@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar 
+    xmlns="http://relaxng.org/ns/structure/1.0"
+    xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:dcterms="http://purl.org/dc/terms/"
+    xmlns:europeana="EUROPEANA"
+    datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <a:documentation>
+“who, what, where and when”  
+  </a:documentation>
+  <start>
+    <element name="record">
+      <ref name="title"/>
+      <ref name="creator"/>
+      <ref name="language"/>
+      <optional>
+        <ref name="dataProvider"/>
+      </optional>
+      <ref name="creator"/>
+      <!-- Favoriser l'indexation  -->
+      <zeroOrMore>
+        <ref name="subject"/>
+      </zeroOrMore>
+    </element>
+  </start>
+  <define name="title">
+    <element name="dc:title">
+      <a:documentation>Titre.</a:documentation>
+      <a:documentation>[Europeana] Obligatoire. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur.</a:documentation>
+      <a:documentation>[Gallica] Obligatoire. Titre composite.</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="creator">
+    <element name="dc:creator">
+      <a:documentation>Auteur. Si connu, obligatoire, et répétable. Une personne (physique ou morale). Nom, Prénom (date-date)</a:documentation>
+      <a:documentation>[Gallica] </a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="description">
+    <element name="dc:description">
+      <a:documentation>Description (nombre de mots ?)
+[Europeana 3.3.2] Obligatoire si pas de title
+      </a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="language">
+    <element name="dc:language">
+      <a:documentation>Langue principale du document, code de 3 lettres (ISO 639-2) ex : fra, eng.
+[Europeana 3.3.3] Europeana impose le code 3 lettres, conversion automatique depuis le code 2 lettres à prévoir.
+      </a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="creator">
+    <element name="dc:creator">
+      <text/>
+    </element> 
+  </define>
+  <define name="europeana-dataProvider">
+    <element name="europeana:dataProvider">
+      <a:documentation>Code du fournisseur de flux OAI, généré automatiquement par Weboai [Europeana 3.3.4]</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="europeana-provider">
+    <element name="europeana:provider">
+      <a:documentation>[Europeana 3.3.7] ??</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="europeana-isShown">
+    <optional>
+      <element name="europeana:isShownAt">
+        <a:documentation>URI exacte du document [Europeana 3.3.5]. &lt;identifier></a:documentation>
+        <text/>
+      </element>
+    </optional>
+    <element name="europeana:isShownBy">
+      <a:documentation>URI de la collection [Europeana 3.3.6]. &lt;isPartOf></a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="subject">
+    <element name="dc:subject">
+      <a:documentation>Un terme d’indexation sujet. 
+[Europeana 3.3.8]</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="type">
+    <element name="dc:type">
+      <a:documentation>Type de document (quel vocabulaire contrôlé ?)
+[Europeana 3.3.9]</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="coverage">
+    <element name="dc:coverage">
+      <a:documentation>Restreint à une indication de lieu.
+[Europeana 3.3.10] Conformément à la sémantique Dublin Core, espace et/ou temps. &gt;dcterms:spatial> et </a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="europeana-rights">
+    <element name="europeana:rights">
+      <a:documentation>URI vers une licence</a:documentation>
+      <data type="anyURI"/>
+    </element>
+  </define>
+  <define name="europeana-type">
+    <element name="europeana:type">
+      <choice>
+        <value>TEXT</value>
+        <value>IMAGE</value>
+        <value>SOUND</value>
+        <value>VIDEO</value>
+        <value>3D</value>
+      </choice>
+    </element>
+  </define>
+</grammar>
