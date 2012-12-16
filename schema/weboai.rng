@@ -4,65 +4,261 @@
     xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dcterms="http://purl.org/dc/terms/"
-    xmlns:europeana="EUROPEANA"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+    xmlns:europeana="http://www.europeana.eu/schemas/ese/"
     datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
-  <a:documentation>
-“who, what, where and when”  
-  </a:documentation>
+  <a:documentation>Schéma des notices weboai</a:documentation>
   <start>
-    <element name="record">
-      <ref name="title"/>
-      <ref name="creator"/>
-      <ref name="language"/>
-      <optional>
-        <ref name="dataProvider"/>
-      </optional>
-      <ref name="creator"/>
-      <!-- Favoriser l'indexation  -->
-      <zeroOrMore>
-        <ref name="subject"/>
-      </zeroOrMore>
+    <element name="oai_dc:dc">
+      <interleave>
+        <oneOrMore>
+          <ref name="identifier"/>
+        </oneOrMore>
+        <optional>
+          <ref name="isPartOf"/>
+        </optional>
+        <ref name="language"/>
+        <ref name="source"/>
+        <oneOrMore>
+          <ref name="title"/>
+        </oneOrMore>
+        <oneOrMore>
+          <ref name="description"/>
+        </oneOrMore>
+        <zeroOrMore>
+          <ref name="creator"/>
+        </zeroOrMore>
+        <zeroOrMore>
+          <ref name="contributor"/>
+        </zeroOrMore>
+        <ref name="date"/>
+        <zeroOrMore>
+          <ref name="coverage"/>
+        </zeroOrMore>
+        <zeroOrMore>
+          <ref name="subject"/>
+        </zeroOrMore>
+        <oneOrMore>
+          <ref name="type"/>
+        </oneOrMore>
+        <oneOrMore>
+          <ref name="format"/>
+        </oneOrMore>
+        <ref name="rights"/>
+        <optional>
+          <ref name="europeana-dataProvider"/>
+        </optional>
+      </interleave>
     </element>
   </start>
-  <define name="title">
-    <element name="dc:title">
-      <a:documentation>Titre.</a:documentation>
-      <a:documentation>[Europeana] Obligatoire. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur.</a:documentation>
-      <a:documentation>[Gallica] Obligatoire. Titre composite.</a:documentation>
+  <define name="identifier">
+    <element name="dc:identifier">
+      <a:documentation>Obligatoire. URI de référence du document en texte intégral</a:documentation>
+      <a:documentation>[Isidore] reconnaissance des systèmes DOI, HANDLE, ARK</a:documentation>
+      <attribute name="xsi:type">
+        <value>dcterms:URI</value>
+      </attribute>
+      <data type="anyURI"/>
+    </element> 
+  </define>
+  <define name="isPartOf">
+    <element name="dcterms:isPartOf">
+      <a:documentation>Si connu, obligatoire. Lien vers une collection</a:documentation>
+      <attribute name="xsi:type">
+        <value>dcterms:URI</value>
+      </attribute>
+      <data type="anyURI"/>
+    </element> 
+  </define>
+  <define name="language">
+    <element name="dc:language">
+      <a:documentation>Unique et obligatoire. Langue principale du document, code de 3 lettres (ISO 639-b2) ex : fre, eng.</a:documentation>
+      <a:documentation>[Europeana] obligatoire.</a:documentation>
+      <a:documentation>[weboai] facette champ:langue</a:documentation>
+      <attribute name="xsi:type">
+        <value>dcterms:ISO639-2</value>
+      </attribute>
+      <ref name="langs"/>
+      
+    </element> 
+  </define>
+  <define name="source">
+    <element name="dc:source">
+      <a:documentation>Unique et obligatoire. Citation bibliographique complète pour le document</a:documentation>
+      <a:documentation>[Isidore] aligné avec un référentiel des titres de revues</a:documentation>
+      <a:documentation>[weboai] (hors recherche, redondant) résultat</a:documentation>
       <text/>
     </element> 
   </define>
-  <define name="creator">
-    <element name="dc:creator">
-      <a:documentation>Auteur. Si connu, obligatoire, et répétable. Une personne (physique ou morale). Nom, Prénom (date-date)</a:documentation>
-      <a:documentation>[Gallica] </a:documentation>
+  <define name="publisher">
+    <element name="dc:publisher">
+      <a:documentation>Éditeur (ville) (?? éditeur numérique ?)</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="title">
+    <element name="dc:title">
+      <a:documentation>Obligatoire, répétable par langue. Titre. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur [ISBD].</a:documentation>
+      <a:documentation>[Europeana] Obligatoire ou &lt;description>. Titre composite conseillé.</a:documentation>
+      <a:documentation>[Gallica] Obligatoire. Titre composite conseillé.</a:documentation>
+      <a:documentation>[weboai] plein-texte champ:titre</a:documentation>
+      <optional>
+        <ref name="xml-lang"/>
+      </optional>
       <text/>
     </element> 
   </define>
   <define name="description">
     <element name="dc:description">
-      <a:documentation>Description (nombre de mots ?)
-[Europeana 3.3.2] Obligatoire si pas de title
-      </a:documentation>
-      <text/>
-    </element> 
-  </define>
-  <define name="language">
-    <element name="dc:language">
-      <a:documentation>Langue principale du document, code de 3 lettres (ISO 639-2) ex : fra, eng.
-[Europeana 3.3.3] Europeana impose le code 3 lettres, conversion automatique depuis le code 2 lettres à prévoir.
-      </a:documentation>
+      <a:documentation>Obligatoire, répétable selon la langue. Résumé</a:documentation>
+      <a:documentation>[Europeana] Obligatoire si pas de title</a:documentation>
+      <a:documentation>[weboai] plein-texte résultat:description</a:documentation>
+      <optional>
+        <attribute name="xsi:type">
+          <choice>
+            <value>dcterms:tableOfContents</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="xml-lang"/>
+      </optional>
       <text/>
     </element> 
   </define>
   <define name="creator">
     <element name="dc:creator">
+      <a:documentation>Si connu, obligatoire, et répétable. Auteur. Une personne (physique ou morale). Nom, Prénom (date-date)</a:documentation>
+      <a:documentation>[Gallica] NF Z 44-061</a:documentation>
       <text/>
     </element> 
   </define>
+  <define name="contributor">
+    <element name="dc:contributor">
+      <a:documentation>Auteur secondaire. Même règles d’écriture que &lt;dc:creator></a:documentation>
+      <a:documentation>[weboai] plein-texte facette champ:auteur resultat:auteur</a:documentation>
+      <text/>
+    </element> 
+  </define>
+  <define name="date">
+    <element name="dc:date">
+      <a:documentation>Unique et obligatoire, au moins une année exacte. Date de création du document. ISO 8601 [W3CDTF] : AAAA-MM-JJ. Période : 1940/1945, 1830-07-27/1830-07-29.
+Ne pas utiliser de crochets carrés, ni de préfixe « ca. ». Les incertitudes sur la datation sont à mettre en note en &lt;dc:description></a:documentation>
+      <a:documentation>[Isidore] Aligné avec un référentiel de périodes</a:documentation>
+      <a:documentation>[weboai] plein-texte chronologie champ:date résultat:dates</a:documentation>
+      <attribute name="xsi:type">
+        <value>dcterms:W3CDTF</value>
+      </attribute>
+      <text/>
+    </element> 
+  </define>
+  <define name="coverage">
+    <element name="dc:coverage">
+      <a:documentation>Lieu.</a:documentation>
+      <a:documentation>[Isidore] Aligné avec un référentiel géographique</a:documentation>
+      <a:documentation>[Gallica] </a:documentation>
+      <a:documentation>[Europeana] Conformément à la sémantique Dublin Core, espace et/ou temps. &gt;dcterms:spatial> et &gt;dcterms:temporal> sont conseillés.</a:documentation>
+      <a:documentation>[weboai] plein-texte facette champ(lieu)</a:documentation>
+      <attribute name="xsi:type">
+        <value>dcterms:spatial</value>
+      </attribute>
+      <optional>
+        <ref name="xml-lang"/>
+      </optional>
+      <text/>
+    </element> 
+  </define>
+  <define name="subject">
+    <element name="dc:subject">
+      <a:documentation>Optionnel et répétable. Un terme d’indexation sujet par élément</a:documentation>
+      <a:documentation>[weboai] plein-texte facette champ(sujet)</a:documentation>
+      <optional>
+        <ref name="xml-lang"/>
+      </optional>
+      <text/>
+    </element> 
+  </define>
+  <define name="format">
+    <element name="dc:format">
+      <a:documentation>Format de fichier, ex: application/tei+xml (généré automatiquement depuis une extension de fichier ?)</a:documentation>
+      <a:documentation>[Gallica] requis</a:documentation>
+      <choice>
+        <value>application/tei+xml</value>
+        <value>text/html</value>
+        <text/>
+      </choice>
+    </element>
+  </define>
+  <define name="type">
+    <element name="dc:type">
+      <a:documentation>Type de document (en faire une facette ? quel vocabulaire ?)</a:documentation>
+      <choice>
+        <value>Collection</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Collection</a:documentation>
+        <value>Text</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Text</a:documentation>
+        <value>monographie imprimée</value>
+        <a:documentation>[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</a:documentation>
+        <value>publication en série imprimée</value>
+        <a:documentation>[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</a:documentation>
+        <value>document cartographique</value>
+        <a:documentation>[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</a:documentation>
+        <value>musique imprimée</value>
+        <a:documentation>[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</a:documentation>
+        <!-- Faut-il une liste close ? -->
+        <text/>
+        <value>Image</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Image</a:documentation>
+        <value>Sound</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Sound</a:documentation>
+        <value>Dataset</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Dataset</a:documentation>
+        <value>Service</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Service</a:documentation>
+        <value>Software</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Software</a:documentation>
+        <value>Event</value>
+        <a:documentation>[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Event</a:documentation>
+      </choice>
+    </element> 
+  </define>
+  <define name="relation">
+    <element name="dc:relation">
+      <a:documentation></a:documentation>
+      <a:documentation>http://purl.org/dc/terms/conformsTo</a:documentation>
+      <a:documentation>[weboai] search result</a:documentation>
+      <optional>
+        <attribute name="xsi:type">
+          <choice>
+            <value>dcterms:hasFormat</value>
+            <value>dcterms:hasPart</value>
+            <value>dcterms:hasVersion</value>
+            <value>dcterms:isFormatOf</value>
+            <value>dcterms:isPartOf</value>
+            <value>dcterms:isReferencedBy</value>
+            <value>dcterms:isReplacedBy</value>
+            <value>dcterms:isRequiredBy</value>
+            <value>dcterms:isVersionOf</value>
+            <value>dcterms:references</value>
+            <value>dcterms:replaces</value>
+            <value>dcterms:requires</value>
+          </choice>
+        </attribute>
+      </optional>
+      <data type="anyURI"/>
+    </element>
+  </define>
+  <define name="rights">
+    <element name="dc:rights">
+      <a:documentation>Obligatoire, unique. Droits. URI de référence vers une licence</a:documentation>
+      <a:documentation>[europeana] &lt;europeana:right> unique et obligatoire, URI</a:documentation>
+      <data type="anyURI"/>
+    </element>
+  </define>
   <define name="europeana-dataProvider">
     <element name="europeana:dataProvider">
-      <a:documentation>Code du fournisseur de flux OAI, généré automatiquement par Weboai [Europeana 3.3.4]</a:documentation>
+      <a:documentation>Code du fournisseur de flux OAI, généré automatiquement par Weboai</a:documentation>
       <text/>
     </element> 
   </define>
@@ -72,42 +268,21 @@
       <text/>
     </element> 
   </define>
-  <define name="europeana-isShown">
-    <optional>
-      <element name="europeana:isShownAt">
-        <a:documentation>URI exacte du document [Europeana 3.3.5]. &lt;identifier></a:documentation>
-        <text/>
-      </element>
-    </optional>
+  <define name="europeana-isShownAt">
+    <element name="europeana:isShownAt">
+      <a:documentation>URI exacte du document &lt;identifier></a:documentation>
+      <text/>
+    </element>
+  </define>
+  <define name="europeana-isShownBy">
     <element name="europeana:isShownBy">
-      <a:documentation>URI de la collection [Europeana 3.3.6]. &lt;isPartOf></a:documentation>
-      <text/>
-    </element> 
-  </define>
-  <define name="subject">
-    <element name="dc:subject">
-      <a:documentation>Un terme d’indexation sujet. 
-[Europeana 3.3.8]</a:documentation>
-      <text/>
-    </element> 
-  </define>
-  <define name="type">
-    <element name="dc:type">
-      <a:documentation>Type de document (quel vocabulaire contrôlé ?)
-[Europeana 3.3.9]</a:documentation>
-      <text/>
-    </element> 
-  </define>
-  <define name="coverage">
-    <element name="dc:coverage">
-      <a:documentation>Restreint à une indication de lieu.
-[Europeana 3.3.10] Conformément à la sémantique Dublin Core, espace et/ou temps. &gt;dcterms:spatial> et </a:documentation>
+      <a:documentation>URI de la collection &lt;isPartOf></a:documentation>
       <text/>
     </element> 
   </define>
   <define name="europeana-rights">
     <element name="europeana:rights">
-      <a:documentation>URI vers une licence</a:documentation>
+      <a:documentation>URI vers une licence, co</a:documentation>
       <data type="anyURI"/>
     </element>
   </define>
@@ -121,5 +296,25 @@
         <value>3D</value>
       </choice>
     </element>
+  </define>
+  <define name="europeana-year">
+    <element name="europeana:year">
+      <a:documentation>Année, généré automatiquement avec &lt;date></a:documentation>
+      <data type="gYear"/>
+    </element>
+  </define>
+  <define name="xml-lang">
+    <attribute name="xml:lang">
+      <ref name="langs"/>
+    </attribute>
+  </define>
+  <define name="langs">
+    <choice>
+      <value>fre</value>
+      <value>eng</value>
+      <data type="language">
+        <param name="length">3</param>
+      </data>
+    </choice>
   </define>
 </grammar>
