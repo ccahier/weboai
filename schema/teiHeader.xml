@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <!-- TODO
+  dc:relation (dcTerms:isPartOf, dc:conformsTo...)
+  dc:coverage, dc:type, dc:subject (revoir)
+  dc:format (non inscrit dans le teiHeader, basé sur extension du fichier ?)
+  europeana:dataProvider, etc.
+-->
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>dc:title –– Titre principal (titre propre)</title>
+        <title type="sub">dc:title –– Sous-titre (complément du titre)</title>
+        <author key="dc:creator">Auteur</author><!-- Baudelaire, Charles (1821-1867) -->
+        <author ana="contributor" key="dc:contributor">Auteur secondaire</author>
+        <editor key="dc:contributor">Éditeur scientifique</editor>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>dc:publisher : CESR</publisher>
+        <date when="2013"/>
+        <idno>dc:identifier</idno>
+        <availability status="restricted">
+          <licence target="dc:rights">License</licence>
+        </availability>
+      </publicationStmt>
+      <seriesStmt><!-- optionnel ? -->
+        <title>Titre de la collection</title>
+        <idno>dcterms:isPartOf</idno>
+      </seriesStmt>
+      <notesStmt>
+        <note type="ref">
+          <ref type="gallica" target="http://gallica.bnf.fr/ark:/12148/bpt6k19995b"/>
+        </note>
+        <note type="abstract">dc:description</note>
+      </notesStmt>
+      <sourceDesc>
+        <bibl>dc:source</bibl>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <creation>
+        <date when="dc:date"/>
+      </creation>
+      <langUsage>
+        <language ident="dc:language"/><!-- ISO 639-2 -->
+      </langUsage>
+      <textClass>
+        <keywords scheme="http://data.bnf.fr/liste-rameau">
+          <term type="subject" key="http://data.bnf.fr/ark:/12148/cb131774360">dc:subject</term>
+        </keywords>
+      </textClass>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p>Some text here.</p>
+    </body>
+  </text>
+</TEI>
