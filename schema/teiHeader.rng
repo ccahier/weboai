@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../modules/xrem/rng_html.xsl"?>
+<?xml-stylesheet type="text/xsl" href="../xrem/rng_html.xsl"?>
+  <!-- TODO
+  dc:relation (dcTerms:isPartOf, dc:conformsTo...)
+  dc:coverage, dc:type, dc:subject (revoir)
+  dc:format (non inscrit dans le teiHeader, basé sur extension du fichier ?)
+  europeana:dataProvider, etc.
+-->
 <grammar
   xmlns="http://relaxng.org/ns/structure/1.0"
   xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
@@ -470,8 +476,8 @@
     <p>Résumé du texte reproduit</p>
   </note>
   <note type="image">
-    <graphic type="thumbnail" url="thumbnail.jpg"/>
-    <graphic type="cover" url="cover.jpg"/>
+    <graphic rend="thumbnail" url="thumbnail.jpg"/>
+    <graphic rend="cover" url="cover.jpg"/>
   </note>
   <note type="ref">
     <ref type="worldcat" n="762566493" target="http://www.worldcat.org/oclc/762566493"/>
@@ -495,7 +501,7 @@
                 </attribute>
                 <element name="graphic">
                   <optional>
-                    <attribute name="type">
+                    <attribute name="rend">
                       <choice>
                         <value>cover</value>
                         <a:documentation>couverture</a:documentation>
@@ -880,7 +886,7 @@
           <ref name="seriesStmt"/>
         </optional>
         <optional>
-          <ref name="noteStmt"/>
+          <ref name="notesStmt"/>
         </optional>
       </element>
     </define>
