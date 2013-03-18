@@ -1,38 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" schematypens="http://relaxng.org/ns/structure/1.0"?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0">
-  <!-- TODO
-  dc:relation (dcTerms:isPartOf, dc:conformsTo...)
-  dc:coverage, dc:type, dc:subject (revoir)
-  dc:format (non inscrit dans le teiHeader, basé sur extension du fichier ?)
-  europeana:dataProvider, etc.
--->
   <teiHeader>
     <fileDesc>
       <titleStmt>
         <title>dc:title –– Titre principal (titre propre)</title>
         <title type="sub">dc:title –– Sous-titre (complément du titre)</title>
-        <author key="dc:creator">Auteur</author><!-- Baudelaire, Charles (1821-1867) -->
+        <!-- La forme d’autorité est inscrite dans l’attribut @key Baudelaire, Charles (1821-1867) -->
+        <author key="dc:creator">Auteur</author>
         <author ana="contributor" key="dc:contributor">Auteur secondaire</author>
         <editor key="dc:contributor">Éditeur scientifique</editor>
       </titleStmt>
       <publicationStmt>
         <publisher>dc:publisher : CESR</publisher>
+        <!-- Date de publication de la ressource électronique, à distinguer de la date de création -->
         <date when="2013"/>
         <idno>dc:identifier</idno>
         <availability status="restricted">
           <licence target="dc:rights">License</licence>
         </availability>
       </publicationStmt>
-      <seriesStmt><!-- optionnel ? -->
+      <!-- Nécessaire si le texte est un item dans une collection -->
+      <seriesStmt>
         <title>Titre de la collection</title>
         <idno>dcterms:isPartOf</idno>
       </seriesStmt>
       <notesStmt>
-        <note type="ref">
-          <ref type="gallica" target="http://gallica.bnf.fr/ark:/12148/bpt6k19995b"/>
-        </note>
         <note type="abstract">dc:description</note>
+        <note>
+          <graphic rend="thumbnail" url="thumbnail.jpg"/>
+          <graphic rend="cover" url="cover.jpg"/>
+        </note>
       </notesStmt>
       <sourceDesc>
         <bibl>dc:source</bibl>
@@ -40,10 +37,12 @@
     </fileDesc>
     <profileDesc>
       <creation>
+        <!-- Date de création du document (à distinguer de la date de publication du document électronique, ou de  la source imprimée)  -->
         <date when="dc:date"/>
       </creation>
       <langUsage>
-        <language ident="dc:language"/><!-- ISO 639-2 -->
+        <!-- ISO 639-2 -->
+        <language ident="dc:language"/>
       </langUsage>
       <textClass>
         <keywords scheme="http://data.bnf.fr/liste-rameau">
@@ -54,7 +53,7 @@
   </teiHeader>
   <text>
     <body>
-      <p>Some text here.</p>
+      <p>Le texte</p>
     </body>
   </text>
 </TEI>

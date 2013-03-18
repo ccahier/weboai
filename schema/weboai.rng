@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../../algone/xrem/rng2html.xsl"?>
 <grammar 
     xmlns="http://relaxng.org/ns/structure/1.0"
     xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
@@ -155,11 +156,11 @@ Ne pas utiliser de crochets carrés, ni de préfixe « ca. ». Les incertitudes 
   </define>
   <define name="coverage">
     <element name="dc:coverage">
-      <a:documentation>Lieu.</a:documentation>
+      <a:documentation>Lieu dont parle le document (surtout ne pas indiquer un lieu de publication, qui fait partie de la référence bibliographique dans &lt;source>)</a:documentation>
       <a:documentation>[Isidore] Aligné avec un référentiel géographique</a:documentation>
       <a:documentation>[Gallica] </a:documentation>
-      <a:documentation>[Europeana] Conformément à la sémantique Dublin Core, espace et/ou temps. &gt;dcterms:spatial> et &gt;dcterms:temporal> sont conseillés.</a:documentation>
-      <a:documentation>[weboai] plein-texte facette champ(lieu)</a:documentation>
+      <a:documentation>[Europeana] Conformément à la sémantique Dublin Core, espace et/ou temps. &lt;dcterms:spatial> et &lt;dcterms:temporal> sont conseillés.</a:documentation>
+      <a:documentation>[weboai] plein-texte facette champ (lieu)</a:documentation>
       <attribute name="xsi:type">
         <value>dcterms:spatial</value>
       </attribute>
