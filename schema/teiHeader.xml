@@ -3,45 +3,62 @@
   <teiHeader>
     <fileDesc>
       <titleStmt>
-        <title>dc:title –– Titre principal (titre propre)</title>
-        <title type="sub">dc:title –– Sous-titre (complément du titre)</title>
-        <!-- La forme d’autorité est inscrite dans l’attribut @key Baudelaire, Charles (1821-1867) -->
-        <author key="dc:creator">Auteur</author>
-        <author ana="contributor" key="dc:contributor">Auteur secondaire</author>
-        <editor key="dc:contributor">Éditeur scientifique</editor>
+        <!-- dc:title, obligatoire, répétable (notamment pour titres traduits) -->
+        <title>titre composite du général au particulier, avec le point pour séparateur [ISBD]</title>
+        <!-- dc:creator, obligatoire
+@key obligatoire, permet d'inscrire la forme d’autorité du nom de l'auteur, c'est celle qui sert de clé de regroupement dans un catalogue.
+Le contenu de l'élément permet d'inscrire le nom de l'auteur avec un balisage enrichi.
+@ref optionnel, permet d'inscrire une ou plusieurs URI (séparées par des espaces) pour se lier à d'autres systèmes de référence.
+ -->
+        <author key="Baudelaire, Charles (1821-1867)" ref="http://www.idref.fr/026709635"><forename>Charles</forename> <surname>Baudelaire</surname></author>
+        <!-- dc:contributor
+Les éléments <editor> sont interprétés comme des "contributeurs" à la ressource.
+Les attributs @key et @ref peuvent être utilisés de la même manière que pour <author> (mais @key n'est pas requis)
+-->
+        <editor>Éditeur scientifique</editor>
       </titleStmt>
       <publicationStmt>
-        <publisher>dc:publisher : CESR</publisher>
-        <!-- Date de publication de la ressource électronique, à distinguer de la date de création -->
+        <!-- dc:publisher, obligatoire, répétable
+Le nom de l'éditeur doit être un terme contrôlé, afin de pouvoir être une clé de regroupement de toutes les ressources d'un éditeur
+        -->
+        <publisher>Centre d'Etudes Supérieures de la Renaissance (CESR)</publisher>
+        <!-- Date de publication de la ressource électronique, à distinguer de la date de création. -->
         <date when="2013"/>
-        <idno>dc:identifier</idno>
+        <!-- dc:identifier, unique, obligatoire, URI -->
+        <idno>http://…</idno>
+        <!-- dc:rights, unique, obligatoire, URI d’une licence -->
         <availability status="restricted">
-          <licence target="dc:rights">License</licence>
+          <licence target="http://creativecommons.org/licenses/by-nc-sa/3.0/fr/">Texte expliquant la licence</licence>
         </availability>
       </publicationStmt>
       <!-- Nécessaire si le texte est un item dans une collection -->
       <seriesStmt>
         <title>Titre de la collection</title>
-        <idno>dcterms:isPartOf</idno>
+        <!-- dcterms:isPartOf, obligatoire si pertinent, URI -->
+        <idno>http://…</idno>
       </seriesStmt>
       <notesStmt>
-        <note type="abstract">dc:description</note>
+        <!-- dc:description, optionnel, répétable par langue -->
+        <note type="abstract">Un texte de présentation de la ressource à destination du public</note>
         <note>
           <graphic rend="thumbnail" url="thumbnail.jpg"/>
           <graphic rend="cover" url="cover.jpg"/>
         </note>
       </notesStmt>
       <sourceDesc>
-        <bibl>dc:source</bibl>
+        <!-- dc:source, obligatoire, unique -->
+        <bibl>Référence bibliographique de la ressource en texte riche</bibl>
+        <!-- toutes autres référence  -->
       </sourceDesc>
     </fileDesc>
     <profileDesc>
       <creation>
-        <!-- Date de création du document (à distinguer de la date de publication du document électronique, ou de  la source imprimée)  -->
+        <!-- dc:date, obligatoire, unique
+Date de création du document (à distinguer de la date de publication du document électronique, ou de  la source imprimée)  -->
         <date when="dc:date"/>
       </creation>
       <langUsage>
-        <!-- ISO 639-2 -->
+        <!-- dc:language, obligatoire, répétable -->
         <language ident="dc:language"/>
       </langUsage>
       <textClass>
