@@ -26,14 +26,118 @@
       <li><a href="teiHeader.rng">Le schéma</a></li>
     </ul>
   </div>
-  
+
+  <div xml:id="exemple">
+    <a:documentation>Exemple de &lt;teiHeader> (suggestion non limitative)</a:documentation>
+    <a:example href="teiHeader.xml"/>
+  </div>
+
+  <!-- MAPPING -->
+  <div xml:id="output_mapping">
+    <a:documentation>Correspondance TEI vers Dublin Core</a:documentation>
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Pour chaque propriété <a href="http://dublincore.org/documents/dces/" target="dc">Dublin Core</a> (en ordre alphabétique) diffusable en <a href="http://www.openarchives.org/OAI/2.0/guidelines.htm" target="oai">OAI</a>, sont indiqués : la définition DC, un chemin XPath dans un document XML/<a href="http://www.tei-c.org/release/doc/tei-p5-doc/fr/html/" target="TEI">TEI</a></p>
+      <dl>
+        <dt><a href="http://purl.org/dc/terms/contributor" target="dc">dc:contributor</a></dt>
+        <dd>
+          <q>An entity responsible for making contributions to the resource.</q>
+          <br/>Auteur secondaire (préface, postface, etc.). Même règles d’écriture que dc:creator
+          <br/>/TEI/teiHeader/fileDesc/titleStmt/author[@ana='contributor']/@key
+          <br/>/TEI/teiHeader/fileDesc/titleStmt/editor/@key
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/creator" target="dc">dc:creator</a></dt>
+        <dd>
+          <q>An entity primarily responsible for making the resource.</q>
+          <br/>Auteur du texte : Nom, Prénom (date-date) NF Z 44-061 – obligatoire, répétable
+          <br/>/TEI/teiHeader/fileDesc/titleStmt/author/@key
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/date" target="dc">dc:date</a> (xsi:type="dcterms:W3CDTF")</dt>
+        <dd>
+          <q>A point or period of time associated with an event in the lifecycle of the resource.</q>
+          <br/>Date de création du document et non de sa déclinaison éditoriale (première édition imprimée, date du fichier TEI, etc.).
+          <br/>/TEI/teiHeader/profileDesc/creation/date/@when
+          <br/>/TEI/teiHeader/profileDesc/creation/date/@notBefore
+          <br/>/TEI/teiHeader/profileDesc/creation/date/@notAfter
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/description" target="dc">dc:description</a></dt>
+        <dd>
+          <q>An account of the resource.</q>
+          <br/>Description de la ressource
+          <br/>/TEI/teiHeader/fileDesc/noteStmt/note[@type='abstract']
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/identifier" target="dc">dc:identifier (xsi:type="dcterms:URI")</a></dt>
+        <dd>
+          <q>An unambiguous reference to the resource within a given context.</q>
+          <br/>URI de référence du fichier (du document en texte intégral) – unique, obligatoire.
+          <br/>/TEI/teiHeader/fileDesc/publicationStmt/idno
+          <!-- NB : doit correspondre à l’URI de référence du fichier TEI et non l’URI du fichier qui a servi de source à ce fichier TEI (cf ambiguïté dans le cas des classiques sciences sociales, cf Bergson, le rire) -->
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/isPartOf" target="dc">dcterms:isPartOf</a> (xsi:type="dcterms:URI")</dt>
+        <dd>
+          <q>A related resource in which the described resource is physically or logically included.</q>
+          <br/>URI de référence vers la collection – unique, obligatoire si connu
+          <!-- URI de référence de la collection électronique et non de la collection imprimée (ex. Annales HSS) -->
+          <br/>/TEI/teiHeader/fileDesc/seriesStmt/idno
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/publisher" target="dc">dc:publisher</a></dt>
+        <dd>
+          <q>An entity responsible for making the resource available.</q>
+          <br/>Ici, l'éditeur de la ressource électronique et non du texte source numérisé.
+          <br/>/TEI/teiHeader/fileDesc/publicationStmt/publisher
+        </dd>
+        <!--
+        <dt><a href="http://purl.org/dc/terms/relation" target="dc">dc:relation</a></dt>
+        <dd>
+          <q>A related resource.</q>
+        </dd>
+        -->
+        <dt><a href="http://purl.org/dc/terms/language" target="dc">dc:language</a> (xsi:type="dcterms:ISO639-2")</dt>
+        <dd>
+          <q>A language of the resource.</q>
+          <br/>Langue principale du document, code de 3 lettres (ISO 639-b2) – unique, obligatoire
+          <br/>/TEI/@xml:lang
+          <br/>/TEI/teiHeader/profileDesc/langUsage/language/@ident
+        </dd>
+        <!-- NB : on devrait remplacer dc:rights par dc:license, non ? -->
+        <dt><a href="http://purl.org/dc/terms/rights" target="dc">dc:rights</a> (xsi:type="dcterms:URI")</dt>
+        <dd>
+          <q>Information about rights held in and over the resource.</q>
+          <br/>URI de référence vers une licence – obligatoire, unique
+          <br/>/TEI/teiHeader/fileDesc/publicationStmt/availability/licence/@target
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/source" target="dc">dc:source</a></dt>
+        <dd>
+          <q>A related resource from which the described resource is derived.</q>
+          <br/>Citation bibliographique complète pour le document (description de la (des) source(s) numérisée(s))
+          <br/>/TEI/teiHeader/fileDesc/sourceDesc/bibl[1]
+        </dd>
+        <dt><a href="http://purl.org/dc/terms/title" target="dc">dc:title</a></dt>
+        <dd>
+          <q>A name given to the resource.</q>
+          <br/>concat(/TEI/teiHeader/fileDesc/titleStmt/title[not(@type)], '. ' , /TEI/teiHeader/fileDesc/titleStmt/title[@type='sub'])
+        </dd>
+        <!--
+        <dt><a href="http://purl.org/dc/terms/type" target="dc">dc:type</a></dt>
+        <dd>
+          <q>The nature or genre of the resource.</q>
+        </dd>
+        -->
+      </dl>
+      <p>Il est encore nécessaire de travailler l'indexation sujet, et d'établire des listes d'autorité pour pouvoir renseigner les propriétés
+        <a href="http://purl.org/dc/terms/subject" target="dc">dc:subject</a>, <a href="http://purl.org/dc/terms/coverage" target="dc">dc:coverage</a> (xsi:type="dcterms:spatial").
+      </p>
+      <!--
+<q>The spatial or temporal topic of the resource, the spatial applicability of the resource, or the jurisdiction under which the resource is relevant.</q>
+<br/>Lieu, aligné avec un référentiel géographique
+
+<q>The topic of the resource.</q>
+<br/>Un terme d’indexation sujet – optionnel, répétable
+        -->
+    </div>
+  </div>
+
   <div xml:id="core">
     <a:documentation>teiHeader / weboai</a:documentation>
-    <div xmlns="http://www.w3.org/1999/xhtml">
-      <p>Un teiHeader minimal et obligatoire pour générer les notices weboai.<br/>
-        La table <a href="#output_mapping">TEI to DC</a> fait la synthèse des correspondances (<em>mapping</em>).</p>
-    </div>
-    <a:example href="teiHeader.xml"/>
     
     <define name="teiHeader">
       <element name="teiHeader">
@@ -158,11 +262,16 @@
         <a:example>
 <author key="Baudelaire, Charles (1821-1867)" ref="http://www.idref.fr/026709635">Baudelaire</author>          
         </a:example>
-        <ref name="author.cont"/>
+        <ref name="key-att"/>
         <optional>
+          <ref name="ref-att"/>
+        </optional>
+        <optional>
+          <!--
           <attribute name="ana">
             <value>contributor</value>
           </attribute>
+          -->
           <!-- ex : ONIX Code List 17  -->
           <attribute name="role">
             <choice>
@@ -173,22 +282,20 @@
             </choice>            
           </attribute>
         </optional>
+        <!-- TODO, autoriser le texte riche -->
+        <text/>
       </element>
     </define>
-    <define name="author.cont">
-      <a:documentation>Contenu commun aux auteurs principaux et secondaires</a:documentation>
+    <define name="key-att">
       <attribute name="key">
-        <a:documentation>Forme normalisée (NF Z 44-061) pour le tri et les traitements : Nom, Prénom (date-date)</a:documentation>
+        <a:documentation>Forme normalisée (NF Z 44-061) pour le tri et les traitements : Nom, Prénom (naissance-mort)</a:documentation>
       </attribute>
-      <optional>
-        <attribute name="ref">
-          <a:documentation>Identification vers un référentiel (URI idRef par ex)</a:documentation>
-          <!-- ET NON email comme pour le pattern resp.atts. TODO : revoir cette logique avec Fréd. -->
-          <data type="anyURI"/>
-        </attribute>
-      </optional>
-      <a:documentation>Forme non normalisée pour la génération automatique des couvertures</a:documentation>
-      <text/>
+    </define>
+    <define name="ref-att">
+      <attribute name="ref">
+        <a:documentation>Identification vers un référentiel (URI idRef par ex)</a:documentation>
+        <data type="anyURI"/>
+      </attribute>
     </define>
     
     <define name="publicationStmt">
@@ -366,7 +473,13 @@
           <ul xmlns="http://www.w3.org/1999/xhtml">
             <li>&lt;<a href="http://purl.org/dc/terms/contributor" target="dc">dc:contributor</a>&gt;</li>
           </ul>
-          <ref name="author.cont"/>
+          <optional>
+            <ref name="key-att"/>
+          </optional>
+          <optional>
+            <ref name="ref-att"/>
+          </optional>
+          <text/>
         </element>
       </choice>
     </define>
@@ -1018,178 +1131,6 @@
     </zeroOrMore>
   </define>
 
-  <!-- MAPPING -->
-  <div xml:id="output_mapping">
-    <a:documentation>TEI to DC (output mapping)</a:documentation>
-    <div xmlns="http://www.w3.org/1999/xhtml">
-      <table>
-        <caption>
-          <p>Cette table précise les métadonnées à produire à partir du fichier source XML/TEI.<br/>
-            Il s’agit donc des métadonnées descriptives du fichier source XML/TEI, utiles pour déclarer un corpus (par ex. export <a href="http://sourceforge.net/p/weboai/wiki/Home/" target="blank">Weboai</a>).</p>
-        </caption>
-        <tr>
-          <th><a href="http://dublincore.org/documents/dces/" target="dc">DC</a>/<a href="http://www.openarchives.org/OAI/2.0/guidelines.htm" target="oai">OAI</a></th>
-          <th>Définition</th>        
-          <th>XPath <a href="http://www.tei-c.org/release/doc/tei-p5-doc/fr/html/" target="TEI">TEI</a></th>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/identifier" target="dc">dc:identifier (xsi:type="dcterms:URI")</a></td>
-          <td>
-            <q>An unambiguous reference to the resource within a given context.</q><br/>
-            URI de référence du fichier (du document en texte intégral) – unique, obligatoire.
-          </td>
-          <!-- NB : doit correspondre à l’URI de référence du fichier TEI et non l’URI du fichier qui a servi de source à ce fichier TEI (cf ambiguïté dans le cas des classiques sciences sociales, cf Bergson, le rire) -->
-          <td>/TEI/teiHeader/fileDesc/publicationStmt/idno</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/isPartOf" target="dc">dcterms:isPartOf</a> (xsi:type="dcterms:URI")</td>
-          <td>
-            <q>A related resource in which the described resource is physically or logically included.</q><br/>
-            URI de référence vers la collection – unique, obligatoire si connu
-          </td>
-          <!-- URI de référence de la collection électronique et non de la collection imprimée (ex. Annales HSS) -->
-          <td>/TEI/teiHeader/fileDesc/seriesStmt/idno</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/relation" target="dc">dc:relation</a></td>
-          <td>
-            <q>A related resource.</q><br/>
-          </td>
-          <!-- 
-            Voir ce qu’on garde en fonction des spécifications Gallica et Isidore
-            NB : relation plus finement définie avec dcterms:isPartOf<br/>
-            Weboai y substitue dc:conformsTo...
-            ON FAIT QUOI ?
-          -->
-          <td>???? Voir XPath défini pour correspondance dcterms:isPartOf // Weboai y substitue dc:conformsTo... ????</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/language" target="dc">dc:language</a> (xsi:type="dcterms:ISO639-2")</td>
-          <td>
-            <q>A language of the resource.</q><br/>
-            Langue principale du document, code de 3 lettres (ISO 639-b2) – unique, obligatoire
-          </td>
-          <td>
-            /TEI/@xml:lang<br/>
-            /TEI/teiHeader/profileDesc/langUsage/language/@ident
-          </td>
-          <!-- NB : on contraint l’inscription dans le teiHeader de manière à ne pas disperser les métadonnées ? -->
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/source" target="dc">dc:source</a></td>
-          <td>
-            <q>A related resource from which the described resource is derived.</q><br/>
-            Citation bibliographique complète pour le document (description de la (des) source(s) numérisée(s))
-          </td>
-          <td>/TEI/teiHeader/fileDesc/sourceDesc/bibl[not(@type)]</td>
-          <!-- prédicat XPath merdique à cause de la présence possible d’une référence plus structurée (bibl[@type='struct']) -->
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/publisher" target="dc">dc:publisher</a></td>
-          <td>
-            <q>An entity responsible for making the resource available.</q><br/>
-            Ici, l'éditeur de la ressource électronique et non du texte source numérisé.
-          </td>
-          <!-- NB : méta non désambiguïsée dans Weboai (éditeur du fichier ou de l’imprimé source ?) -->
-          <td>/TEI/teiHeader/fileDesc/publicationStmt/publisher</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/title" target="dc">dc:title</a></td>
-          <td>
-            <q>A name given to the resource.</q><br/>
-            ?? on prend le titre de la ressource éléctronique ???? – obligatoire, répétable
-          </td>
-          <td>concat(/TEI/teiHeader/fileDesc/titleStmt/title[not(@type)], '. ' , /TEI/teiHeader/fileDesc/titleStmt/title[@type='sub'])</td>
-          <!-- NB : bordel de la gestion des titres composites : une idée géniale ? -->
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/description" target="dc">dc:description</a></td>
-          <td>
-            <q>An account of the resource.</q><br/>
-            Description de la ressource
-          </td>
-          <!-- Weboai propose @xsi:type="(dcterms:tableOfContents)" -->
-          <td>/TEI/teiHeader/fileDesc/noteStmt/note[@type='abstract']</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/creator" target="dc">dc:creator</a></td>
-          <td>
-            <q>An entity primarily responsible for making the resource.</q><br/>
-            Auteur du texte : Nom, Prénom (date-date) NF Z 44-061 – obligatoire, répétable
-          </td>
-          <td>/TEI/teiHeader/fileDesc/titleStmt/author/@key</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/contributor" target="dc">dc:contributor</a></td>
-          <td>
-            <q>An entity responsible for making contributions to the resource.</q><br/>
-            Auteur secondaire (préface, postface, etc.). Même règles d’écriture que dc:creator
-          </td>
-          <td>
-            /TEI/teiHeader/fileDesc/titleStmt/author[@ana='contributor']/@key<br/>
-            /TEI/teiHeader/fileDesc/titleStmt/editor/@key
-          </td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/date" target="dc">dc:date</a> (xsi:type="dcterms:W3CDTF")</td>
-          <td>
-            <q>A point or period of time associated with an event in the lifecycle of the resource.</q><br/>
-            Date de création du document et non de sa déclinaison éditoriale (première édition imprimée, date du fichier TEI, etc.).
-          </td>
-          <!-- il existe des dates moins ambiguës en DC -->
-          <td>
-            /TEI/teiHeader/profileDesc/creation/date/@when<br/>
-            /TEI/teiHeader/profileDesc/creation/date/@notBefore<br/>
-            /TEI/teiHeader/profileDesc/creation/date/@notAfter
-          </td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/type" target="dc">dc:type</a></td>
-          <td>
-            <q>The nature or genre of the resource.</q><br/>
-            Type de document – optionnel, répétable // TODO : distinguer dc:type de dc:subject //  quel vocabulaire ?
-          </td>
-          <!-- NB : Weboai reste ambigu sur le choix du vocabulaire -->
-          <td>??? /TEI/teiHeader/profileDesc/textClass/keywords/list/item // teibookHeader est encore trop imprécis</td>
-          <!-- TODO : préciser le schéma sur ce point dès que le vocabulaire choisi est retenu -->
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/subject" target="dc">dc:subject</a></td>
-          <td>
-            <q>The topic of the resource.</q><br/>
-            Un terme d’indexation sujet – optionnel, répétable // TODO : distinguer dc:type de dc:subject
-          </td>
-          <td>/TEI/teiHeader/profileDesc/textClass/keywords/list/item</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/coverage" target="dc">dc:coverage</a> (xsi:type="dcterms:spatial")</td>
-          <td>
-            <q>The spatial or temporal topic of the resource, the spatial applicability of the resource, or the jurisdiction under which the resource is relevant.</q><br/>
-            Lieu, aligné avec un référentiel géographique
-          </td>
-          <!-- TODO prévoir un espace d’indexation dédié dans le teiHeader -->
-          <td>???? /TEI/teiHeader/profileDesc/textClass/keywords/list/item // teibookHeader est encore trop imprécis</td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/format" target="dc">dc:format</a></td>
-          <td>
-            <q>The file format, physical medium, or dimensions of the resource.</q><br/>
-            Format de fichier
-          </td>
-          <td>MIME Type <a href="http://tools.ietf.org/html/rfc6129" target="ietf">application/tei+xml</a></td>
-        </tr>
-        <tr>
-          <td><a href="http://purl.org/dc/terms/rights" target="dc">dc:rights</a> (xsi:type="dcterms:URI")</td>
-          <td>
-            <q>Information about rights held in and over the resource.</q><br/>
-            URI de référence vers une licence – obligatoire, unique
-          </td>
-          <td>/TEI/teiHeader/fileDesc/publicationStmt/availability/licence/@target</td>
-          <!-- NB : on devrait remplacer dc:rights par dc:license, non ? -->
-        </tr>
-      </table>
-    </div>
-  </div>
   
   <!-- Ne pas toucher pour que ça marche avec teibook.rng -->
   <define name="id-att" combine="choice">

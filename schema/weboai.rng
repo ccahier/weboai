@@ -16,6 +16,9 @@
         <oneOrMore>
           <ref name="identifier"/>
         </oneOrMore>
+        <oneOrMore>
+          <ref name="publisher"/>
+        </oneOrMore>
         <optional>
           <ref name="isPartOf"/>
         </optional>
