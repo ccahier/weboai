@@ -37,6 +37,7 @@
     </rule>
     <rule context="tei:profileDesc">
       <assert test="count(tei:creation/tei:date) = 1">Une unique "date de création" du texte transcrit (dc:date) doit être renseignée [profileDesc/creation/date/@when]. Cette date sert au tri chronologique des œuvres.</assert>
+      <assert test="count(tei:langUsage/tei:language) >=1 ">Au moins une langue du document (dc:language) doit être renseignée [profileDesc/langUsage/language/@ident].</assert>
     </rule>
   </pattern>
     
@@ -58,7 +59,10 @@
     <rule context="tei:licence">
       <assert test="@target">L’attribut @target est obligatoire pour renseigner l’URI de référence de la licence de distribution.</assert>
       <assert test="starts-with(@target, 'http://')">L’URI de référence de la licence doit être de type xsd:anyURI (http://...)</assert>
-    </rule> 
+    </rule>
+    <rule context="tei:language">
+      <assert test="@ident">L’attribut @ident est obligatoire pour renseigner la langue du document (dc:language) au format ISO 639-2.</assert>
+    </rule>
   </pattern>
   
   <pattern>
