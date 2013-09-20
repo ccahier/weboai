@@ -42,7 +42,7 @@
         <dd>
           <q>An entity responsible for making contributions to the resource.</q>
           <br/>Auteur secondaire (préface, postface, etc.). Même règles d’écriture que dc:creator
-          <br/>/TEI/teiHeader/fileDesc/titleStmt/author[@ana='contributor']/@key
+          <!-- <br/>/TEI/teiHeader/fileDesc/titleStmt/author[@ana='contributor']/@key -->
           <br/>/TEI/teiHeader/fileDesc/titleStmt/editor/@key
         </dd>
         <dt><a href="http://purl.org/dc/terms/creator" target="dc">dc:creator</a></dt>
@@ -50,6 +50,7 @@
           <q>An entity primarily responsible for making the resource.</q>
           <br/>Auteur du texte : Nom, Prénom (date-date) NF Z 44-061 – obligatoire, répétable
           <br/>/TEI/teiHeader/fileDesc/titleStmt/author/@key
+          <br/>/TEI/teiHeader/fileDesc/titleStmt/principal/@key
         </dd>
         <dt><a href="http://purl.org/dc/terms/date" target="dc">dc:date</a> (xsi:type="dcterms:W3CDTF")</dt>
         <dd>
@@ -197,6 +198,9 @@
     <define name="titleStmt.cont">
         <ref name="title.group"/>
         <!-- pb déterminisme XSD avec titre traduit et compléments de titre optionnels -->
+        <zeroOrMore>
+          <ref name="principal.norm"></ref>
+        </zeroOrMore>
         <oneOrMore>
           <ref name="author.norm"/>
         </oneOrMore>
@@ -248,6 +252,24 @@
       </attribute>
     </define>
     
+    
+    <define name="principal.norm">
+      <element name="principal">
+        <a:documentation>Éditeur scientifique</a:documentation>
+        <div xmlns="http://www.w3.org/1999/xhtml">
+          <p>L’éditeur scientifique d’un colloque par ex. (dir. ou .éd.). Ne pas confondre avec l’éditeur critique (voir <a:el>editor</a:el>).</p>
+          <p>Ne pas confondre également avec le responsable de l’édition électronique (<code>editionStmt/principal</code>, mention d’édition et non mention de reponsabilité)</p>
+          <ul>
+            <li>&lt;<a href="http://purl.org/dc/terms/creator" target="dc">dc:creator</a>&gt;<br/></li>
+          </ul>
+        </div>
+        <ref name="key-att"/>
+        <optional>
+          <ref name="ref-att"/>
+        </optional>
+        <text/>
+      </element>
+    </define>
     <define name="author.norm">
       <element name="author">
         <a:documentation>Auteur(s) du texte, forme normalisée. Les auteurs secondaires </a:documentation>
@@ -267,11 +289,6 @@
           <ref name="ref-att"/>
         </optional>
         <optional>
-          <!--
-          <attribute name="ana">
-            <value>contributor</value>
-          </attribute>
-          -->
           <!-- ex : ONIX Code List 17  -->
           <attribute name="role">
             <choice>
