@@ -63,7 +63,7 @@
         <dt><a href="http://purl.org/dc/terms/description" target="dc">dc:description</a></dt>
         <dd>
           <q>An account of the resource.</q>
-          <br/>Description de la ressource
+          <br/>Description du texte à destination du public
           <br/>/TEI/teiHeader/fileDesc/noteStmt/note[@type='abstract']
         </dd>
         <dt><a href="http://purl.org/dc/terms/identifier" target="dc">dc:identifier (xsi:type="dcterms:URI")</a></dt>
@@ -83,7 +83,7 @@
         <dt><a href="http://purl.org/dc/terms/publisher" target="dc">dc:publisher</a></dt>
         <dd>
           <q>An entity responsible for making the resource available.</q>
-          <br/>Ici, l'éditeur de la ressource électronique et non du texte source numérisé.
+          <br/>Ici, l'éditeur du texte électronique (et non du texte source numérisé).
           <br/>/TEI/teiHeader/fileDesc/publicationStmt/publisher
         </dd>
         <!--
@@ -124,7 +124,7 @@
         </dd>
         -->
       </dl>
-      <p>Il est encore nécessaire de travailler l'indexation sujet, et d'établire des listes d'autorité pour pouvoir renseigner les propriétés
+      <p>Il est encore nécessaire de travailler l'indexation sujet, et d'établir des listes d'autorité pour pouvoir renseigner les propriétés
         <a href="http://purl.org/dc/terms/subject" target="dc">dc:subject</a>, <a href="http://purl.org/dc/terms/coverage" target="dc">dc:coverage</a> (xsi:type="dcterms:spatial").
       </p>
       <!--
@@ -171,7 +171,7 @@
         <element name="titleStmt">
           <a:documentation>Titre et mentions de responsabilité de l’œuvre</a:documentation>
           <div xmlns="http://www.w3.org/1999/xhtml">
-            <p><a:el>titleStmt</a:el> décrit la ressource électronique (et non la source numérisée, voir <a href="#el_sourceDesc">sourceDesc</a>).<br/>
+            <p><a:el>titleStmt</a:el> décrit le texte électronique (et non la source numérisée, voir <a href="#el_sourceDesc">sourceDesc</a>).<br/>
               Les titres répétables sont interprétés hiérarchiquement.</p>
             <!-- "1) titre de corpus, 2) ouvrage dans le corpus, 3) partie d'ouvrage, etc." -> en principe le titre du corpus est inscrit dans seriesStmt -->
           </div>
@@ -199,11 +199,11 @@
         <ref name="title.group"/>
         <!-- pb déterminisme XSD avec titre traduit et compléments de titre optionnels -->
         <zeroOrMore>
-          <ref name="principal.norm"></ref>
+          <ref name="principal"/>
         </zeroOrMore>
-        <oneOrMore>
+        <zeroOrMore>
           <ref name="author.norm"/>
-        </oneOrMore>
+        </zeroOrMore>
         <zeroOrMore>
           <ref name="contributor"/>
         </zeroOrMore>
@@ -229,6 +229,12 @@
             <!-- surtout laisser cela comme ça, où jing s'embrouille -->
             <ref name="lang-att"/>
           </optional>
+          <optional>
+            <attribute name="ref">
+              <a:documentation>Identification du texte (et non de l’édition imprimée source, voir sourceDesc) vers un référentiel (ex: URI Wikipédia par ex.)</a:documentation>
+               <data type="anyURI"/>
+            </attribute>
+          </optional>          
           <ref name="teiHeader.flow"/>
         </element>
       </oneOrMore>
@@ -251,9 +257,7 @@
         </choice>
       </attribute>
     </define>
-    
-    
-    <define name="principal.norm">
+    <define name="principal">
       <element name="principal">
         <a:documentation>Éditeur scientifique</a:documentation>
         <div xmlns="http://www.w3.org/1999/xhtml">
@@ -264,10 +268,7 @@
           </ul>
         </div>
         <ref name="key-att"/>
-        <optional>
-          <ref name="ref-att"/>
-        </optional>
-        <text/>
+        <ref name="author.cont"/>
       </element>
     </define>
     <define name="author.norm">
@@ -284,34 +285,34 @@
         <a:example>
 <author key="Baudelaire, Charles (1821-1867)" ref="http://www.idref.fr/026709635">Baudelaire</author>          
         </a:example>
-        <ref name="key-att"/>
-        <optional>
-          <ref name="ref-att"/>
-        </optional>
         <optional>
           <!-- ex : ONIX Code List 17  -->
           <attribute name="role">
             <choice>
-              <value>translator</value>
               <value>illustrator</value>
               <value>paratext</value>
               <text/>
             </choice>            
           </attribute>
         </optional>
-        <!-- TODO, autoriser le texte riche -->
-        <text/>
+        <ref name="key-att"/>
+        <ref name="author.cont"/>
       </element>
+    </define>
+    <define name="author.cont">
+      <a:documentation>Contenu commun aux auteurs principaux et secondaires</a:documentation>
+      <optional>
+        <attribute name="ref">
+          <a:documentation>Identification vers un référentiel (URI idRef par ex)</a:documentation>
+          <data type="anyURI"/>
+        </attribute>
+      </optional>
+      <a:documentation>Forme non normalisée pour affichage (exemple génération automatique de couvertures)</a:documentation>
+      <ref name="teiHeader.flow"/>
     </define>
     <define name="key-att">
       <attribute name="key">
         <a:documentation>Forme normalisée (NF Z 44-061) pour le tri et les traitements : Nom, Prénom (naissance-mort)</a:documentation>
-      </attribute>
-    </define>
-    <define name="ref-att">
-      <attribute name="ref">
-        <a:documentation>Identification vers un référentiel (URI idRef par ex)</a:documentation>
-        <data type="anyURI"/>
       </attribute>
     </define>
     
@@ -408,22 +409,25 @@
       <element name="langUsage">
         <oneOrMore>
           <element name="language">
-            <a:documentation>Langue principale de la ressource. Renseigner l’attribut @ident avec un code ISO d'un moins trois lettres de 3 lettres ISO 639-2 (avec extensions simili ISO si nécessaire), et donner un intitulé textuel de la langue dans le contenu de l'élément</a:documentation>
-            <p xmlns="http://www.w3.org/1999/xhtml" class="note">La langue principale de la ressource doit être inscrite sur sa racire /TEI, en valeur de l’attribut @xml:lang.</p>
-            <a:example><language ident="la_EU_mod">Latin moderne (XVIe–XVIIIe)</language></a:example>
+            <a:documentation>Langue principale du texte. Renseigner l’attribut @ident avec un code ISO 639-2 (avec extensions simili ISO si nécessaire), et donner un intitulé textuel de la langue dans le contenu de l'élément</a:documentation>
+            <p xmlns="http://www.w3.org/1999/xhtml" class="note">La langue principale du texte doit être inscrite sur sa racine /TEI, en valeur de l’attribut @xml:lang (permet notamment d’orienter un correcteur orthographique dans un éditeur XML).</p>
+            <a:example>
+<language ident="la_EU_mod" usage="75">Latin moderne (XVIIe)</language>
+<language ident="fr" usage="25">Français (préface et notes)</language>
+            </a:example>
             <ul xmlns="http://www.w3.org/1999/xhtml">
-                <li>&lt;<a href="http://purl.org/dc/terms/language" target="dc">dc:language</a>&gt;</li>
+              <li>&lt;<a href="http://purl.org/dc/terms/language" target="dc">dc:language</a>&gt;</li>
             </ul>
             <attribute name="ident">
               <text/>
             </attribute>
             <optional>
               <attribute name="usage">
-                <a:documentation>Proportion approximative de la langue dans la ressource.</a:documentation>
+                <a:documentation>Proportion approximative de la langue dans le texte.</a:documentation>
                 <text/>
               </attribute>
             </optional>
-            <text/>
+            <ref name="teiHeader.flow"/>
           </element>
         </oneOrMore>
       </element>
@@ -486,17 +490,22 @@
     <define name="contributor">
       <choice>
         <element name="editor">
-          <a:documentation>Auteurs(s) secondaires, forme normalisée (éditeur dans le cas d’une édition de texte)</a:documentation>
+          <a:documentation>Auteurs(s) secondaires, forme normalisée (traducteur, éditeur d’une source…)</a:documentation>
           <ul xmlns="http://www.w3.org/1999/xhtml">
             <li>&lt;<a href="http://purl.org/dc/terms/contributor" target="dc">dc:contributor</a>&gt;</li>
           </ul>
           <optional>
-            <ref name="key-att"/>
+            <attribute name="role">
+              <choice>
+                <value>translator</value>
+                <text/>
+              </choice>            
+            </attribute>
           </optional>
           <optional>
-            <ref name="ref-att"/>
+            <ref name="key-att"/>
           </optional>
-          <text/>
+          <ref name="author.cont"/>
         </element>
       </choice>
     </define>
@@ -504,7 +513,7 @@
     <define name="publicationStmt.optional">
       <optional>
         <element name="address">
-          <a:documentation>Adresse postale de l'éditeur de la ressource</a:documentation>
+          <a:documentation>Adresse postale de l'éditeur du texte</a:documentation>
           <oneOrMore>
             <element name="addrLine">
               <text/>
@@ -590,11 +599,9 @@
         <data type="integer"/>
       </element>
     </define>
-    
     <define name="notesStmt">
       <element name="notesStmt">
-        <a:documentation>Informations complémentaires sur la ressource électronique. Les notes sont obligatoirement typées et permettent d'indiquer :  résumé, liens à des images, des liens à d'autres notices de référence pour la même ressource</a:documentation>
-        <a:documentation>Résumé du texte</a:documentation>
+        <a:documentation>Informations complémentaires sur le texte électronique. Une note de type “abstract” permettent d’inscrire : résumé, liens à des images, liens à d'autres notices de référence pour le même texte</a:documentation>
         <ul xmlns="http://www.w3.org/1999/xhtml">
           <li>&lt;<a href="http://purl.org/dc/terms/title" target="dc">dc:description</a>&gt;</li>
           <li><a href="http://documentation.abes.fr/sudoc/formats/unmb/zones/033.htm" target="unim">Unimarc, zone 033</a></li>
@@ -604,78 +611,58 @@
 <notesStmt>
   <note type="abstract">
     <p>Résumé du texte reproduit</p>
-  </note>
-  <note type="image">
-    <graphic rend="thumbnail" url="thumbnail.jpg"/>
     <graphic rend="cover" url="cover.jpg"/>
-  </note>
-  <note type="ref">
     <ref type="worldcat" n="762566493" target="http://www.worldcat.org/oclc/762566493"/>
   </note>
 </notesStmt>
         </a:example>
         <oneOrMore>
           <element name="note">
-            <choice>
-              <group>
-                <attribute name="type">
-                  <value>abstract</value>
+            <attribute name="type">
+              <value>abstract</value>
+            </attribute>
+            <ref name="lang-att"/>
+            <oneOrMore>
+              <ref name="teiHeader.p"/>
+            </oneOrMore>
+            <optional>
+              <element name="graphic">
+                <attribute name="rend">
+                  <choice>
+                    <value>cover</value>
+                    <a:documentation>couverture</a:documentation>
+                    <text/>
+                  </choice>
                 </attribute>
-                <oneOrMore>
-                  <ref name="teiHeader.p"/>
-                </oneOrMore>
-              </group>
-              <group>
-                <attribute name="type">
-                  <value>image</value>
+                <attribute name="url">
+                  <data type="anyURI"/>
                 </attribute>
-                <element name="graphic">
-                  <optional>
-                    <attribute name="rend">
-                      <choice>
-                        <value>cover</value>
-                        <a:documentation>couverture</a:documentation>
-                        <value>thumbnail</value>
-                        <a:documentation>vignette</a:documentation>
-                        <text/>
-                      </choice>
-                    </attribute>
-                  </optional>
-                  <attribute name="url">
-                    <data type="anyURI"/>
-                  </attribute>
-                </element>
-              </group>
-              <group>
+              </element>
+            </optional>
+            <zeroOrMore>
+              <element name="ref">
                 <attribute name="type">
-                  <value>ref</value>
+                  <choice>
+                    <value>ppn</value>
+                    <a:documentation>id Sudoc</a:documentation>
+                    <value>worldcat</value>
+                    <a:documentation>id Worldcat</a:documentation>
+                    <!-- NB : la zone unimarc 34 renseigne le numéro de la notice dans le catalogue WorldCat -->
+                  </choice>
                 </attribute>
-                <oneOrMore>
-                  <element name="ref">
-                    <attribute name="type">
-                      <choice>
-                        <value>ppn</value>
-                        <a:documentation>id sudoc</a:documentation>
-                        <value>worldcat</value>
-                        <a:documentation>id worldcat</a:documentation>
-                        <!-- NB : la zone unimarc 34 renseigne le numéro de la notice dans le catalogue WorldCat -->
-                      </choice>
-                    </attribute>
-                    <optional>
-                      <attribute name="n"/>
-                    </optional>
-                    <attribute name="target">
-                      <data type="anyURI"/>
-                    </attribute>
-                  </element>
-                </oneOrMore>
-              </group>
-            </choice>
+                <optional>
+                  <attribute name="n"/>
+                </optional>
+                <attribute name="target">
+                  <data type="anyURI"/>
+                </attribute>
+                <text/>
+              </element>
+            </zeroOrMore>
           </element>
         </oneOrMore>
       </element>
-    </define>
-    
+    </define>    
     <define name="editionStmt">
       <element name="editionStmt">
         <a:documentation>Mentions de responsabilité pour le fichier XML/TEI</a:documentation>
@@ -717,7 +704,7 @@
       <element name="respStmt">
         <a:documentation>Mention de responsabilité</a:documentation>
         <div xmlns="http://www.w3.org/1999/xhtml">
-          <p>Personne ayant une responsabilité dans l'élaboration de la ressource électronique.<br/>
+          <p>Personne ayant une responsabilité dans l'élaboration du texte électronique.<br/>
             Ne pas mettre ici l'auteur ou l'éditeur de l'œuvre originale (<a:el>titleStmt</a:el>), mais uniquement les personnes responsables de la numérisation.</p>  
           <!-- pb de la place de l’email, cf pattern resp.atts : utilisation un peu limite de @ref au regard des guidelines : http://www.tei-c.org/release/doc/tei-p5-doc/fr/html/ref-att.canonical.html -->        
         </div>
@@ -731,7 +718,7 @@
             <ref name="resp.cont"/>
           </element>
           <element name="resp">
-            <a:documentation>Date et rôle dans l’établissement de la ressource</a:documentation>
+            <a:documentation>Date et rôle dans l’établissement du texte</a:documentation>
             <ref name="teiHeader.flow"/>
           </element>
         </interleave>
@@ -791,7 +778,7 @@
         </oneOrMore>
       </element>
     </define>
-        
+
     <define name="extent">
       <element name="extent">
         <a:documentation>Description quantitative du fichier</a:documentation>
@@ -816,7 +803,7 @@
         </choice>        
       </element>
     </define>
-        
+
     <define name="textClass">
       <element name="textClass">
         <a:documentation>Description du texte par mots-clés</a:documentation>
@@ -923,7 +910,7 @@
         </optional>
       </element>
     </define>
-  
+
   </div><!-- END OPTIONAL -->
   
   
@@ -961,9 +948,8 @@
       </note>
     </notesStmt>
   </biblFull>
-</sourceDesc>      
+</sourceDesc>
     </a:example>
-    
     <define name="sourceDesc">
       <element name="sourceDesc">
         <a:documentation>Description de la (des) source(s) numérisée(s)</a:documentation>
@@ -975,7 +961,6 @@
         </oneOrMore>
       </element>
     </define>
-    
     <define name="bibl.label">
       <element name="bibl">
         <a:documentation>Référence bibliographique peu structurée de l’œuvre numérisée. En texte mêlé ponctuée, avec typographie légère (italique).  Référence utilisée par exemple pour générer les citations à la page</a:documentation>
@@ -988,7 +973,23 @@
             <text/>
           </element>
         </optional>
-        <ref name="teiHeader.flow"/>
+        <zeroOrMore>
+          <choice>
+            <ref name="teiHeader.flow"/>
+            <element name="author">
+              <text/>
+            </element>
+            <element name="publisher">
+              <text/>
+            </element>
+            <element name="pubPlace">
+              <text/>
+            </element>
+            <element name="edition">
+              <ref name="teiHeader.flow"/>
+            </element>
+          </choice>
+        </zeroOrMore>
       </element>
     </define>
     
@@ -1112,6 +1113,9 @@
           <text/>
         </element>
         <element name="date">
+          <text/>
+        </element>
+        <element name="forename">
           <text/>
         </element>
         <element name="hi">

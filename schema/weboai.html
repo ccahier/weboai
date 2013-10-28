@@ -1,0 +1,829 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html SYSTEM "">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8"/>
+    <style type="text/css"> /* keep file XML valid, maybe included by xsl:document() */
+/* 
+Copyright © 2012-2013 Algone
+license : LGPL http://www.gnu.org/copyleft/lesser.html
+license : APACHE 2.0 http://www.apache.org/licenses/LICENSE-2.0
+&lt;frederic.glorieux@algone.net&gt;
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+/*
+Classes for documented XML files by Xrem transformations 
+*/
+
+section, nav, article, aside, hgroup, header, footer, figure, figcaption { display:block;}
+* {-moz-box-sizing: border-box; -ms-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;}
+
+/** Fonts */
+
+body.xrem, table.facs caption { font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif;font-size:13px;margin:0;}
+body.item {padding:2em;}
+body.nav{padding:0;margin:1ex;}
+body.xrem #nav, body.xrem #header {font-family:Arial, sans-serif;font-size:13px;}
+
+/** simple HTML, with body class protection if css imported (in html tagname order) */
+
+body.xrem a {color:#226; text-decoration:none;}
+body.xrem a:hover { text-decoration:underline;}
+body.xrem fieldset { margin:1em 0 1ex 0; padding:0 1ex 0 1ex; border:1px dotted #363; -moz-border-radius:1ex; -webkit-border-radius:1ex; white-space:normal;}
+body.xrem p {text-align:justify;text-indent:2em;margin-top:0;margin-bottom:0;}
+body.xrem h1 {text-align:center; line-height:105%;}
+body.xrem h3 {border-bottom:1px solid #336699; padding-left: 1em; margin-top:2em; margin-bottom:1em;}
+body.xrem table {font-size:inherit;}
+
+/* Global layout */
+html{height:100%;}
+body.xrem{position:relative;}
+body.xrem #article { padding:0; margin:3ex 5em 5em 30%; min-height:500px;}
+body.xrem #header {position:absolute;background:#DADADA;top:0;left:0;right:0;padding:0 1ex;}
+body.xrem #footer {position:absolute;background:#DADADA;bottom:-1px;left:0;right:0;padding:0 1ex;} /* need container with position :relative */
+body.xrem #footer img {margin:-4px;}
+body.xrem #nav { top:0; position:fixed; padding:0 3px 2em 11px; height:100%; overflow:auto; width:27%; color:black; margin:0 0 0 0; border-right:solid 1px #b3b3b3; }
+body.xrem #nav header, body.nav header { padding:1ex 0;font-style:normal; font-weight:bold;}
+.index div {line-height:100%;margin:0.8ex 0;}
+
+/** generic classes */
+.pre {white-space: pre-wrap;}
+.tree ul { padding:0; margin:0; padding-left:1em; }
+body.xrem ul.tree ul { padding-left:1ex; margin-left:1em;}
+
+/* xml2html.xsl, documented XML source */
+
+.example { background-color: #FFFFFF; background-image: -webkit-gradient(linear, left top, right top,from(#FFFFFF),to(#F8F8F8)); background-image: -webkit-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: -moz-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: -ms-linear-gradient(left, #FFFFFF, #F8F8F8); background-image:      -o-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: linear-gradient(left, #FFFFFF, #F8F8F8); border-left:1px dotted #808080; padding:1ex 1em; margin:0;}
+.xml { line-height:105%; text-align:left;}
+.xml  a { text-decoration:none; border-bottom:none; border:none; padding:0;}
+.xml a.val { color:#0000FF; }
+.xml a.val:hover { text-decoration:underline; border:none; }
+a.xsl  { color:#669966; font-weight:100;}
+a:hover.xsl, a:hover.rdf { background:#0000FF; color:white; }
+a.html, a.dc { color:#FF0000; font-weight:bold;}
+a:hover.html, a:hover.dc, a:hover.template { background:red; color:white; }
+a.template { font-family: Verdana, arial, sans-serif; font-weight:bold; }
+.xml .el, .xml  a.el { font-weight:bold; font-family: "Lucida Console", Courier, "MS Courier New", monospace; text-decoration:none; color:#040; border:none; }
+.xml a:hover.el, .xml a:hover.att { background:#8080FF; color:#FFFFFF; }
+.xml .att { font-family:Arial, sans-serif; font-weight:100; }
+.xml a.att { font-family:Arial, sans-serif; color:#444;}
+.xml .open, .xml .close, .xml .tag { margin:0; font-family:monospace, sans-serif; color:#383; }
+.xml .fold {color:#666666; }
+.xml .pi { color:#008000; font-weight: bold; }
+.xml .val, .xml .cdata { font-weight:normal; margin:0; padding:0; }
+.xml .comment, .xml .comment code { font-size:12px; line-height:125%; background:#FFE; color:#666; }
+.xml  pre.comment { margin:0; padding:0 1em;}
+.xml .comment { font-family:monospace; color:#000; }
+fieldset.comment pre {color:#008;}
+div.comment {white-space: normal;}
+dd.code { margin:0 !important; padding:0 !important; padding-left:1em !important; border-left: 1px dotted #808080;}
+.pre .text { background:#EEF; font-family:serif; color:#000;}
+.xml span.text, .xml .val, .xml .cdata { color:#444;}
+.xml .cdata { color:red}
+.xml .ns { color:#000080; font-weight:100;}
+dt { font-weight:bold;}
+dl.xml { margin:0; padding:0;}
+dl.xml dt { font-weight:normal; }
+details.source { margin-left:1em; float:right; max-width:60%; background:#FFFFFF;}
+details.source summary { float:right; display:inline; text-align:right;}
+details &gt; * { display:none;}
+details.minus &gt; * { display:block;}
+
+/** Relax-NG */
+
+section.attribute { margin-top:1em; }
+section.define, section.element { margin-top:2em; }
+section.rng { margin:2em 0 0 0;}
+section.rng section.rng header { padding-left:2em;}
+section.rng section.rng section.rng header { padding-left:4em;}
+section.rng section.rng section.rng section.rng header { padding-left:6em;}
+header.rng { font-size:110%; margin-bottom:1ex; padding:0; border:none;}
+header.rng a { color:#77A; font-weight:bold;}
+header.attribute { color:#666;}
+/* entry in a table */
+table.grammar { background-color:#F8F8F8; background-image: -webkit-gradient(linear, left top, right top,from(#FFFFFF),to(#F8F8F8)); background-image: -webkit-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: -moz-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: -ms-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: -o-linear-gradient(left, #FFFFFF, #F8F8F8); background-image: linear-gradient(left, #FFFFFF, #F8F8F8); border-collapse:collapse; width:100%; line-height:105%; border-left:1px dotted #808080;margin-bottom:1em;}
+table.grammar tt, table.grammar em {color:#000;}
+table.grammar td { padding:0.5ex 1ex; line-height:1.1em; border-bottom:1px dotted #999999;vertical-align:top;}
+table.grammar th { font-family:Helvetica, Arial, "DejaVu Sans Light ", sans-serif; font-size:12px; width:10ex; vertical-align:top; padding:0.5ex 1ex; background:#DADADA; border-bottom:1px solid #FFFFFF; font-weight:normal;}
+table.attributes td {padding:0 0.2ex;line-height:100%;border:none;}
+table.attributes td.name {text-align:right;}
+.xrem a.required {color:#000;font-weight:bold;}
+.grammar a { font-family:Helvetica, Arial, "DejaVu Sans Light ", sans-serif; color:#315BA7; border:none;}
+.grammar a.define, .grammar a.ref { color:#000; font-style:italic; font-family:serif;}
+td.children div, td.usage div {display:inline} 
+p.cf {margin-top:0;}
+/* att values */
+ul.values {  margin-top:0; margin-bottom:0; padding-top:0; margin-bottom:0;}
+.value{color:#000;}
+.value div.documentation {font-style:italic}
+/* hide/show macro compact view */
+.grammar a.toggle { color:#000; cursor:pointer;}
+a.toggle:hover { text-decoration:none !important; background:#336699; color:#FFFFFF;}
+span.more span.refin { display:none;}
+span.less span.refin {display:block;}
+span.less span.more span.refin {display:none;}
+span.refin { margin-left:0.5ex; border-left:1px dotted #888; padding-left:2ex;}
+div.compact {padding-left:1ex;}
+div.compact ul { margin-top:0; margin-bottom:0; padding-top:0; padding-bottom:0;}
+/* image example */
+table.facs { font-family:serif; margin-top:2em; margin-bottom:2em; border:1px dotted #808080; padding-left:2em; padding-right:2em;}
+table.facs td { vertical-align:top;}
+table.facs caption { background:#DADADA;}
+table.facs p { margin-top:2ex; margin-bottom:2ex;}
+
+/** xsl2html.xsl, documented transformation */
+.transform a {border:none;}
+.match p, .result p { text-indent:1em; line-height:110%; margin:0 0 0.5ex 0; }
+.xsl-var { margin-top:1ex;}
+.output { color:#961716; font-family: "Lucida Console", Courier, "MS Courier New", monospace; font-size:13px; line-height:110%; text-indent:0; text-align:left;}
+.template { margin: 1em 0 0 0; clear:both;}
+.template header { border:none; padding:0; border-bottom:#888 1px solid;}
+
+/* PHP code */
+a.function, .php b.construct, .php var {font-family:Frutiger,"Deja Vu Sans",Helvetica,sans-serif; }
+pre.php { white-space: pre-wrap; font-size:14px; color:red; }
+code.function {color:#A82C37; }
+span.function { font-family:Frutiger,"Deja Vu Sans",Helvetica,sans-serif; color:#000;}
+a.function:hover {text-decoration:underline; }
+.php b.construct { color:#000; }
+code.string { color:#060; }
+code.integer { color:#FF0000; font-weight:bold; }
+code.php-tag { color:#FF0000; }
+code.numeric { color:#FF0000; font-weight:bold; }
+code.constant { color:#000000; }
+tt.op { background:none repeat scroll 0 0 #EEEEEE; color:#000000; }
+code.defined { color:red; }
+code.whitespace { white-space:pre; }
+code.curly { background:none repeat scroll 0 0 #FFAAAA;}
+code.parenthese { background:none repeat scroll 0 0 #AAFFAA; }
+code.square { background:none repeat scroll 0 0 #AAAAFF; }
+code.error-control { background:none repeat scroll 0 0 #FF0000; font-weight:bold; }
+
+@media print {
+  #nav {display:none;}
+  #article {margin:0px !important; padding:0px; }
+  table.grammar  td, table.grammar  th { border:1px dotted #808080; }
+}
+/* keep file XML valid, maybe included by xsl:document() */
+</style>
+  </head>
+  <body class="xrem rng">
+    <nav id="nav">
+      <p> </p>
+      <a style="font-weight:bold; color:#000000;" href="#id719280">Schéma des notices weboai</a>
+      <section class="index"><header>Elements (24)</header><div><b>D</b>. &lt;<a href="#el_dc:contributor" title="Auteur secondaire. Même règles d’écriture que &lt;dc:creator&gt;">dc:contributor</a>&gt; &lt;<a href="#el_dc:coverage" title="Lieu dont parle le document (surtout ne pas indiquer un lieu de publication, qui fait partie de la référence bibliographique dans &lt;source&gt;)">dc:coverage<small class="att"> xsi:type="dcterms:spatial"</small></a>&gt; &lt;<a href="#el_dc:creator" title="Si connu, obligatoire, et répétable. Auteur. Une personne (physique ou morale). Nom, Prénom (date-date)">dc:creator</a>&gt; &lt;<a href="#el_dc:date" title="Unique et obligatoire, au moins une année exacte. Date de création du document. ISO 8601 [W3CDTF] : AAAA-MM-JJ. Période : 1940/1945, 1830-07-27/1830-07-29.&#10;Ne pas utiliser de crochets carrés, ni de préfixe « ca. ». Les incertitudes sur la datation sont à mettre en note en &lt;dc:description&gt;">dc:date<small class="att"> xsi:type="dcterms:W3CDTF"</small></a>&gt; &lt;<a href="#el_dc:description" title="Obligatoire, répétable selon la langue. Résumé">dc:description</a>&gt; &lt;<a href="#el_dc:format" title="Format de fichier, ex: application/tei+xml (généré automatiquement depuis une extension de fichier ?)">dc:format</a>&gt; &lt;<a href="#el_dc:identifier" title="Obligatoire. URI de référence du document en texte intégral">dc:identifier<small class="att"> xsi:type="dcterms:URI"</small></a>&gt; &lt;<a href="#el_dc:language" title="Unique et obligatoire. Langue principale du document, code de 3 lettres (ISO 639-b2) ex : fre, eng.">dc:language<small class="att"> xsi:type="dcterms:ISO639-2"</small></a>&gt; &lt;<a href="#el_dc:publisher" title="Éditeur (ville) (?? éditeur numérique ?)">dc:publisher</a>&gt; &lt;<a href="#el_dc:relation">dc:relation</a>&gt; &lt;<a href="#el_dc:rights" title="Obligatoire, unique. Droits. URI de référence vers une licence">dc:rights</a>&gt; &lt;<a href="#el_dc:source" title="Unique et obligatoire. Citation bibliographique complète pour le document">dc:source</a>&gt; &lt;<a href="#el_dc:subject" title="Optionnel et répétable. Un terme d’indexation sujet par élément">dc:subject</a>&gt; &lt;<a href="#el_dc:title" title="Obligatoire, répétable par langue. Titre. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur [ISBD].">dc:title</a>&gt; &lt;<a href="#el_dc:type" title="Type de document (en faire une facette ? quel vocabulaire ?)">dc:type</a>&gt; &lt;<a href="#el_dcterms:isPartOf" title="Si connu, obligatoire. Lien vers une collection">dcterms:isPartOf<small class="att"> xsi:type="dcterms:URI"</small></a>&gt;  </div> <div><b>E</b>. &lt;<a href="#el_europeana:dataProvider" title="Code du fournisseur de flux OAI, généré automatiquement par Weboai">europeana:dataProvider</a>&gt; &lt;<a href="#el_europeana:isShownAt" title="URI exacte du document &lt;identifier&gt;">europeana:isShownAt</a>&gt; &lt;<a href="#el_europeana:isShownBy" title="URI de la collection &lt;isPartOf&gt;">europeana:isShownBy</a>&gt; &lt;<a href="#el_europeana:provider" title="[Europeana 3.3.7] ??">europeana:provider</a>&gt; &lt;<a href="#el_europeana:rights" title="URI vers une licence, co">europeana:rights</a>&gt; &lt;<a href="#el_europeana:type">europeana:type</a>&gt; &lt;<a href="#el_europeana:year" title="Année, généré automatiquement avec &lt;date&gt;">europeana:year</a>&gt;  </div> <div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </section>
+      <section class="index"><header>Attributes</header><div><b>X</b>. @<a href="#att_xml-lang">xml:lang</a>  </div> </section>
+      <section class="index"><header>Macros</header><div><b>L</b>. <a href="#def_langs">langs</a>()  </div> </section>
+      <p> </p>
+    </nav>
+    <article id="article" class="grammar">
+      <h1 id="id719431">Schéma des notices weboai</h1>
+      <section class="element rng" id="el_oai_dc:dc">
+        <header class="element rng">&lt;<a>oai_dc:dc</a>&gt; </header>
+        <table class="grammar">
+          <tr>
+            <th>Children</th>
+            <td class="children"><div><b>D</b>. &lt;<a href="#el_dc:contributor" title="Auteur secondaire. Même règles d’écriture que &lt;dc:creator&gt;">dc:contributor</a>&gt; &lt;<a href="#el_dc:coverage" title="Lieu dont parle le document (surtout ne pas indiquer un lieu de publication, qui fait partie de la référence bibliographique dans &lt;source&gt;)">dc:coverage<small class="att"> xsi:type="dcterms:spatial"</small></a>&gt; &lt;<a href="#el_dc:creator" title="Si connu, obligatoire, et répétable. Auteur. Une personne (physique ou morale). Nom, Prénom (date-date)">dc:creator</a>&gt; &lt;<a href="#el_dc:date" title="Unique et obligatoire, au moins une année exacte. Date de création du document. ISO 8601 [W3CDTF] : AAAA-MM-JJ. Période : 1940/1945, 1830-07-27/1830-07-29.&#10;Ne pas utiliser de crochets carrés, ni de préfixe « ca. ». Les incertitudes sur la datation sont à mettre en note en &lt;dc:description&gt;">dc:date<small class="att"> xsi:type="dcterms:W3CDTF"</small></a>&gt; &lt;<a href="#el_dc:description" title="Obligatoire, répétable selon la langue. Résumé">dc:description</a>&gt; &lt;<a href="#el_dc:format" title="Format de fichier, ex: application/tei+xml (généré automatiquement depuis une extension de fichier ?)">dc:format</a>&gt; &lt;<a href="#el_dc:identifier" title="Obligatoire. URI de référence du document en texte intégral">dc:identifier<small class="att"> xsi:type="dcterms:URI"</small></a>&gt; &lt;<a href="#el_dc:language" title="Unique et obligatoire. Langue principale du document, code de 3 lettres (ISO 639-b2) ex : fre, eng.">dc:language<small class="att"> xsi:type="dcterms:ISO639-2"</small></a>&gt; &lt;<a href="#el_dc:publisher" title="Éditeur (ville) (?? éditeur numérique ?)">dc:publisher</a>&gt; &lt;<a href="#el_dc:rights" title="Obligatoire, unique. Droits. URI de référence vers une licence">dc:rights</a>&gt; &lt;<a href="#el_dc:source" title="Unique et obligatoire. Citation bibliographique complète pour le document">dc:source</a>&gt; &lt;<a href="#el_dc:subject" title="Optionnel et répétable. Un terme d’indexation sujet par élément">dc:subject</a>&gt; &lt;<a href="#el_dc:title" title="Obligatoire, répétable par langue. Titre. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur [ISBD].">dc:title</a>&gt; &lt;<a href="#el_dc:type" title="Type de document (en faire une facette ? quel vocabulaire ?)">dc:type</a>&gt; &lt;<a href="#el_dcterms:isPartOf" title="Si connu, obligatoire. Lien vers une collection">dcterms:isPartOf<small class="att"> xsi:type="dcterms:URI"</small></a>&gt;  </div> <div><b>E</b>. &lt;<a href="#el_europeana:dataProvider" title="Code du fournisseur de flux OAI, généré automatiquement par Weboai">europeana:dataProvider</a>&gt;  </div> </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact interleave">( <a href="#el_dc:identifier" title="Obligatoire. URI de référence du document en texte intégral">dc:identifier<small class="att"> xsi:type="dcterms:URI"</small></a> +  - <a href="#el_dc:publisher" title="Éditeur (ville) (?? éditeur numérique ?)">dc:publisher</a> +  - <a href="#el_dcterms:isPartOf" title="Si connu, obligatoire. Lien vers une collection">dcterms:isPartOf<small class="att"> xsi:type="dcterms:URI"</small></a> ?  - <a href="#el_dc:language" title="Unique et obligatoire. Langue principale du document, code de 3 lettres (ISO 639-b2) ex : fre, eng.">dc:language<small class="att"> xsi:type="dcterms:ISO639-2"</small></a> - <a href="#el_dc:source" title="Unique et obligatoire. Citation bibliographique complète pour le document">dc:source</a> - <a href="#el_dc:title" title="Obligatoire, répétable par langue. Titre. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur [ISBD].">dc:title</a> +  - <a href="#el_dc:description" title="Obligatoire, répétable selon la langue. Résumé">dc:description</a> +  - <a href="#el_dc:creator" title="Si connu, obligatoire, et répétable. Auteur. Une personne (physique ou morale). Nom, Prénom (date-date)">dc:creator</a> *  - <a href="#el_dc:contributor" title="Auteur secondaire. Même règles d’écriture que &lt;dc:creator&gt;">dc:contributor</a> *  - <a href="#el_dc:date" title="Unique et obligatoire, au moins une année exacte. Date de création du document. ISO 8601 [W3CDTF] : AAAA-MM-JJ. Période : 1940/1945, 1830-07-27/1830-07-29.&#10;Ne pas utiliser de crochets carrés, ni de préfixe « ca. ». Les incertitudes sur la datation sont à mettre en note en &lt;dc:description&gt;">dc:date<small class="att"> xsi:type="dcterms:W3CDTF"</small></a> - <a href="#el_dc:coverage" title="Lieu dont parle le document (surtout ne pas indiquer un lieu de publication, qui fait partie de la référence bibliographique dans &lt;source&gt;)">dc:coverage<small class="att"> xsi:type="dcterms:spatial"</small></a> *  - <a href="#el_dc:subject" title="Optionnel et répétable. Un terme d’indexation sujet par élément">dc:subject</a> *  - <a href="#el_dc:type" title="Type de document (en faire une facette ? quel vocabulaire ?)">dc:type</a> +  - <a href="#el_dc:format" title="Format de fichier, ex: application/tei+xml (généré automatiquement depuis une extension de fichier ?)">dc:format</a> +  - <a href="#el_dc:rights" title="Obligatoire, unique. Droits. URI de référence vers une licence">dc:rights</a> - <a href="#el_europeana:dataProvider" title="Code du fournisseur de flux OAI, généré automatiquement par Weboai">europeana:dataProvider</a> ?  )</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">start. </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:identifier">
+        <header class="element rng">&lt;<a>dc:identifier<small class="att"> xsi:type="dcterms:URI"</small></a>&gt; <div>Obligatoire. URI de référence du document en texte intégral</div><div>[Isidore] reconnaissance des systèmes DOI, HANDLE, ARK</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a class="required" href="#att_xsi-type">xsi:type="dcterms:URI"</a></td>
+                  <td/>
+                  <td>
+                    <span class="value">dcterms:URI</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <em class="data">{anyURI}</em>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dcterms:isPartOf">
+        <header class="element rng">&lt;<a>dcterms:isPartOf<small class="att"> xsi:type="dcterms:URI"</small></a>&gt; Si connu, obligatoire. Lien vers une collection</header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a class="required" href="#att_xsi-type">xsi:type="dcterms:URI"</a></td>
+                  <td/>
+                  <td>
+                    <span class="value">dcterms:URI</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <em class="data">{anyURI}</em>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:language">
+        <header class="element rng">&lt;<a>dc:language<small class="att"> xsi:type="dcterms:ISO639-2"</small></a>&gt; <div>Unique et obligatoire. Langue principale du document, code de 3 lettres (ISO 639-b2) ex : fre, eng.</div><div>[Europeana] obligatoire.</div><div>[weboai] facette champ:langue</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a class="required" href="#att_xsi-type">xsi:type="dcterms:ISO639-2"</a></td>
+                  <td/>
+                  <td>
+                    <span class="value">dcterms:ISO639-2</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span><li class="value"><em class="data">{language}</em> — length: <tt>3</tt></li> )</span>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:source">
+        <header class="element rng">&lt;<a>dc:source</a>&gt; <div>Unique et obligatoire. Citation bibliographique complète pour le document</div><div>[Isidore] aligné avec un référentiel des titres de revues</div><div>[weboai] (hors recherche, redondant) résultat</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:publisher">
+        <header class="element rng">&lt;<a>dc:publisher</a>&gt; Éditeur (ville) (?? éditeur numérique ?)</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:title">
+        <header class="element rng">&lt;<a>dc:title</a>&gt; <div>Obligatoire, répétable par langue. Titre. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur [ISBD].</div><div>[Europeana] Obligatoire ou &lt;description&gt;. Titre composite conseillé.</div><div>[Gallica] Obligatoire. Titre composite conseillé.</div><div>[weboai] plein-texte champ:titre</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <tr>
+                  <td class="name">@<a href="#att_xml-lang">xml:lang</a></td>
+                  <td>?</td>
+                  <td>
+                    <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span> | <em class="data" title="3">{language}</em> )</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <i>{text}</i>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:description">
+        <header class="element rng">&lt;<a>dc:description</a>&gt; <div>Obligatoire, répétable selon la langue. Résumé</div><div>[Europeana] Obligatoire si pas de title</div><div>[weboai] plein-texte résultat:description</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <tr>
+                  <td class="name">@<a href="#att_xml-lang">xml:lang</a></td>
+                  <td>?</td>
+                  <td>
+                    <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span> | <em class="data" title="3">{language}</em> )</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a href="#att_xsi-type">xsi:type</a></td>
+                  <td>?</td>
+                  <td>
+                    <span class="value">dcterms:tableOfContents</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <i>{text}</i>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:creator">
+        <header class="element rng">&lt;<a>dc:creator</a>&gt; <div>Si connu, obligatoire, et répétable. Auteur. Une personne (physique ou morale). Nom, Prénom (date-date)</div><div>[Gallica] NF Z 44-061</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:contributor">
+        <header class="element rng">&lt;<a>dc:contributor</a>&gt; <div>Auteur secondaire. Même règles d’écriture que &lt;dc:creator&gt;</div><div>[weboai] plein-texte facette champ:auteur resultat:auteur</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:date">
+        <header class="element rng">&lt;<a>dc:date<small class="att"> xsi:type="dcterms:W3CDTF"</small></a>&gt; <div>Unique et obligatoire, au moins une année exacte. Date de création du document. ISO 8601 [W3CDTF] : AAAA-MM-JJ. Période : 1940/1945, 1830-07-27/1830-07-29.
+Ne pas utiliser de crochets carrés, ni de préfixe « ca. ». Les incertitudes sur la datation sont à mettre en note en &lt;dc:description&gt;</div><div>[Isidore] Aligné avec un référentiel de périodes</div><div>[weboai] plein-texte chronologie champ:date résultat:dates</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a class="required" href="#att_xsi-type">xsi:type="dcterms:W3CDTF"</a></td>
+                  <td/>
+                  <td>
+                    <span class="value">dcterms:W3CDTF</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <i>{text}</i>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:coverage">
+        <header class="element rng">&lt;<a>dc:coverage<small class="att"> xsi:type="dcterms:spatial"</small></a>&gt; <div>Lieu dont parle le document (surtout ne pas indiquer un lieu de publication, qui fait partie de la référence bibliographique dans &lt;source&gt;)</div><div>[Isidore] Aligné avec un référentiel géographique</div><div>[Gallica] </div><div>[Europeana] Conformément à la sémantique Dublin Core, espace et/ou temps. &lt;dcterms:spatial&gt; et &lt;dcterms:temporal&gt; sont conseillés.</div><div>[weboai] plein-texte facette champ (lieu)</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <tr>
+                  <td class="name">@<a href="#att_xml-lang">xml:lang</a></td>
+                  <td>?</td>
+                  <td>
+                    <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span> | <em class="data" title="3">{language}</em> )</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a class="required" href="#att_xsi-type">xsi:type="dcterms:spatial"</a></td>
+                  <td/>
+                  <td>
+                    <span class="value">dcterms:spatial</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <i>{text}</i>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:subject">
+        <header class="element rng">&lt;<a>dc:subject</a>&gt; <div>Optionnel et répétable. Un terme d’indexation sujet par élément</div><div>[weboai] plein-texte facette champ(sujet)</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <tr>
+                  <td class="name">@<a href="#att_xml-lang">xml:lang</a></td>
+                  <td>?</td>
+                  <td>
+                    <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span> | <em class="data" title="3">{language}</em> )</span>
+                  </td>
+                </tr>
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element">
+                <i>{text}</i>
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:format">
+        <header class="element rng">&lt;<a>dc:format</a>&gt; <div>Format de fichier, ex: application/tei+xml (généré automatiquement depuis une extension de fichier ?)</div><div>[Gallica] requis</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact choice">( <span class="value">application/tei+xml</span> | <span class="value">text/html</span><i>{text}</i> )</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:type">
+        <header class="element rng">&lt;<a>dc:type</a>&gt; Type de document (en faire une facette ? quel vocabulaire ?)</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact choice">( <li class="value"><b class="value">Collection</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Collection</span></li><li class="value"><b class="value">Text</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Text</span></li><li class="value"><b class="value">monographie imprimée</b> — <span class="documentation">[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</span></li><li class="value"><b class="value">publication en série imprimée</b> — <span class="documentation">[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</span></li><li class="value"><b class="value">document cartographique</b> — <span class="documentation">[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</span></li><li class="value"><b class="value">musique imprimée</b> — <span class="documentation">[Gallica] http://www.bnf.fr/documents/Guide_oaipmh.pdf</span></li><i>{text}</i><li class="value"><b class="value">Image</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Image</span></li><li class="value"><b class="value">Sound</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Sound</span></li><li class="value"><b class="value">Dataset</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Dataset</span></li><li class="value"><b class="value">Service</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Service</span></li><li class="value"><b class="value">Software</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Software</span></li><li class="value"><b class="value">Event</b> — <span class="documentation">[DCMITYPE] http://dublincore.org/documents/dcmi-terms/#dcmitype-Event</span></li> )</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:relation">
+        <header class="element rng">&lt;<a>dc:relation</a>&gt; <div/><div>http://purl.org/dc/terms/conformsTo</div><div>[weboai] search result</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Attributes</th>
+            <td>
+              <table class="attributes">
+                
+                <!--xml:lang-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <!--xsi:type-->
+                <tr>
+                  <td class="name">@<a href="#att_xsi-type">xsi:type</a></td>
+                  <td>?</td>
+                  <td>
+                    <span class="compact choice">( <span class="value">dcterms:hasFormat</span> | <span class="value">dcterms:hasPart</span> | <span class="value">dcterms:hasVersion</span> | <span class="value">dcterms:isFormatOf</span> | <span class="value">dcterms:isPartOf</span> | <span class="value">dcterms:isReferencedBy</span> | <span class="value">dcterms:isReplacedBy</span> | <span class="value">dcterms:isRequiredBy</span> | <span class="value">dcterms:isVersionOf</span> | <span class="value">dcterms:references</span> | <span class="value">dcterms:replaces</span> | <span class="value">dcterms:requires</span> )</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact element"> <em class="data">{anyURI}</em></span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_dc:rights">
+        <header class="element rng">&lt;<a>dc:rights</a>&gt; <div>Obligatoire, unique. Droits. URI de référence vers une licence</div><div>[europeana] &lt;europeana:right&gt; unique et obligatoire, URI</div></header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <em class="data">{anyURI}</em>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:dataProvider">
+        <header class="element rng">&lt;<a>europeana:dataProvider</a>&gt; Code du fournisseur de flux OAI, généré automatiquement par Weboai</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>O</b>. &lt;<a href="#el_oai_dc:dc">oai_dc:dc</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:provider">
+        <header class="element rng">&lt;<a>europeana:provider</a>&gt; [Europeana 3.3.7] ??</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:isShownAt">
+        <header class="element rng">&lt;<a>europeana:isShownAt</a>&gt; URI exacte du document &lt;identifier&gt;</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:isShownBy">
+        <header class="element rng">&lt;<a>europeana:isShownBy</a>&gt; URI de la collection &lt;isPartOf&gt;</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <i>{text}</i>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:rights">
+        <header class="element rng">&lt;<a>europeana:rights</a>&gt; URI vers une licence, co</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <em class="data">{anyURI}</em>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:type">
+        <header class="element rng">&lt;<a>europeana:type</a>&gt; </header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <span class="compact choice">( <span class="value">TEXT</span> | <span class="value">IMAGE</span> | <span class="value">SOUND</span> | <span class="value">VIDEO</span> | <span class="value">3D</span> )</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="element rng" id="el_europeana:year">
+        <header class="element rng">&lt;<a>europeana:year</a>&gt; Année, généré automatiquement avec &lt;date&gt;</header>
+        <table class="grammar">
+          <tr>
+            <th>Model</th>
+            <td class="model">
+              <em class="data">{gYear}</em>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage">Unused</td>
+          </tr>
+        </table>
+      </section>
+      <section class="attribute rng" id="att_xml-lang">
+        <header class="attribute rng">@<b>xml:lang</b> </header>
+        <table class="grammar">
+          <tr>
+            <th>Value</th>
+            <td>
+              <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span><li class="value"><em class="data">{language}</em> — length: <tt>3</tt></li> )</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td class="usage"><div><b>D</b>. &lt;<a href="#el_dc:coverage" title="Lieu dont parle le document (surtout ne pas indiquer un lieu de publication, qui fait partie de la référence bibliographique dans &lt;source&gt;)">dc:coverage<small class="att"> xsi:type="dcterms:spatial"</small></a>&gt; &lt;<a href="#el_dc:description" title="Obligatoire, répétable selon la langue. Résumé">dc:description</a>&gt; &lt;<a href="#el_dc:subject" title="Optionnel et répétable. Un terme d’indexation sujet par élément">dc:subject</a>&gt; &lt;<a href="#el_dc:title" title="Obligatoire, répétable par langue. Titre. Pour des items analytiques, titre composite du général au particulier, avec le point pour séparateur [ISBD].">dc:title</a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+      <section class="define rng" id="def_langs">
+        <header class="define rng">
+          <b>langs() </b>
+        </header>
+        <table class="grammar">
+          <tr>
+            <th>Content</th>
+            <td>
+              <span class="compact choice">( <span class="value">fre</span> | <span class="value">eng</span><li class="value"><em class="data">{language}</em> — length: <tt>3</tt></li> )</span>
+            </td>
+          </tr>
+          <tr>
+            <th>Usage</th>
+            <td><div><b>X</b>. @<a href="#att_xml-lang">xml:lang</a>  </div> <div><b>D</b>. &lt;<a href="#el_dc:language" title="Unique et obligatoire. Langue principale du document, code de 3 lettres (ISO 639-b2) ex : fre, eng.">dc:language<small class="att"> xsi:type="dcterms:ISO639-2"</small></a>&gt;  </div> </td>
+          </tr>
+        </table>
+      </section>
+    </article>
+  </body>
+</html>

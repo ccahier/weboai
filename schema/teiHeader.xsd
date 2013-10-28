@@ -1,0 +1,963 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TODO
+  dc:relation (dcTerms:isPartOf, dc:conformsTo...)
+  dc:coverage, dc:type, dc:subject (revoir)
+  dc:format (non inscrit dans le teiHeader, basé sur extension du fichier ?)
+  europeana:dataProvider, etc.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.tei-c.org/ns/1.0" xmlns:ns1="http://www.tei-c.org/ns/1.0">
+  <xs:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
+  <!-- MAPPING -->
+  <xs:element name="teiHeader">
+    <xs:annotation>
+      <xs:documentation>En-tête de fichier TEI</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ns1:fileDesc"/>
+        <xs:element ref="ns1:profileDesc"/>
+        <xs:element minOccurs="0" ref="ns1:encodingDesc"/>
+        <xs:element minOccurs="0" ref="ns1:revisionDesc"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="fileDesc">
+    <xs:annotation>
+      <xs:documentation>Description bibliographique complète du fichier</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="titleStmt" type="ns1:titleStmt.cont">
+          <xs:annotation>
+            <xs:documentation>Titre et mentions de responsabilité de l’œuvre</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element minOccurs="0" ref="ns1:editionStmt"/>
+        <xs:group minOccurs="0" ref="ns1:extent"/>
+        <xs:group ref="ns1:publicationStmt"/>
+        <xs:element minOccurs="0" ref="ns1:seriesStmt"/>
+        <xs:element minOccurs="0" ref="ns1:notesStmt"/>
+        <xs:element maxOccurs="unbounded" ref="ns1:sourceDesc"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="titleStmt.cont">
+    <xs:sequence>
+      <xs:group ref="ns1:title.group"/>
+      <xs:element minOccurs="0" maxOccurs="unbounded" ref="ns1:principal"/>
+      <xs:group minOccurs="0" maxOccurs="unbounded" ref="ns1:author.norm"/>
+      <xs:element minOccurs="0" maxOccurs="unbounded" ref="ns1:editor"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:group name="title.group">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" name="title">
+        <xs:annotation>
+          <xs:documentation>Titres. Le premier titre est considéré comme le titre principal. Les suivants sont considérés commes des compléments du titre. En cas de traduction, le titre original est à indiquer avec un attribut @xml:lang qui en indique la langue.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+          <xs:group ref="ns1:teiHeader.flow"/>
+          <xs:attribute name="type">
+            <xs:annotation>
+              <xs:documentation>Type du complément du titre</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:union memberTypes="xs:token">
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="main">
+                      <xs:annotation>
+                        <xs:documentation>titre principal</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="sub">
+                      <xs:annotation>
+                        <xs:documentation>sous-titre</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="alt">
+                      <xs:annotation>
+                        <xs:documentation>titre alternatif</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="short">
+                      <xs:annotation>
+                        <xs:documentation>forme abrégée</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="desc">
+                      <xs:annotation>
+                        <xs:documentation>paraphrase descriptive de l’œuvre</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:union>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute ref="xml:lang"/>
+          <xs:attribute name="ref" type="xs:anyURI">
+            <xs:annotation>
+              <xs:documentation>Identification du texte (et non de l’édition imprimée source, voir sourceDesc) vers un référentiel (ex: URI Wikipédia par ex.)</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:attributeGroup name="title.type">
+    <xs:attribute name="type" use="required">
+      <xs:annotation>
+        <xs:documentation>Type du complément du titre</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:union memberTypes="xs:token">
+          <xs:simpleType>
+            <xs:restriction base="xs:token">
+              <xs:enumeration value="main">
+                <xs:annotation>
+                  <xs:documentation>titre principal</xs:documentation>
+                </xs:annotation>
+              </xs:enumeration>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:simpleType>
+            <xs:restriction base="xs:token">
+              <xs:enumeration value="sub">
+                <xs:annotation>
+                  <xs:documentation>sous-titre</xs:documentation>
+                </xs:annotation>
+              </xs:enumeration>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:simpleType>
+            <xs:restriction base="xs:token">
+              <xs:enumeration value="alt">
+                <xs:annotation>
+                  <xs:documentation>titre alternatif</xs:documentation>
+                </xs:annotation>
+              </xs:enumeration>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:simpleType>
+            <xs:restriction base="xs:token">
+              <xs:enumeration value="short">
+                <xs:annotation>
+                  <xs:documentation>forme abrégée</xs:documentation>
+                </xs:annotation>
+              </xs:enumeration>
+            </xs:restriction>
+          </xs:simpleType>
+          <xs:simpleType>
+            <xs:restriction base="xs:token">
+              <xs:enumeration value="desc">
+                <xs:annotation>
+                  <xs:documentation>paraphrase descriptive de l’œuvre</xs:documentation>
+                </xs:annotation>
+              </xs:enumeration>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:union>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:attributeGroup>
+  <xs:element name="principal">
+    <xs:annotation>
+      <xs:documentation>Éditeur scientifique</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="ns1:author.cont">
+          <xs:attributeGroup ref="ns1:key-att"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="author.norm">
+    <xs:sequence>
+      <xs:element name="author">
+        <xs:annotation>
+          <xs:documentation>Auteur(s) du texte, forme normalisée. Les auteurs secondaires </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:complexContent>
+            <xs:extension base="ns1:author.cont">
+              <xs:attribute name="role"/>
+              <xs:attributeGroup ref="ns1:key-att"/>
+            </xs:extension>
+          </xs:complexContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:complexType name="author.cont" mixed="true">
+    <xs:annotation>
+      <xs:documentation>Contenu commun aux auteurs principaux et secondaires</xs:documentation>
+    </xs:annotation>
+    <xs:group ref="ns1:teiHeader.flow"/>
+    <xs:attribute name="ref" type="xs:anyURI">
+      <xs:annotation>
+        <xs:documentation>Identification vers un référentiel (URI idRef par ex)</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:attributeGroup name="key-att">
+    <xs:attribute name="key" use="required">
+      <xs:annotation>
+        <xs:documentation>Forme normalisée (NF Z 44-061) pour le tri et les traitements : Nom, Prénom (naissance-mort)</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+  <xs:group name="publicationStmt">
+    <xs:sequence>
+      <xs:element name="publicationStmt">
+        <xs:annotation>
+          <xs:documentation>Informations relatives à la publication et à la diffusion du fichier XML/TEI</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="date">
+              <xs:annotation>
+                <xs:documentation>Date de publication du fichier TEI, forme normalisée : AAAA((-MM)?-JJ)?</xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="when" use="required" type="ns1:date.type"/>
+              </xs:complexType>
+            </xs:element>
+            <xs:element name="idno" type="xs:anyURI">
+              <xs:annotation>
+                <xs:documentation>URI de référence du fichier, obligatoire</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element ref="ns1:availability"/>
+            <xs:element name="publisher" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>L’éditeur. Répétable en cas de coédition.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:choice>
+              <xs:element ref="ns1:address"/>
+              <xs:element ref="ns1:distributor"/>
+            </xs:choice>
+          </xs:choice>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="address">
+    <xs:annotation>
+      <xs:documentation>Adresse postale de l'éditeur du texte</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:addrLine"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="addrLine" type="xs:string"/>
+  <xs:element name="distributor" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>À renseigner si différent du "publisher"</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="availability">
+    <xs:annotation>
+      <xs:documentation>Texte de la licence</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ns1:licence"/>
+      </xs:sequence>
+      <xs:attribute name="status" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="restricted"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="licence">
+    <xs:annotation>
+      <xs:documentation>URI de référence vers la licence</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:choice>
+        <xs:element maxOccurs="unbounded" ref="ns1:p"/>
+        <xs:group ref="ns1:teiHeader.flow"/>
+      </xs:choice>
+      <xs:attribute name="target" use="required" type="xs:anyURI"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="profileDesc">
+    <xs:annotation>
+      <xs:documentation>Description non-bibliographique du texte (langue, circonstances de production)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="ns1:creation"/>
+          <xs:element ref="ns1:langUsage"/>
+        </xs:choice>
+        <xs:element minOccurs="0" ref="ns1:textClass"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="creation">
+    <xs:complexType>
+      <xs:group maxOccurs="unbounded" ref="ns1:creation.date"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="langUsage">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:language"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="language">
+    <xs:annotation>
+      <xs:documentation>Langue principale du texte. Renseigner l’attribut @ident avec un code ISO 639-2 (avec extensions simili ISO si nécessaire), et donner un intitulé textuel de la langue dans le contenu de l'élément</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:group ref="ns1:teiHeader.flow"/>
+      <xs:attribute name="ident" use="required"/>
+      <xs:attribute name="usage">
+        <xs:annotation>
+          <xs:documentation>Proportion approximative de la langue dans le texte.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="creation.date">
+    <xs:sequence>
+      <xs:element name="date">
+        <xs:annotation>
+          <xs:documentation>Date formatée pour les traitements automatisés</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+          <xs:attribute name="type">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="accepted"/>
+                <xs:enumeration value="available"/>
+                <xs:enumeration value="copyrighted"/>
+                <xs:enumeration value="created"/>
+                <xs:enumeration value="issued"/>
+                <xs:enumeration value="modified"/>
+                <xs:enumeration value="submitted"/>
+                <xs:enumeration value="translated"/>
+                <xs:enumeration value="valid"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="when" type="ns1:date.type"/>
+          <xs:attribute name="notBefore" type="ns1:date.type"/>
+          <xs:attribute name="notAfter" type="ns1:date.type"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <!-- END CORE -->
+  <xs:element name="editor">
+    <xs:annotation>
+      <xs:documentation>Auteurs(s) secondaires, forme normalisée (traducteur, éditeur d’une source…)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="ns1:author.cont">
+          <xs:attribute name="role"/>
+          <xs:attribute name="key">
+            <xs:annotation>
+              <xs:documentation>Forme normalisée (NF Z 44-061) pour le tri et les traitements : Nom, Prénom (naissance-mort)</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="publicationStmt.optional">
+    <xs:sequence>
+      <xs:element minOccurs="0" ref="ns1:address"/>
+      <xs:element minOccurs="0" ref="ns1:distributor"/>
+    </xs:sequence>
+  </xs:group>
+  <!--
+    NB : comme pour publicationStmt, factorisation fileDesc-sourceDesc pénible
+    cf URL / ISSN, mapping dc:isPartOf, impossibilité de typer finerment idno
+  -->
+  <xs:element name="seriesStmt">
+    <xs:annotation>
+      <xs:documentation>Informations sur la collection électronique ou imprimée</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="ns1:series.title"/>
+        <xs:group minOccurs="0" ref="ns1:series.idno"/>
+        <xs:element minOccurs="0" ref="ns1:biblScope"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="series.title">
+    <xs:sequence>
+      <xs:element name="title">
+        <xs:annotation>
+          <xs:documentation>Titre de la collection</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+          <xs:group ref="ns1:teiHeader.flow"/>
+          <xs:attribute name="ref">
+            <xs:annotation>
+              <xs:documentation>Identifiant Sudoc PPN de la notice de collection imprimée</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name="series.idno">
+    <xs:sequence>
+      <xs:element name="idno">
+        <xs:annotation>
+          <xs:documentation>Identifiant de la collection</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+          <xs:attribute name="type" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="URI">
+                  <xs:annotation>
+                    <xs:documentation>pour la collection électronique (fileDesc)</xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="ISSN">
+                  <xs:annotation>
+                    <xs:documentation>pour la collection imprimée (sourceDesc)</xs:documentation>
+                  </xs:annotation>
+                </xs:enumeration>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="biblScope">
+    <xs:annotation>
+      <xs:documentation>Numéro de volume</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:integer">
+          <xs:attribute name="type" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="vol"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="notesStmt">
+    <xs:annotation>
+      <xs:documentation>Informations complémentaires sur le texte électronique. Une note de type “abstract” permettent d’inscrire : résumé, liens à des images, liens à d'autres notices de référence pour le même texte</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:note"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="note">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:p"/>
+        <xs:element minOccurs="0" ref="ns1:graphic"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="ref">
+          <xs:complexType mixed="true">
+            <xs:attribute name="type" use="required">
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="ppn">
+                    <xs:annotation>
+                      <xs:documentation>id Sudoc</xs:documentation>
+                    </xs:annotation>
+                  </xs:enumeration>
+                  <xs:enumeration value="worldcat">
+                    <xs:annotation>
+                      <xs:documentation>id Worldcat</xs:documentation>
+                    </xs:annotation>
+                  </xs:enumeration>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="n"/>
+            <xs:attribute name="target" use="required" type="xs:anyURI"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="type" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="abstract"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attributeGroup ref="ns1:lang-att"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="graphic">
+    <xs:complexType>
+      <xs:attribute name="rend" use="required"/>
+      <xs:attribute name="url" use="required" type="xs:anyURI"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="editionStmt">
+    <xs:annotation>
+      <xs:documentation>Mentions de responsabilité pour le fichier XML/TEI</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="edition">
+          <xs:annotation>
+            <xs:documentation>"Décrit les particularités de l’édition d’un texte." (Guidelines) ???</xs:documentation>
+          </xs:annotation>
+          <xs:complexType mixed="true">
+            <xs:group ref="ns1:teiHeader.flow"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="principal" type="ns1:resp.cont">
+          <xs:annotation>
+            <xs:documentation>Responsable de l'édition électronique</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="ns1:funder"/>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="ns1:respStmt"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="funder">
+    <xs:annotation>
+      <xs:documentation>Financeur du projet</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:group ref="ns1:teiHeader.flow"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="respStmt">
+    <xs:annotation>
+      <xs:documentation>Mention de responsabilité</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="name" type="ns1:resp.cont">
+          <xs:annotation>
+            <xs:documentation>Nom de l’intervenant sur le fichier XML/TEI</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element ref="ns1:resp"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="resp">
+    <xs:annotation>
+      <xs:documentation>Date et rôle dans l’établissement du texte</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:group ref="ns1:teiHeader.flow"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="resp.cont" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element ref="ns1:affiliation"/>
+      <xs:element ref="ns1:email"/>
+    </xs:choice>
+    <xs:attribute ref="xml:id"/>
+    <xs:attribute name="ref"/>
+  </xs:complexType>
+  <xs:element name="affiliation">
+    <xs:annotation>
+      <xs:documentation>Affilation de l’intervenant</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:attribute name="ref" type="xs:anyURI"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="email" type="xs:string"/>
+  <xs:element name="revisionDesc">
+    <xs:annotation>
+      <xs:documentation>Historique des révisions du fichier</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:change"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="change">
+    <xs:annotation>
+      <xs:documentation>Date et nature de la modification</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:group ref="ns1:teiHeader.flow"/>
+      <xs:attribute name="who" use="required">
+        <xs:annotation>
+          <xs:documentation>Identifiant du responsable de la modification</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="when" use="required" type="ns1:date.type">
+        <xs:annotation>
+          <xs:documentation>Date de la modification, forme normalisée : AAAA((-MM)?-JJ)?</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="extent">
+    <xs:sequence>
+      <xs:element name="extent">
+        <xs:annotation>
+          <xs:documentation>Description quantitative du fichier</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="ns1:measure"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="measure">
+    <xs:complexType>
+      <xs:attribute name="unit" use="required">
+        <xs:annotation>
+          <xs:documentation>Unité de mesure</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="page"/>
+            <xs:enumeration value="paragraph"/>
+            <xs:enumeration value="word"/>
+            <xs:enumeration value="character"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="quantity" use="required" type="xs:integer"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="textClass">
+    <xs:annotation>
+      <xs:documentation>Description du texte par mots-clés</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:keywords"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="keywords">
+    <xs:annotation>
+      <xs:documentation>Groupe de mots-clés sujet issus d’un même thésaurus (taxonomie)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:term"/>
+      </xs:sequence>
+      <xs:attribute name="scheme" use="required">
+        <xs:annotation>
+          <xs:documentation>Désigne le thésaurus des mots-clés utilisés (définition locale ou URI)</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="term">
+    <xs:annotation>
+      <xs:documentation>Mot-clé d’indexation</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:attribute name="type"/>
+      <xs:attribute name="key">
+        <xs:annotation>
+          <xs:documentation>Numéro de la notice d’autorité</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="encodingDesc">
+    <xs:annotation>
+      <xs:documentation>Documentation technique de l'encodage (relation d'un texte électronique avec sa ou ses sources)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="ns1:projectDesc"/>
+        <xs:element minOccurs="0" ref="ns1:samplingDecl"/>
+        <xs:element minOccurs="0" ref="ns1:editorialDecl"/>
+        <xs:element minOccurs="0" ref="ns1:tagsDecl"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="projectDesc">
+    <xs:annotation>
+      <xs:documentation>Description scientifique du projet.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:p"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="samplingDecl">
+    <xs:annotation>
+      <xs:documentation>Etendue numérisée de la source (pour préciser par ex. les pages de la source non reprises dans le fichier, et pourquoi)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:p"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="editorialDecl">
+    <xs:annotation>
+      <xs:documentation>Corrections apportées au document source.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:p"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="tagsDecl">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="ns1:rendition"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="rendition">
+    <xs:complexType mixed="true">
+      <xs:attributeGroup ref="ns1:id-att"/>
+      <xs:attribute name="scheme" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="css"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- END OPTIONAL -->
+  <xs:element name="sourceDesc">
+    <xs:annotation>
+      <xs:documentation>Description de la (des) source(s) numérisée(s)</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence maxOccurs="unbounded">
+        <xs:element ref="ns1:bibl"/>
+        <xs:element minOccurs="0" ref="ns1:biblFull"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="bibl">
+    <xs:annotation>
+      <xs:documentation>Référence bibliographique peu structurée de l’œuvre numérisée. En texte mêlé ponctuée, avec typographie légère (italique).  Référence utilisée par exemple pour générer les citations à la page</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="ns1:abbr"/>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:group ref="ns1:teiHeader.flow"/>
+          <xs:element name="author" type="xs:string"/>
+          <xs:element ref="ns1:publisher"/>
+          <xs:element name="pubPlace" type="xs:string"/>
+          <xs:element name="edition">
+            <xs:complexType mixed="true">
+              <xs:group ref="ns1:teiHeader.flow"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="abbr" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>Forme courte de la référence bibliographique, par ex. pour l'inscription répétée de la foliotation.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="publisher" type="xs:string"/>
+  <xs:element name="biblFull">
+    <xs:annotation>
+      <xs:documentation>Notice bibliographique complète du volume numérisé</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="titleStmt">
+          <xs:annotation>
+            <xs:documentation>Titres et mentions de responsabilité</xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:complexContent>
+              <xs:extension base="ns1:titleStmt.cont">
+                <xs:group minOccurs="0" ref="ns1:ISBN"/>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" ref="ns1:editionStmt"/>
+        <xs:group minOccurs="0" ref="ns1:biblFull.extent"/>
+        <xs:group ref="ns1:biblFull.publicationStmt"/>
+        <xs:element minOccurs="0" ref="ns1:seriesStmt"/>
+        <xs:element minOccurs="0" ref="ns1:notesStmt"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="ISBN">
+    <xs:sequence>
+      <xs:element name="idno">
+        <xs:annotation>
+          <xs:documentation>ISBN (10 ou 13)</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="type" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="ISBN"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name="biblFull.publicationStmt">
+    <xs:sequence>
+      <xs:element name="publicationStmt">
+        <xs:annotation>
+          <xs:documentation>Informations relatives à la publication de la source imprimée</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:all>
+            <xs:element minOccurs="0" name="publisher" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Nom de l'éditeur</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element minOccurs="0" name="pubPlace" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Lieu de publication</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="date">
+              <xs:annotation>
+                <xs:documentation>Date de publication</xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="when" use="required" type="ns1:date.type"/>
+              </xs:complexType>
+            </xs:element>
+          </xs:all>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name="biblFull.extent">
+    <xs:sequence>
+      <xs:element name="extent">
+        <xs:annotation>
+          <xs:documentation>Description matérielle</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+          <xs:attribute name="ana" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="pp"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="n" use="required" type="xs:integer"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <!-- END BIBLIOGRAPHIC -->
+  <!-- TODO : 2 pattern très génériques... à extraire (->teibonnk.rng) ? -->
+  <xs:simpleType name="date.type">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="p">
+    <xs:annotation>
+      <xs:documentation>Paragraphe de texte enrichi</xs:documentation>
+    </xs:annotation>
+    <xs:complexType mixed="true">
+      <xs:group ref="ns1:teiHeader.flow"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="teiHeader.flow">
+    <xs:annotation>
+      <xs:documentation>Texte riche contrôlé, par exemple dans un titre</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="author" type="xs:string"/>
+        <xs:element name="date" type="xs:string"/>
+        <xs:element ref="ns1:forename"/>
+        <xs:element ref="ns1:hi"/>
+        <xs:element ref="ns1:name"/>
+        <xs:element ref="ns1:num"/>
+        <xs:element ref="ns1:publisher"/>
+        <xs:element ref="ns1:ref"/>
+        <xs:element ref="ns1:surname"/>
+        <xs:element name="title" type="xs:string"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="forename" type="xs:string"/>
+  <xs:element name="hi">
+    <xs:complexType mixed="true">
+      <xs:attribute name="rend" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="sub"/>
+            <xs:enumeration value="sup"/>
+            <xs:enumeration value="sc"/>
+            <xs:enumeration value="i"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="name" type="xs:string"/>
+  <xs:element name="num" type="xs:string"/>
+  <xs:element name="ref">
+    <xs:complexType mixed="true">
+      <xs:attribute name="target" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="surname" type="xs:string"/>
+  <!-- Ne pas toucher pour que ça marche avec teibook.rng -->
+  <xs:attributeGroup name="id-att">
+    <xs:attribute ref="xml:id" use="required"/>
+  </xs:attributeGroup>
+  <xs:attributeGroup name="lang-att">
+    <xs:attribute ref="xml:lang" use="required"/>
+  </xs:attributeGroup>
+</xs:schema>
