@@ -116,9 +116,10 @@ class Weboai {
    ** OAI conversion
    ** TODO : enrichir la méthode pour manipuler la notice OAI (lancement chgt en base, etc.)
    */
-  public function tei2oai($teiDOM) {
+  public function tei2oai($teiDOM, $fileName) {
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
+    $this->proc->setParameter('xsl', 'fileName', $fileName);
     return $this->proc->transformToXML($teiDOM);
   }
   
@@ -374,7 +375,6 @@ class Weboai {
     // IF SCH/XML/ZIP
     if(pathinfo($tmp['name'], PATHINFO_EXTENSION) == 'sch') {
       $weboai=new Weboai($src);
-      echo 'vhdfiuvh dfiuvhdfiuvdfi';
       echo $weboai->sch2xsl();
       exit;
     }
@@ -404,13 +404,14 @@ class Weboai {
   public static function doCli() {
     $timeStart = microtime(true);
     array_shift($_SERVER['argv']); // shift arg 1, the script filepath
-    if (!count($_SERVER['argv'])) exit("usage : php -f Weboai.php (sch2xsl|validation|sqlite) src.xml\n");
+    if (!count($_SERVER['argv'])) exit("usage : php -f Weboai.php (sch2xsl|validation|sqlite|tei2sqlite) (src.xml|dir/)\n");
     $method=null;//method to call
     $src=null;//XML src
+    $srcFileName=null;
     $dest=null;
     
     while ($arg=array_shift($_SERVER['argv'])) {
-      if ($arg=="sch2xsl" || $arg=="validation" || $arg=="sqlite") $method=$arg;
+      if ($arg=="sch2xsl" || $arg=="validation" || $arg=="sqlite" || $arg=="tei2sqlite") $method=$arg;
       else $src=$arg;
     }
     switch ($method) {
@@ -433,6 +434,7 @@ class Weboai {
           echo "\n";
         }
         break;
+      //default: oai2sqlite
       case "sqlite":
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $xml) {
@@ -443,6 +445,31 @@ class Weboai {
         }
         else {
           $weboai = new Weboai($src);
+          $weboai->sqlite('weboai.sqlite');
+        }
+        break;
+      //hook: tei2sqlite
+      case "tei2sqlite":
+        if (is_dir($src)) {
+          foreach(glob($src . '/*.xml') as $tei) {
+            $srcFileName=basename($tei, ".xml");
+            $weboai = new Weboai($tei);
+            $oai = $weboai->tei2oai($weboai->doc, $srcFileName);
+            echo "===============\n$oai===============\n";
+            $oaiDOM = new DOMDocument();
+            $oaiDOM->loadXML($oai);
+            $weboai->doc = $oaiDOM;
+            $weboai->sqlite('weboai.sqlite');
+          }
+        }
+        else {
+          $srcFileName=basename($src, ".xml");
+          $weboai = new Weboai($src);
+          $oai = $weboai->tei2oai($weboai->doc, $srcFileName);// écriture un peu cheloue...
+          echo "===============\n$oai===============\n";
+          $oaiDOM = new DOMDocument();
+          $oaiDOM->loadXML($oai);
+          $weboai->doc = $oaiDOM;
           $weboai->sqlite('weboai.sqlite');
         }
         break;
