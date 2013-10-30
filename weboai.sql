@@ -1,21 +1,29 @@
+-- TOHINK, implement sets, a record may be 
+
 -- Format of an SQLite base feed with OAI
 CREATE TABLE resource (
-  -- OAI record of a resource
+  -- OAI record of a resource, should be enough for an OAI engine, and to display a short result for the resource
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE, -- ! required by OAI protocol to inform harvester
   oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission date http://www.sqlite.org/lang_datefunc.html, time string format 6 : YYYY-MM-DDTHH:MM:SS
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! revoir la spec OAI
-  identifier      TEXT UNIQUE NOT NULL,   -- ! dc:identifier, XML source URI
-  title           TEXT NOT NULL,          -- ! dc:title
-  rights          TEXT NOT NULL,          -- ! dc:rights, distribution licence URI of XML source
-  source          TEXT,                   -- ! dc:source, bibliographic reference of the encoded text
-  date            INTEGER NOT NULL,       -- ! dc:date, creation date of the text
-  description     TEXT,                   -- ? dc:description, abstract
-  record          TEXT                    -- ! the oai record
+  record          TEXT NOT NULL,          -- ! the oai record
+  title           TEXT NOT NULL,          -- ! dc:title, just for display 
+  uri             TEXT,                   -- ! a link for the resource, should be unique dc:identifier, but life sometimes…
+  date            INTEGER,                -- ! dc:date, creation date of the text, should be not null, but let people see it in their queries
+  byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
+  publisher       INTEGER                 -- ? a link to the table of publisher, specific to CAHIER 
 );
-CREATE INDEX resourceTitle ON resource(title);
+
+CREATE VIRTUAL TABLE ft USING FTS3 (
+  -- fulltext fields to find records for a public interface
+  title        TEXT,  -- aggregation of titles and authors for full-text search
+  description  TEXT   -- aggregation of abstracts for full-text search
+);
+
 
 CREATE TABLE author (
-  -- authorities dc:creator or dc:contributor
+  -- person facets for dc:creator or dc:contributor
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   heading         TEXT NOT NULL, -- ! "Baudelaire, Charles (1821-1867)"
   family          TEXT NOT NULL, -- ! "Baudelaire"
@@ -45,22 +53,13 @@ CREATE INDEX writesResource ON writes(resource); -- revoir la sémantique de la 
 CREATE INDEX writesRole     ON writes(role);
 
 CREATE TABLE publisher (
-  -- authorities dc:publisher
+  -- external list of publishers
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   -- heading    TEXT NOT NULL CHECK (heading IN('bfm','cesr','item')), -- ! tei:publisher/@key Compléter la liste
-  label      TEXT UNIQUE NOT NULL,   -- ! tei:publisher
-  uri        TEXT,            -- ? URI
-  protect    INTEGER          -- protected from automatic deletion (ex: external referential)
+  label      TEXT UNIQUE NOT NULL,   -- ! html for the publisher
+  uri        TEXT            -- ? URI
 );
--- CREATE INDEX publisherHeading ON publisher(heading);
-CREATE INDEX publisherLabel   ON publisher(label);
 
-CREATE TABLE publishes (
-  -- relation table
-  publisher     INTEGER NOT NULL REFERENCES publisher(id),
-  resource      INTEGER NOT NULL REFERENCES resource(id)
-);
--- TODO : utile de générer les INDEX ????
 
 -- TRIGGERS
 CREATE TRIGGER resourceDel

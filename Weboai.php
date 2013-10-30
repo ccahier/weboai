@@ -21,6 +21,7 @@ class Weboai {
   public static $re=array(
     // normalize spaces and puctuation in html
     // . ‘
+    // [FG] utilisé ?
     'punct'=>array(
       '@\.\.\.@' => '…',
       '@ ([»?!])@u' => ' $1',
@@ -32,7 +33,7 @@ class Weboai {
       '@</(blockquote|dd|div|dt|h1|h2|h3|h4|h5|h6|li|p|pre)>@' => "\n\$0",
       '@\n +\n@' => "\n\n",
     ),
-    // after tag wash
+    // [FG] utilisé ?
     's'=>array(
       '@(St).@u' => '$1&#46;', // protect non period dots
       '@( +)([.)][) »]*)@u' => '$2$1',
@@ -51,9 +52,9 @@ class Weboai {
   }
   
   /**
-   ** Schematron compilation (file.sch chargé en DOM ds $this->doc)
-   ** TODO : tester .sch en input et la validité du fichier
-   ** TODO : test des droits en doPost()
+   * Schematron compilation (file.sch chargé en DOM ds $this->doc)
+   * TODO : tester .sch en input et la validité du fichier
+   * TODO : test des droits en doPost()
    */
   public function sch2xsl() {
     //if (!$doc) $doc=$this->srcFile;
@@ -71,6 +72,7 @@ class Weboai {
     $this->proc->importStylesheet($this->xsl);
     $xslValidator = $this->proc->transformToDoc($step2);
     // TODO : une petite méthode pour gérer les $dest + chown :www-data ?
+    // [FG] cache folder should be configurable, with a fallback on the tmp folder, or recreation as a class field if nothing better
     if (!file_exists('./out/')) {
       mkdir('out/', 0755, true);
       @chmod('out/', 0755); // @, write permission for www-data
@@ -82,10 +84,11 @@ class Weboai {
     // echo $this->xml2html($validator); // HTML display of XSLT schematron file
   }
   
-  /*
-   ** Shematron (XSL) validation (source xml chargée en DOM in $this->doc)
-   ** si non valide : renvoie une vue HTML du rapport d’erreur SVRL
-   ** si valide : renvoie la notice OAI
+  /**
+   * Shematron (XSL) validation (source xml chargée en DOM in $this->doc)
+   * si non valide : renvoie une vue HTML du rapport d’erreur SVRL
+   * si valide : renvoie la notice OAI
+   * [FG] strange contract for the name, when we validate a file, the only thing we want is the report or TRUe or nothing if everything is OK
    */
   public function xmlValidation() {
       $this->xsl->load(dirname(__FILE__) . '/out/teiHeader_validator.xsl');
@@ -112,25 +115,27 @@ class Weboai {
         echo $this->proc->transformToXML($svrl);
       }
   } 
-  /*
-   ** OAI conversion
-   ** TODO : enrichir la méthode pour manipuler la notice OAI (lancement chgt en base, etc.)
+  /**
+   * OAI conversion
+   * TODO : enrichir la méthode pour manipuler la notice OAI (lancement chgt en base, etc.)
+   * [FG] not a clear contract, seems to behave like a static function
    */
-  public function tei2oai($teiDOM, $fileName) {
+  public function tei2oai($teiDOM, $filename) {
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
-    $this->proc->setParameter('xsl', 'fileName', $fileName);
+    $this->proc->setParameter(null, 'filename', $filename);
     return $this->proc->transformToXML($teiDOM);
   }
   
-  /*
-   ** HTML conversion of XML string for navigator display -- doPost() context.
-   **
+  /**
+   * HTML conversion of XML string for navigator display -- doPost() context.
    */
   public function xml2html($xml) {
     $xmlDOM = new DOMDocument();
     $xmlDOM->loadXML($xml);// oai as DOM
-    $this->xsl->load(dirname(__FILE__) . '/transform/verbid.xsl');
+    // [FG] hey! we get it in our projects http://svn.code.sf.net/p/algone/code/teipub/xml2html.xsl 
+    // What should be added to make it works well for you?
+    $this->xsl->load(dirname(__FILE__) . '/transform/verbid.xsl'); 
     $this->proc->importStylesheet($this->xsl);
     return $this->proc->transformToXML($xmlDOM);
   }
@@ -145,8 +150,8 @@ class Weboai {
     //prepare statements
     //self::$stmt['delResource']=self::$pdo->prepare("DELETE FROM resource WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
     self::$stmt['insResource']=self::$pdo->prepare("
-      INSERT INTO resource (oai_datestamp, oai_identifier, identifier, title, rights, source, date, description, record)
-                    VALUES (?,             ?,               ?,          ?,    ?,      ?,      ?,    ?,           ?);
+      INSERT INTO resource (oai_datestamp, oai_identifier, record, title, uri, date, byline, publisher)
+                    VALUES (?,             ?,              ?,      ?,     ?,   ?,    ?,      ?);
     ");
     self::$stmt['insAuthor']=self::$pdo->prepare("
       INSERT INTO author (heading, family, given, sort1, sort2, birth, death, uri)
@@ -168,18 +173,7 @@ class Weboai {
     self::$stmt['selAuthorId2']=self::$pdo->prepare("
       SELECT id FROM author WHERE sort1 = ? AND sort2 = ?; 
     ");
-    self::$stmt['selPublisherId']=self::$pdo->prepare("
-      SELECT id FROM publisher WHERE label = ?;
-    ");
-    // TODO : revoir la logique d’inscription du publisher : cette info est normalisée dans le contexte de l’application Weboai
-    self::$stmt['insPublisher']=self::$pdo->prepare("
-      INSERT INTO publisher (label)
-                     VALUES (?);
-    ");
-    self::$stmt['insPublishes']=self::$pdo->prepare("
-      INSERT INTO publishes (publisher, resource)
-                     VALUES (?,         ?);
-    ");
+
     
     //start transaction
     self::$pdo->beginTransaction();
@@ -188,24 +182,38 @@ class Weboai {
     
     $oai_datestamp  = $oai->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'datestamp')->item(0)->nodeValue;
     $oai_identifier = $oai->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'identifier')->item(0)->nodeValue;
-    $identifier     = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier')->item(0)->nodeValue;
+    // title, just the first one
     $title          = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title')->item(0)->nodeValue;
-    $rights         = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'rights')->item(0)->nodeValue;
-    $source         = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'source')->item(0)->nodeValue;
-    $date           = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date')->item(0)->nodeValue;
-    $description    = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description')->item(0)->nodeValue;
-    $record         = file_get_contents('./oai_samples/balzac.xml');
-    
+    // prepare the byline
+    $creatorList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
+    $byline=NULL;
+    if ($length=$creatorList->length) {
+      $sep='';
+      for ($i =0; $i < $length; $i++ ) {
+        $bylist.=$sep.$creatorList->item($i)->nodeValue;
+        $sep=' ; ';
+      }
+    }
+    // be nice or block ?
+    $uri=NULL;
+    $idList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
+    if ($idList->length) $uri= $idList->item(0)->nodeValue;
+    // be nice or block ?
+    $date=NULL;
+    $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
+    if ($dateList->length) $date= $dateList->item(0)->nodeValue;
+    // TODO, verify if indent is OK
+    $record=$oai->saveXML();
+    // (oai_datestamp, oai_identifier, record, title, uri, date, byline, publisher)
     self::$stmt['insResource']->execute(array(
       $oai_datestamp,
       $oai_identifier,
-      $identifier,
-      $title,
-      $rights,
-      $source,
-      $date,
-      $description,
       $record,
+      $title,
+      $uri,
+      $date,
+      $byline,
+      0,
     ));
     
     // resource déjà insérée ? récupérer id de la resource pour mise à jour (TODO)
@@ -321,7 +329,6 @@ class Weboai {
 
   /**
    * load a json resource as an array()
-   * IDEM TEIPUB
    */
   static function json($file) {
     $content=file_get_contents($file);
@@ -454,8 +461,11 @@ class Weboai {
           foreach(glob($src . '/*.xml') as $tei) {
             $srcFileName=basename($tei, ".xml");
             $weboai = new Weboai($tei);
+            echo "\n$tei\n";
             $oai = $weboai->tei2oai($weboai->doc, $srcFileName);
-            echo "===============\n$oai===============\n";
+            echo "\n$oai\n\n";
+            // [FG] pas optimisé, on préfèrerait que $weboai->doc change selon les transfromations
+            // mais bon, pas de grosses pertes en perfs
             $oaiDOM = new DOMDocument();
             $oaiDOM->loadXML($oai);
             $weboai->doc = $oaiDOM;
@@ -500,4 +510,6 @@ class Weboai {
   }
   
 }
+
+
 ?>

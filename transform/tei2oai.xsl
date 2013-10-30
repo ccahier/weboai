@@ -17,6 +17,9 @@
   xmlns:dcterms="http://purl.org/dc/terms/"
   exclude-result-prefixes="tei date">
   <xsl:output encoding="UTF-8" indent="yes" method="xml"/>
+  <xsl:param name="oai_id_prefix">CAHIER:</xsl:param>
+  <!-- name of the TEI file  -->
+  <xsl:param name="filename"/>
   
   <xsl:template match="/">
     <xsl:apply-templates select="tei:TEI/tei:teiHeader"/>
@@ -25,7 +28,10 @@
   <xsl:template match="tei:teiHeader">
     <record>
       <header>
-        <identifier>TODO : voir règle de construction</identifier>
+        <identifier>
+          <xsl:value-of select="$oai_id_prefix"/>
+          <xsl:value-of select="$filename"/>
+        </identifier>
         <datestamp><xsl:value-of select="date:date-time()"/></datestamp><!-- date du jour ou date de publi (tei:fileDesc/tei:publicationStmt/tei:date/@when) ? -->
         <setSpec>SHS</setSpec><!-- voir la liste des valeurs ; on articule avec textClass ? -->
       </header>
