@@ -152,8 +152,8 @@ class Weboai {
     //prepare statements
     //self::$stmt['delResource']=self::$pdo->prepare("DELETE FROM resource WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
     self::$stmt['insResource']=self::$pdo->prepare("
-      INSERT INTO resource (oai_datestamp, oai_identifier, record, title, uri, date, byline, publisher)
-                    VALUES (?,             ?,              ?,      ?,     ?,   ?,    ?,      ?);
+      INSERT INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
+                    VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?,      ?);
     ");
     self::$stmt['insAuthor']=self::$pdo->prepare("
       INSERT INTO author (heading, family, given, sort, sort1, sort2, birth, death, uri)
@@ -190,30 +190,30 @@ class Weboai {
     $creatorList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
     $byline=NULL;
     if ($length=$creatorList->length) {
-      $bylist='';
+      $byline='';
       $sep='';
       for ($i =0; $i < $length; $i++ ) {
-        $bylist.=$sep.$creatorList->item($i)->nodeValue;
+        $byline.=$sep.$creatorList->item($i)->nodeValue;
         $sep=' ; ';
       }
     }
     // be nice or block ?
-    $uri=NULL;
+    $identifier=NULL;
     $idList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
-    if ($idList->length) $uri= $idList->item(0)->nodeValue;
+    if ($idList->length) $identifier= $idList->item(0)->nodeValue;
     // be nice or block ?
     $date=NULL;
     $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if ($dateList->length) $date= $dateList->item(0)->nodeValue;
     // TODO, verify if indent is OK
     $record=$oai->saveXML();
-    // (oai_datestamp, oai_identifier, record, title, uri, date, byline, publisher)
+    // (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
     self::$stmt['insResource']->execute(array(
       $oai_datestamp,
       $oai_identifier,
       $record,
       $title,
-      $uri,
+      $identifier,
       $date,
       $byline,
       0,
