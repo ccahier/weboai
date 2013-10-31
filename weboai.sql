@@ -9,7 +9,7 @@ CREATE TABLE resource (
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! revoir la spec OAI
   record          TEXT NOT NULL,          -- ! the oai record
   title           TEXT NOT NULL,          -- ! dc:title, just for display 
-  uri             TEXT,                   -- ! a link for the resource, should be unique dc:identifier, but life sometimes…
+  identifier      TEXT,                   -- ! a link for the full-text, should be unique dc:identifier, but life sometimes…
   date            INTEGER,                -- ! dc:date, creation date of the text, should be not null, but let people see it in their queries
   byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
   publisher       INTEGER                 -- ? a link to the table of publisher, specific to CAHIER 
