@@ -48,6 +48,7 @@ class Weboai {
   
   function __construct($srcFile) {
     $this->srcFile = $srcFile;
+    $this->srcFileName = basename($srcFile);
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
     $this->load($srcFile);
@@ -111,7 +112,7 @@ class Weboai {
    * OAI conversion
    */
   public function tei2oai() {
-    //if ($this->xmlValidation()==false) exit("===================fichier non valide======================\n");
+    //if ($this->xmlValidation()==false) exit("===================$this->srcFileName non valide======================\n");
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
     $this->proc->setParameter(null, 'filename', $this->srcFileName);
