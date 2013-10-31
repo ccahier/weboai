@@ -83,50 +83,39 @@ class Weboai {
     echo "./out/teiHeader_validator.xsl updated\n";
     $validator = file_get_contents('out/teiHeader_validator.xsl');
     echo $validator;
-    // echo $this->xml2html($validator); // HTML display of XSLT schematron file
+    //echo $this->xml2html($validator); //HTML display of XSLT schematron file
   }
   
   /**
-   * Shematron (XSL) validation (source xml chargée en DOM in $this->doc)
-   * si non valide : renvoie une vue HTML du rapport d’erreur SVRL
-   * si valide : renvoie la notice OAI
-   * [FG] strange contract for the name, when we validate a file, the only thing we want is the report or TRUe or nothing if everything is OK
+   * Shematron (XSL) validation of $this->doc
    */
-  public function xmlValidation() {
-      $this->xsl->load(dirname(__FILE__) . '/out/teiHeader_validator.xsl');
-      $this->proc->importStylesheet($this->xsl);
-      $this->proc->setParameter('axsl', 'fileNameParameter', $this->srcFileName);
-      $svrl_report = $this->proc->transformToDoc($this->doc);
-      $failed_assert_nodes = $svrl_report->getElementsByTagNameNS('http://purl.oclc.org/dsdl/svrl','failed-assert');
-      // validation OK, on génère la notice OAI
-      if($failed_assert_nodes->length==0) {
-        echo 'teiHeader conforme au schéma <a href="http://weboai.sourceforge.net/teiHeader.html#el_term">cahier-weboai</a>';
-        // renvoyer la notice oai
-        $oai = $this->tei2oai($this->doc);// oai in string
-        echo $oai;
-        //echo $this->xml2html($oai); // HTML display of OAI record
-      }
-      // échec validation, on renvoie les erreurs
-      else {
-        echo 'teiHeader NON conforme au schéma <a href="http://weboai.sourceforge.net/teiHeader.html#el_term">cahier-weboai</a>';
-        //echo $this->proc->transformToXML($this->doc); // rapport SVRL
-        // SVRL 2 HTML
-        $svrl = $this->proc->transformToDoc($this->doc);
-        $this->xsl->load(dirname(__FILE__).'/'.'transform/svrl2html.xsl');
-        $this->proc->importStylesheet($this->xsl);
-        echo $this->proc->transformToXML($svrl);
-      }
+  public function xmlValidation($xmlValidator='/out/teiHeader_validator.xsl') {
+    $validation=null;
+    $this->xsl->load(dirname(__FILE__) . $xmlValidator);
+    $this->proc->importStylesheet($this->xsl);
+    $this->proc->setParameter('axsl', 'fileNameParameter', $this->srcFileName);
+    $svrl_report = $this->proc->transformToDoc($this->doc);
+    $failed_assert_nodes = $svrl_report->getElementsByTagNameNS('http://purl.oclc.org/dsdl/svrl','failed-assert');
+    //($failed_assert_nodes->length==0) ? $validation=true : $validation=false;
+    if($failed_assert_nodes->length==0) $validation=true;
+    else {
+      $validation=false;
+      $report=$this->proc->transformToXML($this->doc);//SVRL format
+      //$report=$this->xml2html($report);//HTML format
+      echo $report;
+    }
+    return $validation;
   } 
+
   /**
    * OAI conversion
-   * TODO : enrichir la méthode pour manipuler la notice OAI (lancement chgt en base, etc.)
-   * [FG] not a clear contract, seems to behave like a static function, why not load a transformed $this->doc ?
    */
-  public function tei2oai($teiDOM, $filename) {
+  public function tei2oai() {
+    //if ($this->xmlValidation()==false) exit("===================fichier non valide======================\n");
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
-    $this->proc->setParameter(null, 'filename', $filename);
-    return $this->proc->transformToXML($teiDOM);
+    $this->proc->setParameter(null, 'filename', $this->srcFileName);
+    echo $this->proc->transformToXML($this->doc);
   }
   
   /**
@@ -447,14 +436,14 @@ class Weboai {
   public static function doCli() {
     $timeStart = microtime(true);
     array_shift($_SERVER['argv']); // shift arg 1, the script filepath
-    if (!count($_SERVER['argv'])) exit("usage : php -f Weboai.php (sch2xsl|validation|sqlite|tei2sqlite) (src.xml|dir/)\n");
+    if (!count($_SERVER['argv'])) exit("usage : php -f Weboai.php (sch2xsl|validation|tei2oai|sqlite|tei2sqlite) (src.xml|dir/)\n");
     $method=null;//method to call
     $src=null;//XML src
     $srcFileName=null;
     $dest=null;
     
     while ($arg=array_shift($_SERVER['argv'])) {
-      if ($arg=="sch2xsl" || $arg=="validation" || $arg=="sqlite" || $arg=="tei2sqlite") $method=$arg;
+      if ($arg=="sch2xsl" || $arg=="tei2oai" || $arg=="validation" || $arg=="sqlite" || $arg=="tei2sqlite") $method=$arg;
       else $src=$arg;
     }
     switch ($method) {
@@ -468,13 +457,26 @@ class Weboai {
           foreach(glob($src . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
             $weboai->xmlValidation();
-            echo "\n\n";
+            echo "==================================\n";
           }
         }
         else {
           $weboai = new Weboai($src);
           $weboai->xmlValidation();
           echo "\n";
+        }
+        break;
+      case "tei2oai":
+        if (is_dir($src)) {
+          foreach(glob($src . '/*.xml') as $xml) {
+            $weboai = new Weboai($xml);
+            $weboai->tei2oai();
+            echo "==================================\n";
+          }
+        }
+        else {
+        $weboai=new Weboai($src);
+        $weboai->tei2oai();
         }
         break;
       //default: oai2sqlite
