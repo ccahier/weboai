@@ -458,12 +458,13 @@ class Weboai {
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
+            echo "===============\n$weboai->srcFileName\n===============\n$oai";
             $weboai->xmlValidation();
-            echo "==================================\n";
           }
         }
         else {
           $weboai = new Weboai($src);
+            echo "===============\n$weboai->srcFileName\n===============\n$oai";
           $weboai->xmlValidation();
           echo "\n";
         }
@@ -472,12 +473,13 @@ class Weboai {
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
+            echo "===============\n$weboai->srcFileName\n===============\n$oai";
             echo $weboai->tei2oai();
-            echo "==================================\n";
           }
         }
         else {
         $weboai=new Weboai($src);
+        echo "===============\n$weboai->srcFileName\n===============\n$oai";
         echo $weboai->tei2oai();
         }
         break;
