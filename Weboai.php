@@ -116,7 +116,8 @@ class Weboai {
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
     $this->proc->setParameter(null, 'filename', $this->srcFileName);
-    echo $this->proc->transformToXML($this->doc);
+    $oai = $this->proc->transformToXML($this->doc);
+    return $oai;
   }
   
   /**
@@ -471,21 +472,21 @@ class Weboai {
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
-            $weboai->tei2oai();
+            echo $weboai->tei2oai();
             echo "==================================\n";
           }
         }
         else {
         $weboai=new Weboai($src);
-        $weboai->tei2oai();
+        echo $weboai->tei2oai();
         }
         break;
       //default: oai2sqlite
       case "sqlite":
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $xml) {
-            echo "try to load $xml in weboai.sqlite\n";
             $weboai = new Weboai($xml);
+            echo "try to load $weboai->srcFileName in weboai.sqlite\n";
             $weboai->sqlite('weboai.sqlite');
           }
         }
@@ -498,24 +499,18 @@ class Weboai {
       case "tei2sqlite":
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $tei) {
-            $srcFileName=basename($tei, ".xml");
-            $weboai = new Weboai($tei);
-            echo "$tei\n";
-            $oai = $weboai->tei2oai($weboai->doc, $srcFileName);
-            if (self::$debug) echo "\n$oai\n\n";
-            // [FG] pas optimisé, on préfèrerait que $weboai->doc change selon les transfromations
-            // mais bon, pas de grosses pertes en perfs
-            $oaiDOM = new DOMDocument();
-            $oaiDOM->loadXML($oai);
-            $weboai->doc = $oaiDOM;
-            $weboai->sqlite('weboai.sqlite');
-          }
+          $weboai = new Weboai($tei);
+          $oai = $weboai->tei2oai();
+          echo "===============\n$weboai->srcFileName\n===============\n$oai";
+          $oaiDOM = new DOMDocument();
+          $oaiDOM->loadXML($oai);
+          $weboai->doc = $oaiDOM;
+          $weboai->sqlite('weboai.sqlite');          }
         }
         else {
-          $srcFileName=basename($src, ".xml");
           $weboai = new Weboai($src);
-          $oai = $weboai->tei2oai($weboai->doc, $srcFileName);// écriture un peu cheloue...
-          echo "===============\n$oai===============\n";
+          $oai = $weboai->tei2oai();
+          echo "===============\n$weboai->srcFileName\n===============\n$oai";
           $oaiDOM = new DOMDocument();
           $oaiDOM->loadXML($oai);
           $weboai->doc = $oaiDOM;
