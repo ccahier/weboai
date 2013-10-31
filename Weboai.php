@@ -12,6 +12,8 @@ class Weboai {
   private $xsl;
   private $proc;
   private $doc;// DOM doc 
+  /** Debug mode */
+  static $debug; 
   
   // chargement en base
   private static $pdo;// sqlite connection
@@ -118,7 +120,7 @@ class Weboai {
   /**
    * OAI conversion
    * TODO : enrichir la méthode pour manipuler la notice OAI (lancement chgt en base, etc.)
-   * [FG] not a clear contract, seems to behave like a static function
+   * [FG] not a clear contract, seems to behave like a static function, why not load a transformed $this->doc ?
    */
   public function tei2oai($teiDOM, $filename) {
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
@@ -154,8 +156,8 @@ class Weboai {
                     VALUES (?,             ?,              ?,      ?,     ?,   ?,    ?,      ?);
     ");
     self::$stmt['insAuthor']=self::$pdo->prepare("
-      INSERT INTO author (heading, family, given, sort1, sort2, birth, death, uri)
-                  VALUES (?,       ?,      ?,     ?,     ?,     ?,     ?,     ?);
+      INSERT INTO author (heading, family, given, sort, sort1, sort2, birth, death, uri)
+                  VALUES (?,       ?,      ?,     ?,    ?,     ?,     ?,     ?,     ?);
     ");
     self::$stmt['insWrites']=self::$pdo->prepare("
       INSERT INTO writes (author, resource, role)
@@ -188,6 +190,7 @@ class Weboai {
     $creatorList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
     $byline=NULL;
     if ($length=$creatorList->length) {
+      $bylist='';
       $sep='';
       for ($i =0; $i < $length; $i++ ) {
         $bylist.=$sep.$creatorList->item($i)->nodeValue;
@@ -235,6 +238,11 @@ class Weboai {
       self::insAuthor($contributor->nodeValue, 2);// arg2, 2=contributor
     }
     
+    /* 
+    <teiHeader> is not reliable enough to get an information about the publisher
+    and there is no need for a n-n table, why the same book by same publisher ?
+    The list should be provided externally (TODO)
+    
     foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher') as $publisher) {
       $label = $publisher->nodeValue;
       self::$stmt['insPublisher']->execute(array($label)); // $label UNIQUE in weboai.sql
@@ -248,34 +256,61 @@ class Weboai {
       else $publisherId=self::$pdo->lastInsertId();
       self::$stmt['insPublishes']->execute(array($publisherId, self::$pars['resourceId']));
     }
-      
+    */
     self::$pdo->commit();
   }
   
   /**
-   * Called from XSL, to create an author entry
+   * called on dc:creator and dc:contributor
    *
    * Montaigne, Françoise de (153.?-....)
+   * Bernard de Clairvaux (saint ; 1090?-1153)
    */
   public static function insAuthor($text, $role=NULL, $uri=NULL) {
-    $text=strtr(trim($text),array('…'=>'...'));
-    preg_match('@^([^,]+)(?:, *([^\(]+))?(?:\([^0-9]*([0-9\.]+\??)[^0-9\.]+([0-9\.]+\??)?)?@u', $text, $matches);
-    $family=$given=$birth=$death=null;
-    if(isset($matches[1])) $family=trim($matches[1]);
-    if(isset($matches[2])) $given=trim($matches[2]);
-    if(isset($matches[3])) $birth=trim($matches[3]);
-    if(isset($matches[4])) $death=trim($matches[4]);
-    // be nice for common values like "Jean-Jacques Rousseau" ?
-    if (!$given && $pos=strpos($family, ' ')) {
+    // bug ?
+    if (!$text) return;
+    $heading=$text;
+    $text=strtr(trim($text),array('…'=>'...', ' '=>' '));  // unbreakable space before ';'
+    if(strpos($text,'(')) {
+      $dates=substr($text, strpos($text,'(')+1);
+      $dates=trim(substr($dates, 0, strpos($dates+')',')')-1));
+      if(strpos($text,';'))  $dates=trim(substr($dates, strpos($dates ,';')+1));
+      $names=trim(substr($text, 0, strpos($text,'(')));
+    }
+    else {
+      $names=$text;
+      $dates="";
+    }
+    $family=$given=$birth=$death="";
+    if (($pos=strpos($names, ',')) !== false) {
+      $family=trim(substr($names, 0, $pos));
+      $given=trim(substr($names, $pos+1));
+    } 
+    else $family=$names;
+    // if a wild value, try to separate $names an convert case ?
+    /*
+    if ($text && !$given && $pos=strpos($family, ' ')) {
       $given=trim(substr($family,0,$pos));
       $family=trim(substr($family,$pos));
     }
+     // a wild value, try to convert case
+    if ($text) {
+      // if uppercase, convert case, 
+      if ($family==mb_convert_case($family, MB_CASE_UPPER, "UTF-8")) $family=mb_convert_case($family, MB_CASE_TITLE, "UTF-8");
+      // keep things like "Henri de", or "T.H.L", "J.-C."
+      if ($given==mb_convert_case($given, MB_CASE_UPPER, "UTF-8") && preg_match('/\p{Lu}\p{Lu}/', $given)) $given=mb_convert_case($given, MB_CASE_TITLE, "UTF-8");
+    }
+    */
     // charger ressource json pour le tri
-    self::$re['fr_sort_tr']=self::json(dirname(__FILE__).'/fr_sort.json');
+    self::$re['fr_sort_tr']=self::json(dirname(__FILE__).'/lib/fr_sort.json');
     $sort1=strtr($family, self::$re['fr_sort_tr']);
     $sort2=strtr($given, self::$re['fr_sort_tr']);
+    $birth=trim(substr($dates,0, strpos($dates, '-')));
+    $death=trim(substr($dates, strpos($dates, '-')+1));
     if($death=='…' || $death=='...') $death='....';
-    $heading=$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'');
+    if (!$text) $heading=$key; // give key as is
+    // no rebuild of an heading from fields, some info can be lost like (saint ; 1090?-1153)
+    // $heading=$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'');
     if(!$uri) $uri=NULL;
     // dates should be int in sql field to be used 
     if ($death=='....') $death=null;
@@ -287,7 +322,7 @@ class Weboai {
     if (!$death) $death=null;
     // ? negative dates ?
     self::$stmt['selAuthorId']->execute(array( $sort1, $sort2, $birth, $death ));
-    $authorId=self::$stmt['selAuthorId']->fetchColumn();//renvoie id auteur
+    $authorId=self::$stmt['selAuthorId']->fetchColumn();
     // be nice if no dates
     if (!$authorId && !$birth) {
       self::$stmt['selAuthorId2']->execute(array( $sort1, $sort2));
@@ -296,12 +331,13 @@ class Weboai {
       if ($authorId and self::$stmt['selAuthorId2']->fetchColumn()) $authorId=null;
     }
     if (!$authorId) {
+      // (heading, family, given, sort, sort1, sort2, birth, death, uri)
       self::$stmt['insAuthor']->execute(array(
-        $heading, $family, $given, $sort1, $sort2, $birth, $death, $uri
+        $heading, $family, $given, $sort1.$sort2, $sort1, $sort2, $birth, $death, $uri
       ));
+      // echo $text.' — '.$dates.' — '.$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'')."\n";
       $authorId=self::$pdo->lastInsertId();
     }
-    $resourceId=null;
     $resourceId=self::$pars['resourceId'];
     self::$stmt['insWrites']->execute(array($authorId, $resourceId, $role));
   }  
@@ -461,9 +497,9 @@ class Weboai {
           foreach(glob($src . '/*.xml') as $tei) {
             $srcFileName=basename($tei, ".xml");
             $weboai = new Weboai($tei);
-            echo "\n$tei\n";
+            echo "$tei\n";
             $oai = $weboai->tei2oai($weboai->doc, $srcFileName);
-            echo "\n$oai\n\n";
+            if (self::$debug) echo "\n$oai\n\n";
             // [FG] pas optimisé, on préfèrerait que $weboai->doc change selon les transfromations
             // mais bon, pas de grosses pertes en perfs
             $oaiDOM = new DOMDocument();

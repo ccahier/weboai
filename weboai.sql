@@ -25,15 +25,16 @@ CREATE VIRTUAL TABLE ft USING FTS3 (
 CREATE TABLE author (
   -- person facets for dc:creator or dc:contributor
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  heading         TEXT NOT NULL, -- ! "Baudelaire, Charles (1821-1867)"
-  family          TEXT NOT NULL, -- ! "Baudelaire"
-  given           TEXT NOT NULL, -- ? "Charles"
-  sort1           TEXT NOT NULL, -- ! "baudelaire" : sortable key with no spaces or diacritics, family name : "baudelaire"
-  sort2           TEXT NOT NULL, -- ! "charles" sortable key with no spaces or diacritics, given name : "charles"
-  birth           INTEGER,       -- ? "1821" birth year
-  death           INTEGER,       -- ? "1867" death year
-  uri             TEXT,          -- ? URI
-  protect         INTEGER        -- protected from automatic deletion (ex: external referential)
+  heading         TEXT NOT NULL, -- normalize key, ex: Baudelaire, Charles (1821-1867)
+  family          TEXT NOT NULL, -- family name, ex: Baudelaire
+  given           TEXT, -- given name, ex: Charles (could be null, medieval)
+  sort            TEXT NOT NULL, -- full key with no diacritics for search with like
+  sort1           TEXT NOT NULL, -- ! family name as a sortable key with no spaces or diacritics, ex: baudelaire
+  sort2           TEXT, -- ! given name as a sortable key with no spaces or diacritics, ex: charles (may be null)
+  birth           INTEGER, -- ? year of birth
+  death           INTEGER, -- ? year of death
+  uri             TEXT,  -- ? an URI identifier for the entity
+  protect         INTEGER  -- protected from automatic deletion (ex: external referential)
 );
 CREATE INDEX authorHeading ON author(heading);
 CREATE INDEX authorFamily  ON author(family);
