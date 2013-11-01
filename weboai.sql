@@ -6,7 +6,7 @@ CREATE TABLE resource (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   deleted BOOLEAN NOT NULL DEFAULT FALSE, -- ! required by OAI protocol to inform harvester
   oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission date http://www.sqlite.org/lang_datefunc.html, time string format 6 : YYYY-MM-DDTHH:MM:SS
-  oai_identifier  TEXT UNIQUE NOT NULL,   -- ! revoir la spec OAI
+  oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
   record          TEXT NOT NULL,          -- ! the oai record
   title           TEXT NOT NULL,          -- ! dc:title, just for display 
   identifier      TEXT,                   -- ! a link for the full-text, should be unique dc:identifier, but life sometimes…
@@ -50,26 +50,27 @@ CREATE TABLE writes (
   role        INTEGER NOT NULL -- 1=dc:creator | 2=dc:contributor (NB: dc:contributor = tei:editor)
 );
 CREATE INDEX writesAuthor   ON writes(author);
-CREATE INDEX writesResource ON writes(resource); -- revoir la sémantique de la base ????
+CREATE INDEX writesResource ON writes(resource); -- revoir la sémantique de la base ???? [FG] Pourquoi ? plutôt "text" ?
 CREATE INDEX writesRole     ON writes(role);
 
 CREATE TABLE publisher (
   -- external list of publishers
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  code       TEXT UNIQUE NOT NULL,
   -- heading    TEXT NOT NULL CHECK (heading IN('bfm','cesr','item')), -- ! tei:publisher/@key Compléter la liste
   label      TEXT UNIQUE NOT NULL,   -- ! html for the publisher
   uri        TEXT            -- ? URI
 );
+CREATE INDEX publisherCode     ON publisher(code);
 
 
 -- TRIGGERS
 CREATE TRIGGER resourceDel
-  -- on resource's record deletion, delete search index, relations to author (dc:creator | dc:contributor) and relation to publisher (dc:publisher)
+  -- on resource's record deletion, delete search index, relations to author (dc:creator | dc:contributor)
   BEFORE DELETE ON resource
   FOR EACH ROW BEGIN
     DELETE FROM writes WHERE writes.resource = OLD.id;
-    DELETE FROM publishes WHERE publishes.resource = OLD.id;
-    DELETE FROM search WHERE search.rowid = OLD.id;
+    DELETE FROM ft WHERE ft.rowid = OLD.id;
 END;
 
 CREATE TRIGGER writesDel
