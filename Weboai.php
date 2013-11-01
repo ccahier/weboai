@@ -142,9 +142,12 @@ class Weboai {
     self::connect($sqlFile);
     //prepare statements
     //self::$stmt['delResource']=self::$pdo->prepare("DELETE FROM resource WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
+    
+    // Take of on 
     self::$stmt['insResource']=self::$pdo->prepare("
-      INSERT INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
-                    VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?,      ?);
+      INSERT OR REPLACE INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
+                    VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?,      ?)
+      ;
     ");
     self::$stmt['insAuthor']=self::$pdo->prepare("
       INSERT INTO author (heading, family, given, sort, sort1, sort2, birth, death, uri)
@@ -209,17 +212,18 @@ class Weboai {
       $byline,
       0,
     ));
-    
-    // resource déjà insérée ? récupérer id de la resource pour mise à jour (TODO)
+    // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
+    if(!isset(self::$pars['resourceId'])) self::$pars['resourceId']=self::$pdo->lastInsertId();
+    // Shall we inform for replace ?
+    /* [FG] No more used with INSERT OR REPLACE   
     if (substr(self::$stmt['insResource']->errorCode(), 0, 2) == 23) {
+      echo '<mark>' . $title . ' (notice déjà insérée, resource.id=' . self::$pars['resourceId'] . ')</mark>';      
       self::$stmt['selResourceId']->execute(array($title));
       self::$pars['resourceId']=self::$stmt['selResourceId']->fetchColumn();
-      echo '<mark>' . $title . ' (notice déjà insérée, resource.id=' . self::$pars['resourceId'] . ')</mark>';      
       // on sort pour l’instant -- TODO: proposer mise à jour de la notice
       exit;
-    }   
-    //garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
-    if(!isset(self::$pars['resourceId'])) self::$pars['resourceId']=self::$pdo->lastInsertId();
+    }
+    */
     
     // insertions
     foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
@@ -230,7 +234,7 @@ class Weboai {
     }
     
     /* 
-    <teiHeader> is not reliable enough to get an information about the publisher
+    [FG] <teiHeader> is not reliable enough to get an information about the publisher
     and there is no need for a n-n table, why the same book by same publisher ?
     The list should be provided externally (TODO)
     
@@ -342,15 +346,16 @@ class Weboai {
         @chmod($dir, 0775);
       }
       self::$pdo=new PDO("sqlite:".$sqlFile);
-      self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
       @chmod($sqlFile, 0775);
+      self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
       self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
-      return;
     }
     else {
       self::$pdo=new PDO("sqlite:".$sqlFile);
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     }
+    // send some pragmas before work
+    self::$pdo->exec("PRAGMA recursive_triggers = TRUE;"); // triggers ON CONFLICT
   }
  
 
