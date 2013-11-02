@@ -6,14 +6,14 @@ set_time_limit(-1);
 if (php_sapi_name() == "cli") Weboai::doCli();
 
 class Weboai {
+  /** Debug mode */
+  static $debug;
   // conversions
   private $srcFile;//path du fichier chargé
   private $srcFileName;// nom du fichier chargé
   private $xsl;
   private $proc;
   private $doc;// DOM doc 
-  /** Debug mode */
-  static $debug; 
   
   // chargement en base
   private static $pdo;// sqlite connection
@@ -138,15 +138,19 @@ class Weboai {
    * Load an OAI record in the weboai SQLITE database
    * TODO : tester qu’on envoie bien OAI valide
    */
-  public function sqlite($sqlFile) {
+  public function sqlite($sqlFile, $sets=array()) {
     self::connect($sqlFile);
+    // build an oai identifier 
+    $publisher=current($sets);
+    // TODO 
+    $oai_identifier = 'cahier:'.substr($publisher, strpos($publisher, ':')+1).':'.pathinfo($this->srcFileName, PATHINFO_FILENAME);
     //prepare statements
     //self::$stmt['delResource']=self::$pdo->prepare("DELETE FROM resource WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
     
     // Take of on 
     self::$stmt['insResource']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
-                    VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?,      ?)
+      INSERT OR REPLACE INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline)
+                               VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?)
       ;
     ");
     self::$stmt['insAuthor']=self::$pdo->prepare("
@@ -176,8 +180,7 @@ class Weboai {
     // pour meilleure lisibilité
     $oai = $this->doc;
     
-    $oai_datestamp  = $oai->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'datestamp')->item(0)->nodeValue;
-    $oai_identifier = $oai->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'identifier')->item(0)->nodeValue;
+    $oai_datestamp  = time();
     // title, just the first one
     $title          = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title')->item(0)->nodeValue;
     // prepare the byline
@@ -209,12 +212,20 @@ class Weboai {
       $title,
       $identifier,
       $date,
-      $byline,
-      0,
+      $byline
     ));
     // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
     if(!isset(self::$pars['resourceId'])) self::$pars['resourceId']=self::$pdo->lastInsertId();
-    // Shall we inform for replace ?
+    // add the setSpecs to the OAI file
+    if (count($sets)) {
+      $member=self::$pdo->prepare("INSERT INTO member (resource, oaiset) SELECT ?, oaiset.id FROM oaiset WHERE spec=? ");
+      foreach ($sets as $spec) {
+        $member->execute(array(self::$pars['resourceId'], $spec));
+        if (!$member->rowCount()) echo "$spec — SET UNKNOWN\n";
+      }
+    }
+
+    // Shall we inform when replace ?
     /* [FG] No more used with INSERT OR REPLACE   
     if (substr(self::$stmt['insResource']->errorCode(), 0, 2) == 23) {
       echo '<mark>' . $title . ' (notice déjà insérée, resource.id=' . self::$pars['resourceId'] . ')</mark>';      
@@ -235,8 +246,8 @@ class Weboai {
     
     /* 
     [FG] <teiHeader> is not reliable enough to get an information about the publisher
-    and there is no need for a n-n table, why the same book by same publisher ?
-    The list should be provided externally (TODO)
+    and there is no need for a n-n table, why the same text by two publishers ?
+    The list should be provided externally
     
     foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher') as $publisher) {
       $label = $publisher->nodeValue;
@@ -252,6 +263,7 @@ class Weboai {
       self::$stmt['insPublishes']->execute(array($publisherId, self::$pars['resourceId']));
     }
     */
+    // publisher provided as sets
     self::$pdo->commit();
   }
   
@@ -335,21 +347,13 @@ class Weboai {
     }
     $resourceId=self::$pars['resourceId'];
     self::$stmt['insWrites']->execute(array($authorId, $resourceId, $role));
-  }  
-  
-  
+  }
+  /**
+   * Connect to database
+   */
   function connect($sqlFile) {
     // create database
-    if (!file_exists($sqlFile)) {
-      if (!file_exists($dir=dirname($sqlFile))) {
-        mkdir($dir, 0775, true);
-        @chmod($dir, 0775);
-      }
-      self::$pdo=new PDO("sqlite:".$sqlFile);
-      @chmod($sqlFile, 0775);
-      self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
-      self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
-    }
+    if (!file_exists($sqlFile)) self::create($sqlFile);
     else {
       self::$pdo=new PDO("sqlite:".$sqlFile);
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
@@ -357,7 +361,34 @@ class Weboai {
     // send some pragmas before work
     self::$pdo->exec("PRAGMA recursive_triggers = TRUE;"); // triggers ON CONFLICT
   }
- 
+  /**
+   * Create database 
+   */
+  function create($sqlFile) {
+    if (!file_exists($dir=dirname($sqlFile))) {
+      mkdir($dir, 0775, true);
+      @chmod($dir, 0775);
+    }
+    self::$pdo=new PDO("sqlite:".$sqlFile);
+    @chmod($sqlFile, 0775);
+    self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+    self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
+    // for creation load sets
+    if(!file_exists($json=dirname(__FILE__).'/conf/set.json')) return;
+    $set=self::json($json);
+    $ins=self::$pdo->prepare(
+    'INSERT INTO oaiset (spec, name, uri, image, description)
+                 VALUES (?,    ?,    ?,   ?,     ?);'
+    );
+    foreach($set as $spec=>$array) {
+      $name=$array[0];
+      $uri=(isset($array[1]))?$array[1]:null;
+      // TODO, check links ?
+      $image=(isset($array[2]))?$array[2]:null;
+      $description=(isset($array[3]))?$array[3]:null;
+      $ins->execute(array($spec, $name, $uri, $image, $description));
+    }
+  }
 
   /**
    * load a json resource as an array()
@@ -448,10 +479,14 @@ class Weboai {
     $src=null;//XML src
     $srcFileName=null;
     $dest=null;
-    
+    $args=array();
     while ($arg=array_shift($_SERVER['argv'])) {
+      // method
       if ($arg=="sch2xsl" || $arg=="tei2oai" || $arg=="validation" || $arg=="sqlite" || $arg=="tei2sqlite") $method=$arg;
-      else $src=$arg;
+      // first non method argument is supposed to be the source document
+      else if(!$src) $src=$arg;
+      // record other args for some commands
+      else $args[]=$arg;
     }
     switch ($method) {
       case "sch2xsl":
@@ -503,16 +538,18 @@ class Weboai {
         }
         break;
       //hook: tei2sqlite
+      // use some args as setSpec
       case "tei2sqlite":
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $tei) {
           $weboai = new Weboai($tei);
           $oai = $weboai->tei2oai();
-          echo "===============\n$weboai->srcFileName\n===============\n$oai";
+          // [FG] please, one line by file is enough, let it
+          echo "$weboai->srcFileName\n";
           $oaiDOM = new DOMDocument();
           $oaiDOM->loadXML($oai);
           $weboai->doc = $oaiDOM;
-          $weboai->sqlite('weboai.sqlite');          }
+          $weboai->sqlite('weboai.sqlite', $args);          }
         }
         else {
           $weboai = new Weboai($src);
@@ -521,7 +558,7 @@ class Weboai {
           $oaiDOM = new DOMDocument();
           $oaiDOM->loadXML($oai);
           $weboai->doc = $oaiDOM;
-          $weboai->sqlite('weboai.sqlite');
+          $weboai->sqlite('weboai.sqlite', $args);
         }
         break;
     }
@@ -541,8 +578,8 @@ class Weboai {
     $this->doc->formatOutput=true;
     $this->doc->substituteEntities=true;
 
-    // realpath is supposed to be useful on win but break absolute uris
-    $this->doc->load($src, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_COMPACT);
+    // LIBXML_NOWARNING to not output warning on 
+    $this->doc->load($src, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_COMPACT  | LIBXML_NOWARNING);
     restore_error_handler();
     if (count($this->message)) {
       $this->doc->appendChild($this->doc->createComment("Error recovered in loaded XML document \n". implode("\n", $this->message)."\n"));
