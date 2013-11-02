@@ -246,7 +246,6 @@ class Weboai {
     
     /* 
     [FG] <teiHeader> is not reliable enough to get an information about the publisher
-    and there is no need for a n-n table, why the same text by two publishers ?
     The list should be provided externally
     
     foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher') as $publisher) {
@@ -374,7 +373,7 @@ class Weboai {
     self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
     // for creation load sets
-    if(!file_exists($json=dirname(__FILE__).'/conf/set.json')) return;
+    if(!file_exists($json=dirname(__FILE__).'/local/set.json')) return;
     $set=self::json($json);
     $ins=self::$pdo->prepare(
     'INSERT INTO oaiset (spec, name, uri, image, description)
@@ -567,6 +566,7 @@ class Weboai {
   /**
    * Load xml src as dom in $this->doc, with an error recorder
    * called by constructor
+   * [FG] error handler is unplugged. Keep or strip?
    */
   private function load($src) {
     $this->message=array();
