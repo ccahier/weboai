@@ -1,0 +1,11 @@
+php_flag zlib.output_compression on
+php_value zlib.output_compression_level 9 
+
+# maybe needed on some servers
+Options -MultiViews +FollowSymLinks +Indexes
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# edit rewrite base according to your server
+# RewriteBase …
+RewriteRule   ^(.*)$ index.php/$1 [QSA,L]

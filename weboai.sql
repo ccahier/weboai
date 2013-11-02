@@ -1,4 +1,3 @@
--- TOHINK, implement sets, a record may be 
 
 -- Format of an SQLite base feed with OAI
 CREATE TABLE resource (
