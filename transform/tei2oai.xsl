@@ -17,8 +17,6 @@
   xmlns:dcterms="http://purl.org/dc/terms/"
   exclude-result-prefixes="tei date">
   <xsl:output encoding="UTF-8" indent="yes" method="xml"/>
-  <xsl:param name="oai_id_prefix">CAHIER:</xsl:param>
-  <!-- name of the TEI file  -->
   <xsl:param name="filename"/>
   
   <xsl:template match="/">
@@ -26,80 +24,86 @@
   </xsl:template>
     
   <xsl:template match="tei:teiHeader">
-    <record>
-      <header>
-        <identifier>
-          <xsl:value-of select="$oai_id_prefix"/>
-          <xsl:value-of select="$filename"/>
-        </identifier>
-        <datestamp><xsl:value-of select="date:date-time()"/></datestamp><!-- date du jour ou date de publi (tei:fileDesc/tei:publicationStmt/tei:date/@when) ? -->
-        <setSpec>SHS</setSpec><!-- voir la liste des valeurs ; on articule avec textClass ? -->
-      </header>
-      <metadata>
-        <oai_dc:dc xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-          <!-- closed, do not allow ordering, or to test if an expected element is not there
-          <xsl:apply-templates select="
-            tei:fileDesc/tei:publicationStmt/tei:idno |
-            tei:fileDesc/tei:titleStmt/tei:title[1] |
-            tei:fileDesc/tei:titleStmt/tei:author |
-            tei:fileDesc/tei:titleStmt/tei:editor |
-            tei:fileDesc/tei:publicationStmt/tei:publisher |
-            tei:fileDesc/tei:publicationStmt/tei:availability |
-            tei:fileDesc/tei:seriesStmt/tei:idno |
-            tei:fileDesc/tei:notesStmt/tei:note[@type='abstract'] |
-            tei:fileDesc/tei:sourceDesc/tei:bibl |
-            tei:profileDesc/tei:creation |
-            tei:profileDesc/tei:textClass//tei:term[@type='subject']"/>
-            -->
-          <!-- 1! identifier -->
-          <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno[1]"/>
-          <!-- 1! title -->
-          <!-- TODO: Aggregate subtitles ? translated titles ? -->
-          <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:title[1]"/>
-          <!-- n? creator -->
-          <xsl:choose>
-            <xsl:when test="tei:fileDesc/tei:titleStmt/tei:author">
-              <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:author"/>
-            </xsl:when>
-            <!-- specific BVH, msDesc before a <bibl> ? -->
-            <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct">
-              <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct/*/tei:author"/>
-            </xsl:when>
-            <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]">
-              <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]/tei:author"/>
-            </xsl:when>
-          </xsl:choose>
-          <!-- 1? significant date -->
-          <xsl:choose>
-            <xsl:when test="tei:profileDesc/tei:creation/tei:date">
-              <xsl:apply-templates select="tei:profileDesc/tei:creation/tei:date[1]"/>
-            </xsl:when>
-            <!-- specific BVH, msDesc before a <bibl> ? -->
-            <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct">
-              <!-- Date can be in <imprint>, or not -->
-              <xsl:for-each select="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct//tei:date[1]">
-                <xsl:apply-templates select="."/>
-              </xsl:for-each>
-            </xsl:when>
-            <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]">
-              <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]/tei:date[1]"/>
-            </xsl:when>
-          </xsl:choose>
-          <!-- n? contributor -->
-          <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:editor"/>
-          <!-- n? description -->
-          <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
-          <!-- n? publisher -->
-          <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:publisher"/>
-          <!-- 1! rights -->
-          <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:availability"/>
-          <!-- 1? source -->
-          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]"/>
-          <!-- n? subject -->
-          <xsl:apply-templates select="tei:profileDesc/tei:textClass//tei:term"/>
-        </oai_dc:dc>
-      </metadata>
-    </record>
+    <!-- It is not the right context to handle that, too much infos are server dependant, and not source dependant -->
+    <!--
+    <header>
+      <identifier>
+        <xsl:value-of select="$oai_id_prefix"/>
+        <xsl:value-of select="$filename"/>
+      </identifier>
+      <datestamp><xsl:value-of select="date:date-time()"/></datestamp>
+    </header>
+    -->
+    <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+      <xsl:choose>
+        <xsl:when test="/*/@xml:id">
+          <xsl:attribute name="xml:id">
+            <xsl:value-of select="/*/@xml:id"/>
+          </xsl:attribute>
+        </xsl:when>
+        <!-- Ajouter ici un filename ? -->
+      </xsl:choose>
+      <!-- closed, do not allow ordering, or to test if an expected element is not there
+      <xsl:apply-templates select="
+        tei:fileDesc/tei:publicationStmt/tei:idno |
+        tei:fileDesc/tei:titleStmt/tei:title[1] |
+        tei:fileDesc/tei:titleStmt/tei:author |
+        tei:fileDesc/tei:titleStmt/tei:editor |
+        tei:fileDesc/tei:publicationStmt/tei:publisher |
+        tei:fileDesc/tei:publicationStmt/tei:availability |
+        tei:fileDesc/tei:seriesStmt/tei:idno |
+        tei:fileDesc/tei:notesStmt/tei:note[@type='abstract'] |
+        tei:fileDesc/tei:sourceDesc/tei:bibl |
+        tei:profileDesc/tei:creation |
+        tei:profileDesc/tei:textClass//tei:term[@type='subject']"/>
+        -->
+      <!-- 1! identifier -->
+      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno[1]"/>
+      <!-- 1! title -->
+      <!-- TODO: Aggregate subtitles ? translated titles ? -->
+      <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:title[1]"/>
+      <!-- n? creator -->
+      <xsl:choose>
+        <xsl:when test="tei:fileDesc/tei:titleStmt/tei:author">
+          <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:author"/>
+        </xsl:when>
+        <!-- specific BVH, msDesc before a <bibl> ? -->
+        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct">
+          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct/*/tei:author"/>
+        </xsl:when>
+        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]">
+          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]/tei:author"/>
+        </xsl:when>
+      </xsl:choose>
+      <!-- 1? significant date -->
+      <xsl:choose>
+        <xsl:when test="tei:profileDesc/tei:creation/tei:date">
+          <xsl:apply-templates select="tei:profileDesc/tei:creation/tei:date[1]"/>
+        </xsl:when>
+        <!-- specific BVH, msDesc before a <bibl> ? -->
+        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct">
+          <!-- Date can be in <imprint>, or not -->
+          <xsl:for-each select="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct//tei:date[1]">
+            <xsl:apply-templates select="."/>
+          </xsl:for-each>
+        </xsl:when>
+        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]">
+          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]/tei:date[1]"/>
+        </xsl:when>
+      </xsl:choose>
+      <!-- n? contributor -->
+      <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:editor"/>
+      <!-- n? description -->
+      <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
+      <!-- n? publisher -->
+      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:publisher"/>
+      <!-- 1! rights -->
+      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:availability"/>
+      <!-- 1? source -->
+      <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]"/>
+      <!-- n? subject -->
+      <xsl:apply-templates select="tei:profileDesc/tei:textClass//tei:term"/>
+    </oai_dc:dc>
   </xsl:template>
   
   <!-- 
