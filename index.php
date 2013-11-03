@@ -31,8 +31,9 @@ Ceci est une démonstration de Weboai sur les corpus CAHIER.
 Plus d’explications sur le <a href="http://sourceforge.net/p/weboai/wiki/Home/">wiki du projet Sourceforge</a>. 
               </p>
               <?php 
+echo "\n".'<h2 style="text-align:center; margin-top:1em; margin-bottom:1em; ">';$oaiweb->report();echo '</h2>';
+$oaiweb->sets();
 $oaiweb->chrono();
-echo '<p> </p>';
 $oaiweb->biblio(); 
               ?>
             </div>

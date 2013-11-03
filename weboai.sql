@@ -55,11 +55,11 @@ CREATE INDEX writesRole     ON writes(role);
 CREATE TABLE oaiset (
   -- external list of sets, also used for publishers http://www.openarchives.org/OAI/openarchivesprotocol.html#Set
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
-  spec         TEXT UNIQUE NOT NULL, -- setSpec, a colon [:] separated list indicating the path from the root of the set hierarchy to the respective node.
-  name         TEXT,   -- setName, a short human-readable string naming the set.
+  spec         TEXT UNIQUE NOT NULL, -- OAI, setSpec, a colon [:] separated list indicating the path from the root of the set hierarchy to the respective node.
+  name         TEXT,   -- OAI, setName, a short human-readable string naming the set.
   uri          TEXT,   -- not in OAI protocol but useful for links
   image        BLOB,   -- not in OAI protocol, useful for human interface
-  description  TEXT    -- setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set 
+  description  TEXT    -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set 
 );
 CREATE INDEX oaisetSpec ON oaiset(spec);
 

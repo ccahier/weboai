@@ -24,7 +24,7 @@ class Oaiweb {
   /** date query, start year */
   public $start;
   /** set query, 0 or more */
-  public $set=array();
+  public $set;
   /** lang for generated messages */
   public $lang;
   /** Generated messages */
@@ -38,6 +38,26 @@ class Oaiweb {
     ),
     "date"=>array("en"=>"Date","fr"=>"Date"),
     "death"=>array("en"=>"Death","fr"=>"Mort"),
+    "docs"=>array(
+      "fr"=>'<b>%d</b> textes trouvés parmi <a href="?">%d</a>',
+      "en"=>'<b>%d</b> texts out <a href="?">%d</a>'
+    ),
+    "docsAll"=>array(
+      "fr"=>'<b>%d</b> textes',
+      "en"=>'<b>%d</b> texts'
+    ),
+    "docs1"=>array(
+      "fr"=>'<b>Un</b> texte trouvé parmi  <a href="?">%d</a>',
+      "en"=>'<b>One</b> text out of <a href="?">%d</a>'
+    ),
+    "docs0"=>array(
+      "fr"=>'<b>Aucun</b> texte trouvé parmi  <a href="?">%d</a>',
+      "en"=>'<b>No</b> text out of  <a href="?">%d</a>'
+    ),
+    "n"=>array("en"=>"№","fr"=>"n°"),
+    "text"=>array("en"=>"Text","fr"=>"Texte"),
+    "texts"=>array("en"=>"Text","fr"=>"Textes"),
+    "text1"=>array("en"=>"One text","fr"=>"Un texte"),
     "title"=>array("en"=>"Title","fr"=>"Titre"),
     "titles"=>array("en"=>"Title(s)","fr"=>"Titre(s)"),
   );
@@ -61,6 +81,17 @@ class Oaiweb {
     // by and notby may be repeated params or comma separated integer list
     if (isset($_REQUEST['by'])) $this->by=self::csi(implode(',',Web::pars('by')));
     if (isset($_REQUEST['notby'])) $this->notby=self::csi(implode(',',Web::pars('notby')));
+    // valid sets requested and take the integer for query
+    if (isset($_REQUEST['set'])) {
+      $setSpecs=Web::pars('set');
+      $this->set=array();
+      $getId=$this->pdo->prepare("SELECT id FROM oaiset WHERE spec = ? ");
+      foreach ($setSpecs AS $set) {
+        $getId->execute(array($set));
+        list($id)=$getId->fetch();
+        if($id) $this->set[]=$id;
+      }
+    }
   }
   /** What to append to a query string, to keep search params */
   function qsa($exclude=array(), $include=array()) {
@@ -102,10 +133,15 @@ class Oaiweb {
     $this->pdo->exec("CREATE TEMP TABLE found (id INTEGER PRIMARY KEY, date INTEGER);");
     $from="";
     $where=" 1 ";
-    if($this->by || $this->notby) $from .= ",writes";
+    if($this->by || $this->notby) $from .= ", writes";
     if ($this->by) $where.=" AND (writes.author IN (".implode(',',$this->by).")  AND writes.resource = resource.id)";
     if ($this->notby) $where.=" AND (writes.author NOT IN (".implode(',',$this->notby).")  AND writes.resource = resource.id)";
-
+    // set array supposed to have been verified against the table oaiset to have integer serial
+    if ($this->set) {
+      $from .= ", member";
+      $where.=" AND (member.oaiset IN (".implode(',',$this->set).")  AND member.resource = resource.id)";
+    }
+    
     if ($this->start && $this->end) $where.=" AND (resource.date >= $this->start AND resource.date <= $this->end)";
     // occurrences not useful in this biliographic context
     if ($this->q) {
@@ -119,6 +155,18 @@ class Oaiweb {
     echo "<!-- $sql \n",$this->docsFound," found out ".$this->docsCount." in ",number_format( microtime(true) - $timeStart, 3)," s. -->";
     $this->pdo->commit(); // temp tables only available now
     $this->search=TRUE;
+  }
+  /**
+   * Display a simple line as a report about query
+   */
+  public function report() {
+    if (!$this->search) $this->search();
+    // no query
+    if ($this->docsFound==$this->docsCount) echo $this->msg("docsAll", array($this->docsCount));
+    else if ($this->docsFound > 1) echo $this->msg("docs", array($this->docsFound, $this->docsCount));
+    else if ($this->docsFound == 1) echo $this->msg("docs1", array($this->docsCount));
+    // nothing found
+    else echo $this->msg("docs0", array($this->docsCount));
   }
   /** 
    * display search results as a chrono
@@ -165,13 +213,17 @@ class Oaiweb {
     $html[]='<table width="100%" class="chrono" border="0" cellspacing="0" cellpadding="0">
   <tr>';
     foreach($chrono as $start=>$value) {
-      // last cell
+      // keep other search params
+      $href="?".$this->qsa(array('start','end'));
+      // last cell, link to reset chrono search
       if ($value==="") {
-        $html[]='    <td align="left" class="end"><div class="year">'.$start.'</div></td>';
+        $html[]='    <td align="left" class="end"><a href="'.$href.'">X<div class="year">'.$start.'</div></a></td>';
         continue;
       }
+      // add the period search params
+      $href .= "&start=".$start."&end=".($start+$step-1);
       $em=number_format($height*$value/$max);
-      $href="?".$this->qsa(array('start','end'))."&start=".$start."&end=".($start+$step-1);
+      // no link if value=0
       if (!$value) $href="";
       $html[]='    <td>';
       if ($href) $html[]='      <a href="'.$href.'">';
@@ -186,13 +238,37 @@ class Oaiweb {
 </table>';
     echo implode("\n",$html);
   }
+  /**
+   * List sets
+   */
+  public function sets($prefix="") {
+    if (!$this->search) $this->search();
+    if (!$this->docsFound) return;
+    $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member, found WHERE found.id=member.resource AND member.oaiset=oaiset.id GROUP BY oaiset.id ORDER BY oaiset.spec ");
+    $list->execute(array());
+    echo "\n".'<div class="sets">';
+    while($set=$list->fetch(PDO::FETCH_ASSOC)) {
+      // do no display sets with no result, except for home
+      if (!$set['count'] && $this->docsFound != $this->docsCount) continue;
+      // indent subsets
+      $indent=substr_count($set['spec'], ':');
+      // number of texts
+      if (!$set['count']) $texts='';
+      else if ($set['count']==1) $texts=$this->msg('text1');
+      else $texts=$set['count'].' '.mb_strtolower ( $this->msg('texts') , "UTF-8" );
+      
+      echo '<div class="' . $indent*2 . 'em">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['spec'] . '">' . $set['name'] . '  (' . $texts . ')'.'</a></div>'; 
+    }
+    echo "\n".'</div>';
+  }
+  
   
   /**
    * display search results as a bibliography
    * do not display books by author (pb multiple authors)
    * $limit : max books
    */
-  public function biblio($cols=array('byline', 'title', 'date'), $limit=300) {
+  public function biblio($cols=array('n', 'byline', 'title', 'date'), $limit=300) {
     if (!$this->search) $this->search();
     if (!$this->docsFound) return;
 
@@ -203,16 +279,20 @@ class Oaiweb {
     $html[]='<table class="sortable">';
     $html[]='  <tr>';
     foreach($cols as $col) {
+      if ($col == 'n')  $html[]='    <th>'.$this->msg('n').'</th>';
       if ($col == 'byline') $html[]='    <th>'.$this->msg('byline').'</th>';
       if ($col == 'date')   $html[]='    <th>'.$this->msg('date').'</th>';
       if ($col == 'title')  $html[]='    <th class="nosort">'.$this->msg('title').'</th>';
     }
     echo implode("\n",$html);
     $list->execute(array());
+    $i=0;
     while($record=$list->fetch(PDO::FETCH_ASSOC)) {
+      $i++;
       $html=array();
       $html[]='  <tr>';
       foreach($cols as $col) {
+        if ($col == 'n')      $html[]='    <td class="n">'.$i.'</td>';
         if ($col == 'byline') $html[]='    <td class="byline">'.$record['byline'].'</td>';
         if ($col == 'date')   $html[]='    <td>'.$record['date'].'</td>';
         if ($col == 'title')  $html[]='    <td><a href="'.$record['identifier'].'">'.$record['title'].'</a></td>';
