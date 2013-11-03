@@ -101,7 +101,7 @@ class Oaiweb {
     $this->docsCount = current($this->pdo->query("SELECT COUNT(*) FROM resource")->fetch());
     $this->pdo->exec("CREATE TEMP TABLE found (id INTEGER PRIMARY KEY, date INTEGER);");
     $from="";
-    $where="WHERE 1 ";
+    $where=" 1 ";
     if($this->by || $this->notby) $from .= ",writes";
     if ($this->by) $where.=" AND (writes.author IN (".implode(',',$this->by).")  AND writes.resource = resource.id)";
     if ($this->notby) $where.=" AND (writes.author NOT IN (".implode(',',$this->notby).")  AND writes.resource = resource.id)";
@@ -109,9 +109,9 @@ class Oaiweb {
     if ($this->start && $this->end) $where.=" AND (resource.date >= $this->start AND resource.date <= $this->end)";
     // occurrences not useful in this biliographic context
     if ($this->q) {
-      $sql="INSERT INTO found (id, date) SELECT ft.docid, resource.date FROM resource, fr ".$from." WHERE (resource.id=fr.docid AND fr.title MATCH ".$this->pdo->quote($this->q).") ".$where;
+      $sql="INSERT INTO found (id, date) SELECT ft.docid, resource.date FROM resource, ft ".$from." WHERE (resource.id=ft.docid AND ft.heading MATCH ".$this->pdo->quote($this->q).") AND ".$where;
     }
-    else $sql="INSERT INTO found (id, date) SELECT resource.id, resource.date FROM resource ".$from."  ".$where;
+    else $sql="INSERT INTO found (id, date) SELECT resource.id, resource.date FROM resource ".$from." WHERE ".$where;
     $this->pdo->exec($sql);
     $this->pdo->exec("CREATE INDEX foundDate ON found(date);");
     $this->docsFound = current($this->pdo->query("select count(*) from found")->fetch());

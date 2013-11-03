@@ -18,10 +18,10 @@
                                 
                                     
                                                                             
-                                        <div id="cloudfw_search-2" class="widget-header widget_cloudfw_search"><h3 class="header-widget-title">Rechercher</h3> <form action="http://www.cahier.paris-sorbonne.fr" id="searchform" method="get">
+                                        <div id="cloudfw_search-2" class="widget-header widget_cloudfw_search"><h3 class="header-widget-title">Rechercher</h3> <form action="" id="searchform" method="get">
                       <div id="search-module">
                             
-                                <span id="search-module-icon"></span><input type="text" name="s" id="search-input" />
+                                <span id="search-module-icon"></span><input type="text" name="q" value="<?php echo str_replace('"', '&quot;', $oaiweb->q) ?>" id="search-input" />
                                 
                         </div><!-- /#search-module -->
                     </form>
