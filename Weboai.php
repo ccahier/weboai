@@ -52,6 +52,8 @@ class Weboai {
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
     $this->load($srcFile);
+    // json replace table
+    self::$re['fr_sort_tr']=self::json(dirname(__FILE__).'/lib/fr_sort.json');
   }
   
   /**
@@ -147,10 +149,14 @@ class Weboai {
     //prepare statements
     //self::$stmt['delResource']=self::$pdo->prepare("DELETE FROM resource WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
     
-    // Take of on 
     self::$stmt['insResource']=self::$pdo->prepare("
       INSERT OR REPLACE INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline)
                                VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?)
+      ;
+    ");
+    self::$stmt['insFt']=self::$pdo->prepare("
+      INSERT OR REPLACE INTO ft (docid, heading, description)
+                         VALUES (?,     ?,       ?)
       ;
     ");
     self::$stmt['insAuthor']=self::$pdo->prepare("
@@ -161,11 +167,7 @@ class Weboai {
       INSERT INTO writes (author, resource, role)
                   VALUES (?,      ?,        ?);
     ");
-    // id d’une notice déjà soumise pour mise à jour -- TODO régler la politique ID pour améliorer la clause WHERE
-    self::$stmt['selResourceId']=self::$pdo->prepare("
-      SELECT id FROM resource WHERE title= ?;
-    ");
-    // déplacer dans la méthode insAuthor()?
+    // déplacer dans la méthode insAuthor()? [FG] Why? Interest of prepared statement is to avoid repetition 
     self::$stmt['selAuthorId']=self::$pdo->prepare("
       SELECT id FROM author WHERE sort1 = ? AND sort2 = ? AND birth = ? AND death = ?; 
     ");
@@ -202,7 +204,6 @@ class Weboai {
     $date=NULL;
     $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if ($dateList->length) $date= $dateList->item(0)->nodeValue;
-    // TODO, verify if indent is OK
     $record=$oai->saveXML();
     // (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
     self::$stmt['insResource']->execute(array(
@@ -215,7 +216,20 @@ class Weboai {
       $byline
     ));
     // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
-    if(!isset(self::$pars['resourceId'])) self::$pars['resourceId']=self::$pdo->lastInsertId();
+    self::$pars['resourceId']=self::$pdo->lastInsertId();
+    // full text version
+    $heading=(($byline)?$byline.'. ':'').$title;
+    $description=$heading;
+    $descList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
+    for ($i =0; $i < $descList->length; $i++ ) {
+      $description.="\n\n".$descList->item($i)->nodeValue;
+    }
+    self::$stmt['insFt']->execute(array(
+      self::$pars['resourceId'],
+      $heading,
+      $heading.(($description)?"\n".$description:''),
+    ));
+    
     // add the setSpecs to the OAI file
     if (count($sets)) {
       $member=self::$pdo->prepare("INSERT INTO member (resource, oaiset) SELECT ?, oaiset.id FROM oaiset WHERE spec=? ");
@@ -226,7 +240,11 @@ class Weboai {
     }
 
     // Shall we inform when replace ?
-    /* [FG] No more used with INSERT OR REPLACE   
+    /* [FG] No more used with INSERT OR REPLACE
+    // id d’une notice déjà soumise pour mise à jour -- TODO régler la politique ID pour améliorer la clause WHERE
+    self::$stmt['selResourceId']=self::$pdo->prepare("
+      SELECT id FROM resource WHERE title= ?;
+    ");
     if (substr(self::$stmt['insResource']->errorCode(), 0, 2) == 23) {
       echo '<mark>' . $title . ' (notice déjà insérée, resource.id=' . self::$pars['resourceId'] . ')</mark>';      
       self::$stmt['selResourceId']->execute(array($title));
@@ -307,8 +325,6 @@ class Weboai {
       if ($given==mb_convert_case($given, MB_CASE_UPPER, "UTF-8") && preg_match('/\p{Lu}\p{Lu}/', $given)) $given=mb_convert_case($given, MB_CASE_TITLE, "UTF-8");
     }
     */
-    // charger ressource json pour le tri
-    self::$re['fr_sort_tr']=self::json(dirname(__FILE__).'/lib/fr_sort.json');
     $sort1=strtr($family, self::$re['fr_sort_tr']);
     $sort2=strtr($given, self::$re['fr_sort_tr']);
     $birth=trim(substr($dates,0, strpos($dates, '-')));

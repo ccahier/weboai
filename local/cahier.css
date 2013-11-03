@@ -19,15 +19,18 @@
 .chrono td {vertical-align:bottom; text-align:center;}
 .chrono td.end {width:4ex;}
 .chrono .year {text-align:left; border-left:1px solid #CCCCCC; font-weight:normal; padding-left:0.5ex;}
-.chrono .bar {border-top:2px ridge #3F1F2C; border-left:1px solid #CCCCCC; background-color: #3F1F2C; background-image: -webkit-gradient(linear, left bottom, right top,from(#FFFFFF),to(#3F1F2C)); background-image: -webkit-linear-gradient(bottom,#FFFFFF, #3F1F2C); background-image: -moz-linear-gradient(bottom, #FFFFFF, #3F1F2C); background-image: -ms-linear-gradient(bottom, #FFFFFF, #3F1F2C); background-image: -o-linear-gradient(bottom, #FFFFFF, #3F1F2C); background-image: linear-gradient(bottom, #FFFFFF, #3F1F2C);}
+.chrono .bar {border-top:2px ridge #6C3A55; border-left:1px solid #CCCCCC; background-color:#6C3A55; background-image: -webkit-gradient(linear, left bottom, right top,from(#FFFFFF),to(#6C3A55)); background-image: -webkit-linear-gradient(bottom,#FFFFFF, #6C3A55); background-image: -moz-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: -ms-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: -o-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: linear-gradient(bottom, #FFFFFF, #6C3A55);}
 /** sortable for biblio */
-table.sortable td{ vertical-align:top; border:#CCCCCC 1px solid;border-bottom:none; border-top:none; padding:2px 1ex; }
-tr.even { }
-tr.odd { background-color:#DFDFDF;}
-table.sortable th{ vertical-align:top; padding:1px 0; text-align:center; background-color:#3F1F2C; color:#FFFFFF; border-left:1px #FFF solid; }
+table.sortable { border:1px #6C3A55 solid; }
+table.sortable td{ vertical-align:top; border:#CCCCCC 1px solid; border-bottom:none; border-top:none; padding:2px 1ex; }
+table.sortable tr:hover {background-color:#E9E2E6}
+table.sortable th{ vertical-align:top; padding:1px 0; text-align:center; background-color:#6C3A55; color:#FFFFFF; border-left:1px #FFF solid; }
 table.sortable th a {color:#FFFFFF;}
+table.sortable tr.mod5 td { border-top:dashed 1px #6C3A55; }
+table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
 
 
+#content a {color:#6C3A55;}
 body {background-color: #3F1F2C; background-image: url('http://cahier.paris-sorbonne.fr/wp-content/uploads/2011/11/bg_red33.jpg'); background-repeat: repeat-x; background-position: 50% 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
 #body-pattern {background-image: url(http://www.cahier.paris-sorbonne.fr/wp-content/themes/positive/lib/imgs/navigation-pattern.png); background-repeat: repeat; }
 #header, #header-widget {color: #E7E7E8; }

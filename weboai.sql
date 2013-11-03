@@ -15,7 +15,7 @@ CREATE TABLE resource (
 
 CREATE VIRTUAL TABLE ft USING FTS3 (
   -- fulltext fields to find records for a public interface
-  title        TEXT,  -- aggregation of titles and authors for full-text search
+  heading      TEXT,  -- aggregation of titles and authors for full-text search
   description  TEXT   -- aggregation of abstracts for full-text search
 );
 
