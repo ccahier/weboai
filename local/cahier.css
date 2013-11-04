@@ -19,6 +19,7 @@ table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
 td.n { text-align:right; color:#999A9A; font-size:80%;}
 /** Sets */
 div.sets {margin-top:1em; margin-bottom:1em; }
+#content a {color:#6C3A55;}
 
 /** CAHIER, local design, not webaoi */
 /* cross-domain problem with Firefox, fonts are local */
@@ -27,7 +28,6 @@ div.sets {margin-top:1em; margin-bottom:1em; }
   font-family: 'BebasNeueRegular';
   src: url('bebasneue-webfont.eot');
 }
-
 @font-face {
   /* This declaration targets everything else */
   font-family: 'BebasNeueRegular';
@@ -35,7 +35,6 @@ div.sets {margin-top:1em; margin-bottom:1em; }
   font-weight: normal;
   font-style: normal;
 }
-#content a {color:#6C3A55;}
 body {background-color: #3F1F2C; background-image: url('http://cahier.paris-sorbonne.fr/wp-content/uploads/2011/11/bg_red33.jpg'); background-repeat: repeat-x; background-position: 50% 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
 #body-pattern {background-image: url(http://www.cahier.paris-sorbonne.fr/wp-content/themes/positive/lib/imgs/navigation-pattern.png); background-repeat: repeat; }
 #header, #header-widget {color: #E7E7E8; }

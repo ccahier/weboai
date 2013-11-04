@@ -295,7 +295,10 @@ class Oaiweb {
         if ($col == 'n')      $html[]='    <td class="n">'.$i.'</td>';
         if ($col == 'byline') $html[]='    <td class="byline">'.$record['byline'].'</td>';
         if ($col == 'date')   $html[]='    <td>'.$record['date'].'</td>';
-        if ($col == 'title')  $html[]='    <td><a href="'.$record['identifier'].'">'.$record['title'].'</a></td>';
+        if ($col == 'title')  {
+          if ($record['identifier'] && $record['identifier']!='?') $html[]='    <td><a href="'.$record['identifier'].'">'.$record['title'].'</a></td>';
+          else $html[]='<td>'.$record['title'].'</td>';
+        }
       }
       $html[]='  </tr>';
       echo implode("\n",$html);
