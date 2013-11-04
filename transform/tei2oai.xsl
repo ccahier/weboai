@@ -58,7 +58,19 @@
         tei:profileDesc/tei:textClass//tei:term[@type='subject']"/>
         -->
       <!-- 1! identifier -->
-      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno[1]"/>
+      <xsl:choose>
+        <xsl:when test="tei:fileDesc/tei:publicationStmt/tei:idno[1]">
+          <dc:identifier>
+            <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno[1]"/>
+          </dc:identifier>
+        </xsl:when>
+        <!-- specific  -->
+        <xsl:when test="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base">
+          <dc:identifier>
+            <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base"/>
+          </dc:identifier>
+        </xsl:when>
+      </xsl:choose>
       <!-- 1! title -->
       <!-- TODO: Aggregate subtitles ? translated titles ? -->
       <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:title[1]"/>

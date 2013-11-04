@@ -5,7 +5,7 @@
   "publisher:cellf":["CELLF, Centre d'Étude de la Langue et de la Littérature Françaises des XVIIe et XVIIIe siècles", "http://www.cellf.paris-sorbonne.fr/"],
   "publisher:cellf:astree":["CELLF, le règne d'Astrée", "http://www.astree.paris-sorbonne.fr/"],
   "publisher:cellf:artamene":["CELLF, Artamène ou le Grand Cyrus", "http://www.artamene.org/"],
-  "publisher:cellf:crht":["CELLF, Centre de recherche sur l’histoire du théâtre", "http://www.crht.paris-sorbonne.fr/"],
+  "publisher:cellf:crht":["CELLF, Bibliothèque dramatique", "http://www.crht.paris-sorbonne.fr/"],
   "publisher:obvil":["OBVIL, Observatoire de la vie littéraire", "http://obvil.paris-sorbonne.fr/"],
   "publisher:obvil:critique":["OBVIL, corpus critique", "http://obvil-dev.paris-sorbonne.fr/critique/"]
 }
