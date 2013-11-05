@@ -244,22 +244,42 @@ class Oaiweb {
   public function sets($prefix="") {
     if (!$this->search) $this->search();
     if (!$this->docsFound) return;
-    $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member, found WHERE found.id=member.resource AND member.oaiset=oaiset.id GROUP BY oaiset.id ORDER BY oaiset.spec ");
-    $list->execute(array());
-    echo "\n".'<div class="sets">';
-    while($set=$list->fetch(PDO::FETCH_ASSOC)) {
-      // do no display sets with no result, except for home
-      if (!$set['count'] && $this->docsFound != $this->docsCount) continue;
-      // indent subsets
-      $indent=substr_count($set['spec'], ':');
-      // number of texts
-      if (!$set['count']) $texts='';
-      else if ($set['count']==1) $texts=$this->msg('text1');
-      else $texts=$set['count'].' '.mb_strtolower ( $this->msg('texts') , "UTF-8" );
-      
-      echo '<div class="' . $indent*2 . 'em">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['spec'] . '">' . $set['name'] . '  (' . $texts . ')'.'</a></div>'; 
+    // no search, list all sets
+    if ($this->docsFound == $this->docsCount) {
+      echo "\n".'<div class="sets">';
+      $countQ=$this->pdo->prepare("SELECT count(*) AS count FROM member, found WHERE member.oaiset=? AND found.id=member.resource");
+      foreach ($this->pdo->query("SELECT * FROM oaiset", PDO::FETCH_ASSOC) as $set) {
+        // indent subsets
+        $indent=substr_count($set['spec'], ':');
+        $countQ->execute(array($set['id']));
+        list($count)=$countQ->fetch();
+        if (!$count) $texts='';
+        else if ($count==1) $texts=' ('.$this->msg('text1').')';
+        else $texts=' ('.$count.' '.mb_strtolower ( $this->msg('texts') , "UTF-8" ).')';
+        if(!$count) echo '<div class="level' . (0 + $indent) . '">'. $set['name'] .'</a></div>';
+        else echo '<div class="level' . (0+$indent) . '">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['spec'] . '">' . $set['name'] . $texts .'</a></div>'; 
+      }
+      echo "\n".'</div>';
     }
-    echo "\n".'</div>';
+    else {
+      $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member, found WHERE found.id=member.resource AND member.oaiset=oaiset.id GROUP BY oaiset.id ORDER BY oaiset.spec ");
+      $list->execute(array());
+      echo "\n".'<div class="sets">';
+      while($set=$list->fetch(PDO::FETCH_ASSOC)) {
+        // do no display sets with no result, except for home
+        if (!$set['count'] && $this->docsFound != $this->docsCount) continue;
+        // indent subsets
+        $indent=substr_count($set['spec'], ':');
+        // number of texts
+        if (!$set['count']) $texts='';
+        else if ($set['count']==1) $texts=' ('.$this->msg('text1').')';
+        else $texts=' ('.$set['count'].' '.mb_strtolower ( $this->msg('texts') , "UTF-8" ).')';
+        
+        echo '<div class="level'. (0 + $indent) . '">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['spec'] . '">' . $set['name'] . $texts .'</a></div>'; 
+      }
+      echo "\n".'</div>';
+    }
+    
   }
   
   

@@ -18,7 +18,11 @@ table.sortable tr.mod5 td { border-top:dashed 1px #6C3A55; }
 table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
 td.n { text-align:right; color:#999A9A; font-size:80%;}
 /** Sets */
-div.sets {margin-top:1em; margin-bottom:1em; }
+div.sets {margin-top:1em; margin-bottom:1em;color:#999A9A}
+div.sets .level0 {color:#000000}
+div.sets .level1 {margin-left:2em;}
+div.sets .level2 {margin-left:4em;}
+
 #content a {color:#6C3A55;}
 
 /** CAHIER, local design, not webaoi */
