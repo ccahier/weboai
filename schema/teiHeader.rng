@@ -41,7 +41,7 @@
         <dt><a href="http://purl.org/dc/terms/contributor" target="dc">dc:contributor</a></dt>
         <dd>
           <q>An entity responsible for making contributions to the resource.</q>
-          <br/>Auteur secondaire (préface, postface, etc.). Même règles d’écriture que dc:creator
+          <br/>Auteur secondaire (préface, postface, etc.) : Nom, Prénom (date-date) NF Z 44-061 – optionnel, répétable
           <!-- <br/>/TEI/teiHeader/fileDesc/titleStmt/author[@ana='contributor']/@key -->
           <br/>/TEI/teiHeader/fileDesc/titleStmt/editor/@key
         </dd>
@@ -57,8 +57,7 @@
           <q>A point or period of time associated with an event in the lifecycle of the resource.</q>
           <br/>Date de création du document et non de sa déclinaison éditoriale (première édition imprimée, date du fichier TEI, etc.).
           <br/>/TEI/teiHeader/profileDesc/creation/date/@when
-          <br/>/TEI/teiHeader/profileDesc/creation/date/@notBefore
-          <br/>/TEI/teiHeader/profileDesc/creation/date/@notAfter
+          <br/>en cas d’intervalle : /TEI/teiHeader/profileDesc/creation/date/@notAfter
         </dd>
         <dt><a href="http://purl.org/dc/terms/description" target="dc">dc:description</a></dt>
         <dd>
@@ -95,9 +94,9 @@
         <dt><a href="http://purl.org/dc/terms/language" target="dc">dc:language</a> (xsi:type="dcterms:ISO639-2")</dt>
         <dd>
           <q>A language of the resource.</q>
-          <br/>Langue principale du document, code de 3 lettres (ISO 639-b2) – unique, obligatoire
-          <br/>/TEI/@xml:lang
+          <br/>Langue principale du document, code de 3 lettres (ISO 639-b2) – obligatoire, répétable
           <br/>/TEI/teiHeader/profileDesc/langUsage/language/@ident
+          <br/>si langUsage non renseigné : /TEI/@xml:lang
         </dd>
         <!-- NB : on devrait remplacer dc:rights par dc:license, non ? -->
         <dt><a href="http://purl.org/dc/terms/rights" target="dc">dc:rights</a> (xsi:type="dcterms:URI")</dt>
@@ -115,7 +114,8 @@
         <dt><a href="http://purl.org/dc/terms/title" target="dc">dc:title</a></dt>
         <dd>
           <q>A name given to the resource.</q>
-          <br/>concat(/TEI/teiHeader/fileDesc/titleStmt/title[not(@type)], '. ' , /TEI/teiHeader/fileDesc/titleStmt/title[@type='sub'])
+          <br/>Si pas de @type : /TEI/teiHeader/fileDesc/titleStmt/title[1]
+          <br/>Sinon : concat(/TEI/teiHeader/fileDesc/titleStmt/title[@type='main'], '.' , /TEI/teiHeader/fileDesc/titleStmt/title[@type='sub'])
         </dd>
         <!--
         <dt><a href="http://purl.org/dc/terms/type" target="dc">dc:type</a></dt>
@@ -212,7 +212,7 @@
     <define name="title.group">
       <oneOrMore>
         <element name="title">
-          <a:documentation>Titres. Le premier titre est considéré comme le titre principal. Les suivants sont considérés commes des compléments du titre. En cas de traduction, le titre original est à indiquer avec un attribut @xml:lang qui en indique la langue.</a:documentation>
+          <a:documentation>Titres. Le premier titre est considéré comme le titre principal. Les suivants sont considérés commes des compléments du titre. En cas d’utilisation de @type, l’export DC concatène dans dc:title le titre principal (main) et le sous-titre (sub). En cas de traduction, le titre original est à indiquer avec un attribut @xml:lang qui en indique la langue.</a:documentation>
           <ul xmlns="http://www.w3.org/1999/xhtml">
             <li>&lt;<a href="http://purl.org/dc/terms/title" target="dc">dc:title</a>&gt; titre propre et sous-titre (optionnel)</li>
             <!-- 
@@ -396,6 +396,8 @@
       <element name="creation">
         <div xmlns="http://www.w3.org/1999/xhtml">
           <p>“The date and place of composition are often of particular importance for studies of linguistic variation; since such information cannot be inferred with confidence from the bibliographic description of the copy text, the creation element may be used to provide a consistent location for this information.” (<a href="http://www.tei-c.org/release/doc/tei-p5-doc/fr/html/HD.html#HD4C" target="TEI">TEI P5, Guidelines, principes directeurs</a>)</p>
+          <p>La date renseignée ici est la date estimée "de composition" du texte transcrit (quand l’auteur a-t-il composé le texte ?), et non la date d’une instance particulière de ce texte (date d’un manuscrit ou d’un imprimé). Une telle date est utile au classement chronologique des textes.</p>
+          <p>Pour l’export DC, en cas d’intervalle (par ex. "entre 1200 et 1225"), renseigné grâce aux attributs @notBefore et @notAfter, on ne conserve dans dc:date que la valeur de la borne supérieure ("1225").</p>
           <ul>
             <li>&lt;<a href="http://purl.org/dc/terms/date" target="dc">dc:date</a>&gt;</li>
           </ul>
@@ -409,11 +411,12 @@
       <element name="langUsage">
         <oneOrMore>
           <element name="language">
-            <a:documentation>Langue principale du texte. Renseigner l’attribut @ident avec un code ISO 639-2 (avec extensions simili ISO si nécessaire), et donner un intitulé textuel de la langue dans le contenu de l'élément</a:documentation>
+            <a:documentation>Langue(s) principale(s) du texte. Renseigner l’attribut @ident avec un code ISO 639-2 (avec extensions simili ISO si nécessaire), et donner un intitulé textuel de la langue dans le contenu de l'élément</a:documentation>
             <p xmlns="http://www.w3.org/1999/xhtml" class="note">La langue principale du texte doit être inscrite sur sa racine /TEI, en valeur de l’attribut @xml:lang (permet notamment d’orienter un correcteur orthographique dans un éditeur XML).</p>
+            <p xmlns="http://www.w3.org/1999/xhtml" class="note">Pour les variantes historiques des langues (moyen fançais, ancien français, etc.), le choix est fait au sein du consortium de privilégier une authentification plus générique (français), en conservant la possibilité de coupler cette identification à une date.</p>
             <a:example>
-<language ident="la_EU_mod" usage="75">Latin moderne (XVIIe)</language>
-<language ident="fr" usage="25">Français (préface et notes)</language>
+<language ident="lat" usage="75">Latin moderne (XVIIe)</language>
+<language ident="fre" usage="25">Français (préface et notes)</language>
             </a:example>
             <ul xmlns="http://www.w3.org/1999/xhtml">
               <li>&lt;<a href="http://purl.org/dc/terms/language" target="dc">dc:language</a>&gt;</li>

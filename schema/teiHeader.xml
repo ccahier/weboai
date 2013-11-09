@@ -5,7 +5,8 @@
     <fileDesc>
       <titleStmt>
         <!-- dc:title, obligatoire, répétable (notamment pour titres traduits) -->
-        <title>titre composite du général au particulier, avec le point pour séparateur [ISBD]</title>
+        <title type="main">Titre composite du général au particulier, avec le point pour séparateur [ISBD]</title>
+        <title type="sub">Sous-titre optionnel, concaténé au titre principal dans la conversion dc:title</title>
         <!-- dc:creator, obligatoire
 @key obligatoire, permet d'inscrire la forme d’autorité du nom de l'auteur, c'est celle qui sert de clé de regroupement dans un catalogue.
 Le contenu de l'élément permet d'inscrire le nom de l'auteur avec un balisage enrichi (optionnel).
@@ -55,8 +56,8 @@ Le nom de l'éditeur doit être un terme contrôlé, afin de pouvoir être une c
     <profileDesc>
       <creation>
         <!-- dc:date, obligatoire, unique
-Date de création du document (à distinguer de la date de publication du document électronique, ou de  la source imprimée)  -->
-        <date when="2013"/>
+Date de création du document (à distinguer de la date de publication du document électronique, ou de la source imprimée)  -->
+        <date when="1857"/>
       </creation>
       <langUsage>
         <!-- dc:language, obligatoire, répétable -->
