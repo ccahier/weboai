@@ -37,6 +37,7 @@ class Oaiweb {
       "en"=>'Byline',
     ),
     "date"=>array("en"=>"Date","fr"=>"Date"),
+    "date1"=>array("en"=>"Date","fr"=>"Date"),
     "death"=>array("en"=>"Death","fr"=>"Mort"),
     "docs"=>array(
       "fr"=>'<b>%d</b> textes trouvés parmi <a href="?">%d</a>',
@@ -129,25 +130,25 @@ class Oaiweb {
   public function search() {
     $timeStart = microtime(true);
     $this->pdo->beginTransaction();
-    $this->docsCount = current($this->pdo->query("SELECT COUNT(*) FROM resource")->fetch());
+    $this->docsCount = current($this->pdo->query("SELECT COUNT(*) FROM record")->fetch());
     $this->pdo->exec("CREATE TEMP TABLE found (id INTEGER PRIMARY KEY, date INTEGER);");
     $from="";
     $where=" 1 ";
     if($this->by || $this->notby) $from .= ", writes";
-    if ($this->by) $where.=" AND (writes.author IN (".implode(',',$this->by).")  AND writes.resource = resource.id)";
-    if ($this->notby) $where.=" AND (writes.author NOT IN (".implode(',',$this->notby).")  AND writes.resource = resource.id)";
+    if ($this->by) $where.=" AND (writes.author IN (".implode(',',$this->by).")  AND writes.record = record.id)";
+    if ($this->notby) $where.=" AND (writes.author NOT IN (".implode(',',$this->notby).")  AND writes.record = record.id)";
     // set array supposed to have been verified against the table oaiset to have integer serial
     if ($this->set) {
       $from .= ", member";
-      $where.=" AND (member.oaiset IN (".implode(',',$this->set).")  AND member.resource = resource.id)";
+      $where.=" AND (member.oaiset IN (".implode(',',$this->set).")  AND member.record = record.id)";
     }
     
-    if ($this->start && $this->end) $where.=" AND (resource.date >= $this->start AND resource.date <= $this->end)";
+    if ($this->start && $this->end) $where.=" AND (record.date >= $this->start AND record.date <= $this->end)";
     // occurrences not useful in this biliographic context
     if ($this->q) {
-      $sql="INSERT INTO found (id, date) SELECT ft.docid, resource.date FROM resource, ft ".$from." WHERE (resource.id=ft.docid AND ft.heading MATCH ".$this->pdo->quote($this->q).") AND ".$where;
+      $sql="INSERT INTO found (id, date) SELECT ft.docid, record.date FROM record, ft ".$from." WHERE (record.id=ft.docid AND ft.heading MATCH ".$this->pdo->quote($this->q).") AND ".$where;
     }
-    else $sql="INSERT INTO found (id, date) SELECT resource.id, resource.date FROM resource ".$from." WHERE ".$where;
+    else $sql="INSERT INTO found (id, date) SELECT record.id, record.date FROM record ".$from." WHERE ".$where;
     $this->pdo->exec($sql);
     $this->pdo->exec("CREATE INDEX foundDate ON found(date);");
     $this->docsFound = current($this->pdo->query("select count(*) from found")->fetch());
@@ -210,6 +211,7 @@ class Oaiweb {
     $chrono[$last]="";
     // max bar height in em
     $height=10;
+    $html[]='<p>Répartition des textes trouvés selon les dates “premières” (généralement la date de création)</p>';
     $html[]='<table width="100%" class="chrono" border="0" cellspacing="0" cellpadding="0">
   <tr>';
     foreach($chrono as $start=>$value) {
@@ -247,7 +249,7 @@ class Oaiweb {
     // no search, list all sets
     if ($this->docsFound == $this->docsCount) {
       echo "\n".'<div class="sets">';
-      $countQ=$this->pdo->prepare("SELECT count(*) AS count FROM member, found WHERE member.oaiset=? AND found.id=member.resource");
+      $countQ=$this->pdo->prepare("SELECT count(*) AS count FROM member, found WHERE member.oaiset=? AND found.id=member.record");
       foreach ($this->pdo->query("SELECT * FROM oaiset", PDO::FETCH_ASSOC) as $set) {
         // indent subsets
         $indent=substr_count($set['spec'], ':');
@@ -262,7 +264,7 @@ class Oaiweb {
       echo "\n".'</div>';
     }
     else {
-      $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member, found WHERE found.id=member.resource AND member.oaiset=oaiset.id GROUP BY oaiset.id ORDER BY oaiset.spec ");
+      $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member, found WHERE found.id=member.record AND member.oaiset=oaiset.id GROUP BY oaiset.id ORDER BY oaiset.spec ");
       $list->execute(array());
       echo "\n".'<div class="sets">';
       while($set=$list->fetch(PDO::FETCH_ASSOC)) {
@@ -288,11 +290,11 @@ class Oaiweb {
    * do not display books by author (pb multiple authors)
    * $limit : max books
    */
-  public function biblio($cols=array('n', 'byline', 'title', 'date'), $limit=300) {
+  public function biblio($cols=array('n', 'byline', 'title', 'date', 'date2'), $limit=300) {
     if (!$this->search) $this->search();
     if (!$this->docsFound) return;
 
-    $list=$this->pdo->prepare("SELECT resource.identifier, resource.byline, resource.title, resource.date FROM resource, found WHERE found.id=resource.id ORDER BY found.date LIMIT ".$limit);
+    $list=$this->pdo->prepare("SELECT record.identifier, record.byline, record.title, record.date, record.date2 FROM record, found WHERE found.id=record.id ORDER BY found.date LIMIT ".$limit);
     
     // buffer to output line after line
     $html=array();
@@ -301,7 +303,8 @@ class Oaiweb {
     foreach($cols as $col) {
       if ($col == 'n')  $html[]='    <th>'.$this->msg('n').'</th>';
       if ($col == 'byline') $html[]='    <th>'.$this->msg('byline').'</th>';
-      if ($col == 'date')   $html[]='    <th>'.$this->msg('date').'</th>';
+      if ($col == 'date')   $html[]='    <th title="Date de création du texte">Date <br/>première</th>';
+      if ($col == 'date2')   $html[]='    <th title="Autre date importante, comme la date d’édition d’un texte ancien">Date <br/>seconde</th>';
       if ($col == 'title')  $html[]='    <th class="nosort">'.$this->msg('title').'</th>';
     }
     echo implode("\n",$html);
@@ -315,6 +318,7 @@ class Oaiweb {
         if ($col == 'n')      $html[]='    <td class="n">'.$i.'</td>';
         if ($col == 'byline') $html[]='    <td class="byline">'.$record['byline'].'</td>';
         if ($col == 'date')   $html[]='    <td>'.$record['date'].'</td>';
+        if ($col == 'date2')   $html[]='    <td>'.$record['date2'].'</td>';
         if ($col == 'title')  {
           if ($record['identifier'] && $record['identifier']!='?') $html[]='    <td><a href="'.$record['identifier'].'">'.$record['title'].'</a></td>';
           else $html[]='<td>'.$record['title'].'</td>';
