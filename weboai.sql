@@ -1,16 +1,18 @@
 
 -- Format of an SQLite base feed with OAI
-CREATE TABLE resource (
+CREATE TABLE record (
   -- OAI record of a resource, should be enough for an OAI engine, and to display a short result for the resource
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   deleted BOOLEAN NOT NULL DEFAULT FALSE, -- ! required by OAI protocol to inform harvester
   oai_datestamp   INTEGER NOT NULL,       -- ! OAI record's submission date http://www.sqlite.org/lang_datefunc.html, time string format 6 : YYYY-MM-DDTHH:MM:SS
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
   record          TEXT NOT NULL,          -- ! the oai record
-  title           TEXT NOT NULL,          -- ! dc:title, just for display 
   identifier      TEXT,                   -- ! a link for the full-text, should be unique dc:identifier, but life sometimes…
-  date            INTEGER,                -- ! dc:date, creation date of the text, should be not null, but let people see it in their queries
-  byline          TEXT                    -- ? optional, texts may not have authors, dc:author x n, just for display 
+  title           TEXT NOT NULL,          -- ! dc:title, just for display 
+  byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
+  date            INTEGER NOT NULL,       -- ! dc:date, creation date of the text, should be not null
+  date2           INTEGER,                -- ? second important date in life of resoource (ex: edition date of a medieval text)
+  issued          INTEGER                 -- ? publication date of electronic resource
 );
 
 CREATE VIRTUAL TABLE ft USING FTS3 (
@@ -44,11 +46,11 @@ CREATE INDEX authorProtect ON author(protect);
 CREATE TABLE writes (
   -- relation table
   author      INTEGER NOT NULL REFERENCES author(id),
-  resource    INTEGER NOT NULL REFERENCES resource(id),
+  record      INTEGER NOT NULL REFERENCES record(id),
   role        INTEGER NOT NULL -- 1=dc:creator | 2=dc:contributor (NB: dc:contributor = tei:editor)
 );
 CREATE INDEX writesAuthor   ON writes(author);
-CREATE INDEX writesResource ON writes(resource); -- revoir la sémantique de la base ???? [FG] Pourquoi ? plutôt "text" ?
+CREATE INDEX writesRecord   ON writes(record); -- revoir la sémantique de la base ???? [FG] Pourquoi ? plutôt "text" ?
 CREATE INDEX writesRole     ON writes(role);
 
 
@@ -65,19 +67,19 @@ CREATE INDEX oaisetSpec ON oaiset(spec);
 
 CREATE TABLE member (
   oaiset      INTEGER NOT NULL REFERENCES oaiset(id),
-  resource    INTEGER NOT NULL REFERENCES resource(id)
+  record      INTEGER NOT NULL REFERENCES record(id)
 );
 CREATE INDEX memberOaiset   ON member(oaiset);
-CREATE INDEX memberResource ON member(resource);
+CREATE INDEX memberRecord   ON member(record);
 
 -- TRIGGERS
-CREATE TRIGGER resourceDel
+CREATE TRIGGER recordDel
   -- on resource's record deletion, delete search index, relations to author (dc:creator | dc:contributor), relation to sets
-  BEFORE DELETE ON resource
+  BEFORE DELETE ON record
   FOR EACH ROW BEGIN
     DELETE FROM ft WHERE ft.rowid = OLD.id;
-    DELETE FROM writes WHERE writes.resource = OLD.id;
-    DELETE FROM member WHERE member.resource = OLD.id;
+    DELETE FROM writes WHERE writes.record = OLD.id;
+    DELETE FROM member WHERE member.record = OLD.id;
 END;
 
 CREATE TRIGGER writesDel

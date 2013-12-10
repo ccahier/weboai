@@ -18,7 +18,7 @@ class Weboai {
   // chargement en base
   private static $pdo;// sqlite connection
   private static $stmt=array();// store PDOStatement in array
-  private static $pars=array();// parameters (as resourceID) for SQL
+  private static $pars=array();// parameters (as recordID) for SQL
 
   public static $re=array(
     // normalize spaces and puctuation in html
@@ -147,11 +147,11 @@ class Weboai {
     // TODO 
     $oai_identifier = 'cahier:'.substr($publisher, strpos($publisher, ':')+1).':'.pathinfo($this->srcFileName, PATHINFO_FILENAME);
     //prepare statements
-    //self::$stmt['delResource']=self::$pdo->prepare("DELETE FROM resource WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
+    //self::$stmt['delRecord']=self::$pdo->prepare("DELETE FROM record WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
     
-    self::$stmt['insResource']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO resource (oai_datestamp, oai_identifier, record, title, identifier, date, byline)
-                               VALUES (?,             ?,              ?,      ?,     ?,          ?,    ?)
+    self::$stmt['insRecord']=self::$pdo->prepare("
+      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
+                             VALUES (?,             ?,              ?,      ?,     ?,          ?,      ?,    ?,     ?)
       ;
     ");
     self::$stmt['insFt']=self::$pdo->prepare("
@@ -164,7 +164,7 @@ class Weboai {
                   VALUES (?,       ?,      ?,     ?,    ?,     ?,     ?,     ?,     ?);
     ");
     self::$stmt['insWrites']=self::$pdo->prepare("
-      INSERT INTO writes (author, resource, role)
+      INSERT INTO writes (author, record, role)
                   VALUES (?,      ?,        ?);
     ");
     // déplacer dans la méthode insAuthor()? [FG] Why? Interest of prepared statement is to avoid repetition 
@@ -204,37 +204,55 @@ class Weboai {
     $date=NULL;
     $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if ($dateList->length) $date= $dateList->item(0)->nodeValue;
+    $date2=NULL;
+    $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
+    if ($dateList->length) $date2 = $dateList->item(0)->nodeValue;
+    $issued=NULL;
+    $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
+    if ($dateList->length) $issued = $dateList->item(0)->nodeValue;
     $record=$oai->saveXML();
-    // (oai_datestamp, oai_identifier, record, title, identifier, date, byline, publisher)
-    self::$stmt['insResource']->execute(array(
+    // (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
+    self::$stmt['insRecord']->execute(array(
       $oai_datestamp,
       $oai_identifier,
       $record,
       $title,
       $identifier,
+      $byline,
       $date,
-      $byline
+      $date2,
+      $issued
     ));
     // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
-    self::$pars['resourceId']=self::$pdo->lastInsertId();
+    self::$pars['recordId']=self::$pdo->lastInsertId();
     // full text version
     $heading=(($byline)?$byline.'. ':'').$title;
     $description=$heading;
-    $descList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
+    $descList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
     for ($i =0; $i < $descList->length; $i++ ) {
       $description.="\n\n".$descList->item($i)->nodeValue;
     }
     self::$stmt['insFt']->execute(array(
-      self::$pars['resourceId'],
+      self::$pars['recordId'],
       $heading,
       $heading.(($description)?"\n".$description:''),
     ));
     
     // add the setSpecs to the OAI file
+    // add language set
+    $nodeList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
+    for ($i =0; $i < $nodeList->length; $i++ ) {
+      $value=$nodeList->item($i)->nodeValue;
+      if (strpos(strtolower($value), 'fr') === 0) $sets[]='lang:fr';
+      else $sets[]='lang:xx';
+    }
+    
     if (count($sets)) {
-      $member=self::$pdo->prepare("INSERT INTO member (resource, oaiset) SELECT ?, oaiset.id FROM oaiset WHERE spec=? ");
+      $member=self::$pdo->prepare("INSERT INTO member (record, oaiset) SELECT ?, oaiset.id FROM oaiset WHERE spec=? ");
+      // unifier les sets
+      $sets=array_flip(array_flip($sets));
       foreach ($sets as $spec) {
-        $member->execute(array(self::$pars['resourceId'], $spec));
+        $member->execute(array(self::$pars['recordId'], $spec));
         if (!$member->rowCount()) echo "$spec — SET UNKNOWN\n";
       }
     }
@@ -242,13 +260,13 @@ class Weboai {
     // Shall we inform when replace ?
     /* [FG] No more used with INSERT OR REPLACE
     // id d’une notice déjà soumise pour mise à jour -- TODO régler la politique ID pour améliorer la clause WHERE
-    self::$stmt['selResourceId']=self::$pdo->prepare("
-      SELECT id FROM resource WHERE title= ?;
+    self::$stmt['selrecordId']=self::$pdo->prepare("
+      SELECT id FROM record WHERE title= ?;
     ");
-    if (substr(self::$stmt['insResource']->errorCode(), 0, 2) == 23) {
-      echo '<mark>' . $title . ' (notice déjà insérée, resource.id=' . self::$pars['resourceId'] . ')</mark>';      
-      self::$stmt['selResourceId']->execute(array($title));
-      self::$pars['resourceId']=self::$stmt['selResourceId']->fetchColumn();
+    if (substr(self::$stmt['insRecord']->errorCode(), 0, 2) == 23) {
+      echo '<mark>' . $title . ' (notice déjà insérée, record.id=' . self::$pars['recordId'] . ')</mark>';      
+      self::$stmt['selRecordId']->execute(array($title));
+      self::$pars['recordId']=self::$stmt['selRecordId']->fetchColumn();
       // on sort pour l’instant -- TODO: proposer mise à jour de la notice
       exit;
     }
@@ -277,7 +295,7 @@ class Weboai {
       }
       // insertion d’un nouveau publisher
       else $publisherId=self::$pdo->lastInsertId();
-      self::$stmt['insPublishes']->execute(array($publisherId, self::$pars['resourceId']));
+      self::$stmt['insPublishes']->execute(array($publisherId, self::$pars['recordId']));
     }
     */
     // publisher provided as sets
@@ -360,8 +378,8 @@ class Weboai {
       // echo $text.' — '.$dates.' — '.$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'')."\n";
       $authorId=self::$pdo->lastInsertId();
     }
-    $resourceId=self::$pars['resourceId'];
-    self::$stmt['insWrites']->execute(array($authorId, $resourceId, $role));
+    $recordId=self::$pars['recordId'];
+    self::$stmt['insWrites']->execute(array($authorId, $recordId, $role));
   }
   /**
    * Connect to database
@@ -557,14 +575,16 @@ class Weboai {
       case "tei2sqlite":
         if (is_dir($src)) {
           foreach(glob($src . '/*.xml') as $tei) {
-          $weboai = new Weboai($tei);
-          $oai = $weboai->tei2oai();
-          // [FG] please, one line by file is enough, let it
-          echo "$weboai->srcFileName\n";
-          $oaiDOM = new DOMDocument();
-          $oaiDOM->loadXML($oai);
-          $weboai->doc = $oaiDOM;
-          $weboai->sqlite('weboai.sqlite', $args);          }
+            $weboai = new Weboai($tei);
+            $oai = $weboai->tei2oai();
+            // [FG] please, one line by file is enough, let it
+            echo "$weboai->srcFileName\n";
+            $oaiDOM = new DOMDocument();
+            $oaiDOM->loadXML($oai);
+            $weboai->doc = $oaiDOM;
+            // other args are set
+            $weboai->sqlite('weboai.sqlite', $args);          
+          }
         }
         else {
           $weboai = new Weboai($src);

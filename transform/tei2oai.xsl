@@ -59,10 +59,8 @@
         -->
       <!-- 1! identifier -->
       <xsl:choose>
-        <xsl:when test="tei:fileDesc/tei:publicationStmt/tei:idno[1]">
-          <dc:identifier>
-            <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno[1]"/>
-          </dc:identifier>
+        <xsl:when test="tei:fileDesc/tei:publicationStmt/tei:idno">
+            <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno"/>
         </xsl:when>
         <!-- specific  -->
         <xsl:when test="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base">
@@ -88,27 +86,50 @@
         </xsl:when>
       </xsl:choose>
       <!-- 1? significant date -->
-      <xsl:choose>
-        <xsl:when test="tei:profileDesc/tei:creation/tei:date">
-          <xsl:apply-templates select="tei:profileDesc/tei:creation/tei:date[1]"/>
-        </xsl:when>
-        <!-- specific BVH, msDesc before a <bibl> ? -->
-        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct">
-          <!-- Date can be in <imprint>, or not -->
-          <xsl:for-each select="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct//tei:date[1]">
-            <xsl:apply-templates select="."/>
-          </xsl:for-each>
-        </xsl:when>
-        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]">
-          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]/tei:date[1]"/>
-        </xsl:when>
-      </xsl:choose>
+      <xsl:variable name="date">
+        <xsl:choose>
+          <xsl:when test="tei:profileDesc/tei:creation/tei:date">
+            <xsl:apply-templates select="tei:profileDesc/tei:creation/tei:date[1]" mode="year"/>
+          </xsl:when>
+          <!-- specific BVH, msDesc before a <bibl> ? -->
+          <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:date">
+            <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:date)[1]" mode="year"/>
+          </xsl:when>
+          <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]">
+            <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]//tei:date)[1]" mode="year"/>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:if test="$date != ''">
+        <dc:date>
+          <xsl:value-of select="$date"/>
+        </dc:date>
+      </xsl:if>
+      <xsl:variable name="date2">
+        <xsl:choose>
+          <xsl:when test="tei:fileDesc/tei:sourceDesc//tei:date">
+            <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc//tei:date)[1]" mode="year"/>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:if test="$date2 != $date and $date2 != ''">
+        <dcterms:dateCopyrighted>
+          <xsl:value-of select="$date2"/>
+        </dcterms:dateCopyrighted>
+      </xsl:if>
+      <xsl:if test="tei:fileDesc/tei:editionStmt/tei:edition[position()=last()]//tei:date">
+        <dcterms:issued>
+          <xsl:apply-templates select="(tei:fileDesc/tei:editionStmt/tei:edition[position()=last()]//tei:date)[1]" mode="year"/>
+        </dcterms:issued>
+      </xsl:if>
       <!-- n? contributor -->
       <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:editor"/>
       <!-- n? description -->
       <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
       <!-- n? publisher -->
       <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:publisher"/>
+      <!-- n? language -->
+      <xsl:apply-templates select="tei:profileDesc/tei:langUsage/tei:language"/>
       <!-- 1! rights -->
       <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:availability"/>
       <!-- 1? source -->
@@ -125,7 +146,19 @@
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_idno -->
   <!-- obligatoire, unique -->
   <xsl:template match="tei:publicationStmt/tei:idno">
-    <dc:identifier><xsl:apply-templates/></dc:identifier>
+    <xsl:choose>
+      <xsl:when test=". != '' and . != '?'">
+        <dc:identifier>
+          <xsl:apply-templates select="@type"/>
+          <xsl:apply-templates/>
+        </dc:identifier>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+  <xsl:template match="tei:idno/@type">
+    <xsl:attribute name="xsi:type">
+      <xsl:value-of select="translate(., '-', '/')"/>
+    </xsl:attribute>
   </xsl:template>
   
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_title -->
@@ -196,16 +229,20 @@
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_licence -->
   <!-- obligatoire, unique -->
   <xsl:template match="tei:availability">
-    <dc:rights>
       <xsl:choose>
+        <xsl:when test="tei:licence/@target = '' or tei:licence/@target = '?'"/>
         <xsl:when test="tei:licence/@target">
-          <xsl:value-of select="tei:licence/@target"/>
+          <dc:rights>
+            <xsl:value-of select="tei:licence/@target"/>
+          </dc:rights>
         </xsl:when>
+        <xsl:when test=". ='' or . ='?'"/>
         <xsl:otherwise>
-          <xsl:value-of select="normalize-space(.)"/>
+          <dc:rights>
+            <xsl:value-of select="normalize-space(.)"/>
+          </dc:rights>
         </xsl:otherwise>
       </xsl:choose>
-    </dc:rights>
   </xsl:template>
   
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_idno_2 -->
@@ -232,7 +269,12 @@
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_bibl -->
   <!-- unique, obligatoire -->
   <xsl:template match="tei:sourceDesc/tei:bibl">
-    <dc:source><xsl:value-of select="normalize-space(.)"/></dc:source>
+    <xsl:choose>
+      <xsl:when test=".='' or .='?'"/>
+      <xsl:otherwise>
+        <dc:source><xsl:value-of select="normalize-space(.)"/></dc:source>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_creation -->
@@ -242,7 +284,13 @@
       <xsl:call-template name="year"/>
     </dc:date>
   </xsl:template>
-  
+
+  <xsl:template match="tei:language">
+    <dc:language>
+      <xsl:value-of select="@ident"/>
+    </dc:language>
+  </xsl:template>
+
   <!-- Get a year from a date tag with different possible attributes -->
   <xsl:template match="*" mode="year" name="year">
     <xsl:choose>
