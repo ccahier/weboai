@@ -19,11 +19,11 @@ function addEvent(obj, evType, fn){
 }
 
 var Dia = {
-  start:"",
-  end:"",
+  startId:"",
+  endId:"",
   init:function (tagName, className) {
     // déjà fait ?
-    if (Dia.start) return;
+    if (Dia.startId) return;
     var tdm='<form name="tdm"><select id="tdmSelect">';
     // ou bien
     // if (arguments.callee.done) return; else arguments.callee.done = true;
@@ -37,7 +37,7 @@ var Dia = {
       o=list[i];
       if (o.className != className) continue;
       if (!o.id) o.id="dia"+i;
-      if (!Dia.start) Dia.start=o.id;
+      if (!Dia.startId) Dia.startId=o.id;
       if(prev) {
         prev.next=o.id;
         o.prev=prev.id;
@@ -51,7 +51,7 @@ var Dia = {
       // table des matières
       tdm += '<option value="'+o.id+'">'+o.title+'</option>';
       // keep last one
-      Dia.end=o.id;
+      Dia.endId=o.id;
       prev=o;
     }
     tdm += "</select></form>";
@@ -96,7 +96,7 @@ var Dia = {
   },
   go: function (prev) {
     var hash=window.location.hash.substr(1);
-    if(!hash) hash=Dia.start;
+    if(!hash) hash=Dia.startId;
     var from=document.getElementById(hash);
     if (!from) return "#";
     var to;
@@ -124,11 +124,11 @@ var Dia = {
   },
   first:function () {
     Dia.init();
-    return "#"+Dia.start;
+    return "#"+Dia.startId;
   },
   end:function () {
     Dia.init();
-    return "#"+Dia.end;
+    return "#"+Dia.endId;
   }
 }
 window.onresize=Dia.size;
