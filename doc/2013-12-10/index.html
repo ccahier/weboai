@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Weboai</title>
+    <link href="dia.css" rel="stylesheet" type="text/css"/>
+  </head>
+  <body>
+    <div id="header"><img src="banner.jpg" align="left" alt="Weboai, CAHIER/Algone" />
+        <p>Algone<br/>Weboai, 2013-12-10</p>      
+    </div>
+  <!--body matter -->
+  <table class="dias">
+    <tr>
+      <td class="dia">
+        <h1>Objectif</h1>
+        <p>Valoriser les corpus d’auteurs numériques des partenaires CAHIER :</p>
+        <ul>
+          <li>sur le portail du consortium ;</li>
+          <li>en déclarant les ressources XML/TEI aux principaux moissonneurs OAI.</li>
+        </ul>
+        <p>Weboai est un agrégateur « intermédiaire » : il agrège les notices de la communauté CAHIER pour les déclarer ensuite aux moissonneurs généralistes.</p>
+        <p><b>Une difficulté</b> : l’hérérogénéité des pratiques d’encodage des métadonnées.</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="dia">
+        <h1>Weboai est donc :</h1>
+        <ul>
+          <li><b>un logiciel libre</b> qui implémente un entrepôt OAI et propose une interface de validation et d’alimentation des notices ;</li>
+          <li><b>une initiative communautaire</b> pour faire converger les pratiques d’encodage des métadonnées.</li>
+        </ul>
+		<!--
+        <p>Licence libre (Huma-Num).</p>
+		-->
+      </td>
+    </tr>
+    <tr>
+      <td class="dia">
+        <h1>Méthode</h1>
+        <ul>
+          <li>Échanges continus avec les membres du consortium de manière à <b>dégager un schéma commun de <code>teiHeader</code></b>.</li>
+          <li>Ce schéma définit uniquement le jeu de métadonnées indispensables à la production des notices OAI (TEI → DC).<br/>
+        Il ne s’agit pas de définir un teiHeader commun pour les différents projets éditoriaux, cependant, 
+		des discussions ont été engagées sur d’autres champs de métadonnées. 
+		  </li>
+          <li>Implémentation de la spécification pour la transformation et la publication des notices.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td class="dia">
+        <h1>État du travail</h1>
+        <ul>
+          <li>Un <a href="https://sourceforge.net/p/weboai/wiki/Home/" target="_blank">wiki</a> pour conserver la mémoire des décisions concernant le schéma.</li>
+          <li>Un schéma documenté : <a href="http://weboai.sourceforge.net/schema/teiHeader.html" target="_blank">http://weboai.sourceforge.net/schema/teiHeader.html</a></li>
+          <li>Une <a href="http://sourceforge.net/p/weboai/wiki/2013-11-08/" target="_blank">journée d’échanges</a> pour valider les orientations prises.</li>
+          <li>Un premier prototype de catalogue est en ligne : <a href="http://weboai.sourceforge.net/" target="_blank">http://weboai.sourceforge.net/</a></li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td class="dia">
+        <h1>Solutions techniques</h1>
+        <ul>
+          <li>Relax-NG et Schématron pour les schéma et la validation ;</li>
+          <li>Sitemaps / XML pour la déclaration des corpus et l’alimentation automatique de la base ;</li>
+          <li>XSLT pour la transformation des teiHeader en notices OAI / Dublin Core.</li>
+          <li>SQLite pour la base de données ;</li>
+          <li>PHP comme langage web (notamment pour l’implémentation d’un entrepôt OAI).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td class="dia">
+        <h1>À résoudre</h1>
+        <ul>
+          <li>Mise en ligne des sources XML/TEI : Isidore favorise les ressources accessibles en texte intégral.</li>
+          <li>Identification de ces sources XML/TEI.</li>
+		  <!--
+          <li>L’objectif est-il bien de valoriser des fichiers source et non des applications de consultation ?</li>
+		  -->
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+    <footer id="footer">
+      <table>
+        <tr>
+          <td width="700">  Frédéric Glorieux et Vincent Jolivet, décembre 2013</td>
+          <td align="right" id="nav">?</td>
+          <td align="right" nowrap="nowrap" style="padding:3px 2em 3px 1em;" width="10%"><a 
+		  class="but" href="#" onclick="this.href=Dia.first()">|&lt;</a><a 
+		  accesskey="z" class="but" href="#" onclick="this.href=Dia.prev()">&lt;</a><a 
+		  class="but" href="#" onclick="Dia.size() ; this.href=window.location.hash">O</a><a 
+		  accesskey="y" class="but" href="#" onclick="this.href=Dia.next()">&gt;</a><a 
+		  class="but" href="#" onclick="this.href=Dia.end()">&gt;|</a>  
+		  
+		  <a 
+		  class="but" onclick="var a=body.style.fontSize.replace(/[a-z]/gi, ''); body.style.fontSize= (Number(a) - 0.3)+'ex';">–</a><a 
+		  class="but" onclick="var a=body.style.fontSize.replace(/[a-z]/gi, ''); body.style.fontSize= (Number(a) + 0.3)+'ex';">+</a>
+          </td>
+        </tr>
+      </table>
+    </footer>
+    <script src="Dia.js">//</script>
+  </body>
+</html>
