@@ -27,8 +27,8 @@ Le nom de l'éditeur doit être un terme contrôlé, afin de pouvoir être une c
         <publisher>Centre d'Etudes Supérieures de la Renaissance (CESR)</publisher>
         <!-- Date de publication du texte électronique, à distinguer de la date de création. -->
         <date when="2013"/>
-        <!-- dc:identifier, unique, obligatoire, URI -->
-        <idno>http://…</idno>
+        <!-- dc:identifier, unique pour chaque type (tei, html, epub, txt), obligatoire, URI -->
+        <idno type="tei">http://…</idno>
         <!-- dc:rights, unique, obligatoire, URI d’une licence -->
         <availability status="restricted">
           <licence target="http://creativecommons.org/licenses/by-nc-sa/3.0/fr/">Texte expliquant la licence</licence>

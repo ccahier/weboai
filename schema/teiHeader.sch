@@ -23,7 +23,7 @@
     <title>Présence des champs obligatoires</title>
     <rule context="tei:titleStmt">
       <assert test="count(tei:title) >=1">Le titre (dc:title), obligatoire, est inscrit en valeur de l’élément title</assert>
-      <assert test="count(tei:author) >= 1">Au moins un auteur du texte original transcrit (dc:creator) doit être renseigné [fileDesc/titleStmt/author]</assert>
+      <assert test="count(tei:author|tei:principal) >= 1">Le texte doit être attribué (dc:creator) à un auteur [fileDesc/titleStmt/author] ou à un éditeur scientifique [fileDesc/titleStmt/principal].</assert>
     </rule>
     <rule context="tei:publicationStmt">
       <assert test="count(tei:idno) = 1">Une unique URI de référence doit être renseignée [fileDesc/publicationStmt/idno]. Elle sert d’identifiant (dc:identifier) à la notice.</assert>

@@ -333,13 +333,24 @@
               </attribute>
             </element>
           </oneOrMore>
-          <element name="idno">
-            <a:documentation>URI de référence du fichier, obligatoire</a:documentation>
-            <ul xmlns="http://www.w3.org/1999/xhtml">
-              <li>&lt;<a href="http://purl.org/dc/terms/identifier" target="dc">dc:identifier</a>&gt;</li>
-            </ul>
-            <data type="anyURI"/>
-          </element>
+          <oneOrMore>
+            <element name="idno">
+              <a:documentation>URI de référence du fichier, obligatoire</a:documentation>
+              <ul xmlns="http://www.w3.org/1999/xhtml">
+                <li>&lt;<a href="http://purl.org/dc/terms/identifier" target="dc">dc:identifier</a>&gt;</li>
+              </ul>
+              <attribute name="type">
+                <a:documentation>Le format de la ressource distribuée</a:documentation>
+                <choice>
+                  <value>tei</value>
+                  <value>html</value>
+                  <value>epub</value>
+                  <value>txt</value>
+                </choice>
+              </attribute>
+              <data type="anyURI"/>
+            </element>
+          </oneOrMore>
           <ref name="availability"/>
           <oneOrMore>
             <element name="publisher">
