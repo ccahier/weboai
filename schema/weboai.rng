@@ -1,16 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../../algone/xrem/rng2html.xsl"?>
+<?xml-stylesheet type="text/xsl" href="../xrem/rng2html.xsl"?>
 <grammar 
     xmlns="http://relaxng.org/ns/structure/1.0"
     xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dcterms="http://purl.org/dc/terms/"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:oai="http://www.openarchives.org/OAI/2.0/"
     xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
     xmlns:europeana="http://www.europeana.eu/schemas/ese/"
     datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
   <a:documentation>Schéma des notices weboai</a:documentation>
   <start>
+    <choice>
+      <ref name="record"/>
+      <ref name="set"/>
+    </choice>
+  </start>
+  <define name="set">
+    <element name="oai:set">
+      <element name="oai:setSpec">
+        <data type="string">
+          <param name="pattern">[a-z0-9]+(:[a-z0-9]+)*</param>
+        </data>
+      </element>
+      <element name="oai:setName">
+        <data type="string"/>
+      </element>
+      <element name="oai:setDescription">
+        <element name="oai_dc:dc">
+          <interleave>
+            <ref name="identifier"/>
+            <ref name="publisher"/>
+            <ref name="description"/>
+            <oneOrMore>
+              <ref name="language"/>
+            </oneOrMore>
+            <optional>
+              <ref name="source"/>
+            </optional>
+          </interleave>
+        </element>
+      </element>
+    </element>
+  </define>
+  <define name="record">
     <element name="oai_dc:dc">
       <interleave>
         <oneOrMore>
@@ -55,7 +89,7 @@
         </optional>
       </interleave>
     </element>
-  </start>
+  </define>
   <define name="identifier">
     <element name="dc:identifier">
       <a:documentation>Obligatoire. URI de référence du document en texte intégral</a:documentation>

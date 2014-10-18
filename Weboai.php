@@ -1,59 +1,113 @@
 <?php
+/**
+ * Classe de chargement des notices pour exposition OAI
+ */
+
 //if($_SERVER['REQUEST_METHOD']=='POST') Weboai::doPost();
 
 // cli usage
 set_time_limit(-1);
-if (php_sapi_name() == "cli") Weboai::doCli();
+if (php_sapi_name() == "cli") Weboai::docli();
 
 class Weboai {
-  /** Debug mode */
-  static $debug;
-  // conversions
-  private $srcFile;//path du fichier chargé
-  private $srcFileName;// nom du fichier chargé
-  private $xsl;
-  private $proc;
-  private $doc;// DOM doc 
+  static $debug; // debug mode
+  private $srcuri; //path du fichier chargé
+  private $srcfilename; // nom du fichier chargé
+  private $doc; // DOM du XML en court de traitement
+  private $xsl; // DOM d’xsl de transformation
+  private $proc; // processeur xsl
+  private static $log; // flux de log
   
   // chargement en base
-  private static $pdo;// sqlite connection
-  private static $stmt=array();// store PDOStatement in array
-  private static $pars=array();// parameters (as recordID) for SQL
-
-  public static $re=array(
-    // normalize spaces and puctuation in html
-    // . ‘
-    // [FG] utilisé ?
-    'punct'=>array(
-      '@\.\.\.@' => '…',
-      '@ ([»?!])@u' => ' $1',
-      '@([\.?!…»])\s\s+@u' => '$1 ',
-      '@( [tp]\.) ([IVX])@' => '$1 $2', // t. II
-      '@­@' => '',
-      '@<(blockquote|dd|div|dt|h1|h2|h3|h4|h5|h6|li|p|pre)( [^>]+)?>\s*@' => "\$0\n",
-      '@\n +<@' => "\n<",
-      '@</(blockquote|dd|div|dt|h1|h2|h3|h4|h5|h6|li|p|pre)>@' => "\n\$0",
-      '@\n +\n@' => "\n\n",
-    ),
-    // [FG] utilisé ?
-    's'=>array(
-      '@(St).@u' => '$1&#46;', // protect non period dots
-      '@( +)([.)][) »]*)@u' => '$2$1',
-      '@([\p{Ll}>»]\.) ( *)(« |‘|"|“)?([\p{Lu}])@u' => "\$1\$2\n\$3\$4", // a. A… a. « A… f135b. ‘Or pour
-      '@([\?\.\!…] ») ( *)([\p{Lu}«])@' => "\$1\$2\n\$3",
-      '@([?!…]) ( *)([\p{Lu}«])@' => "\$1\$2\n\$3",
-      '@&#46;@' => '.', //restore periods
-    )
-  );
+  private static $sqlitefile; // chemin du fichier sql
+  private static $pdo; // sqlite connection
+  private static $stmt=array(); // store PDOStatement in array
+  private static $pars=array(); // parameters (as record_rowid) for SQL
+  public static $setlang = array( // liste des langue utilisée pour les sets
+    'fr' => 'lang:fr',
+    'fre' => 'lang:fr',
+  ); // lang sets 
+  public static $re=array();
   
-  function __construct($srcFile) {
-    $this->srcFile = $srcFile;
-    $this->srcFileName = basename($srcFile);
+  function __construct($srcuri) {
+    $this->srcuri = $srcuri;
+    $this->srcfilename = pathinfo($srcuri, PATHINFO_FILENAME);
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
-    $this->load($srcFile);
+    $this->load($srcuri);
     // json replace table
-    self::$re['fr_sort_tr']=self::json(dirname(__FILE__).'/lib/fr_sort.json');
+    self::$re['fr_sort_tr'] = self::json(dirname(__FILE__).'/lib/fr_sort.json');
+  }
+  
+  /**
+   * Signaler une erreur
+   */
+  public static function log($line) {
+    if (!self::$log) self::$log = STDERR;
+    fwrite (self::$log, $line . "\n");
+  }
+  /**
+   * Chargement d’un set avec lien sur un sitemap.xml
+   *  — charger la notice de set oai en base sqlite
+   *  — charger le sitemap.xml
+   *  — boucler sur les <url>
+   *  — transformer un TEI en notice DC-OAI
+   *  — charger la notice DC-OAI en base
+   */
+  public static function set2sqlite($sqlitefile, $sets) {
+    self::connect($sqlitefile);
+    
+    self::$stmt['setins']=self::$pdo->prepare(
+    'INSERT INTO oaiset (setspec, setname, identifier, description, sitemap, xml, image)
+                 VALUES (?,       ?,       ?,          ?,           ?,       ?,   ?);'
+    );
+    if (!is_array($sets)) $sets = array($sets);
+    foreach ($sets as $setpath) {
+      if (strpos($setpath, '*') !== false) {
+        foreach (glob($setpath) as $setfile) Weboai::loadset($setfile);
+      }
+      else Weboai::loadset($setpath);
+    }
+  }
+  
+  /**
+   * Charger une seule déclaration de set, appeler par sets ci-dessus
+   */
+  private static function loadset($setfile) {
+    self::log("Load set file $setfile");
+    $xml = file_get_contents($setfile);
+    $doc = new DOMDocument();
+    $doc->loadXML($xml, LIBXML_NOWARNING);
+    // valider ?
+    $setspec = $doc->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'setSpec')->item(0)->textContent;
+    $setname = $doc->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'setName')->item(0)->textContent;
+    $identifier = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier')->item(0)->textContent;
+    $description = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description')->item(0)->textContent;
+    $sourcelist = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'source');
+    if ($sourcelist->length) $source = $sourcelist->item(0)->textContent;
+    else $source = null;
+    $xml = preg_replace('@<\?[^\n]*\?>@', '', $xml);
+    // en cas de remplacement de set (même setspec), des triggers s’occupent de supprimer les records qui en dépendent
+    self::$stmt['setins']->execute(array($setspec, $setname, $identifier, $description, $source, $xml, null));
+    // pas de sitemap à parser, sortir.
+    if (!$source) return;
+    $reader = new XMLReader();
+    $reader->open($source);
+    
+    // préparer l’indexation de plusieurs notices
+    self::sqlitepre();
+    while($reader->read()) {
+      if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'loc') {
+        $teiuri = $reader->expand()->textContent;
+        echo "$teiuri\n";
+        $weboai = new Weboai($teiuri);
+        $weboai->tei2oai();
+        $weboai->sqlite($setspec);
+      }
+    }
+    $reader->close();
+    // finir l’indexation de plusieurs notices
+    self::sqlitepost();
   }
   
   /**
@@ -62,7 +116,7 @@ class Weboai {
    * TODO : test des droits en doPost()
    */
   public function sch2xsl() {
-    //if (!$doc) $doc=$this->srcFile;
+    //if (!$doc) $doc=$this->srcuri;
     /* step1, 2, 3 : see : https://code.google.com/p/schematron/wiki/RunningSchematronWithGNOMExsltproc */
     //step1
     $this->xsl->load(dirname(__FILE__).'/'.'iso-schematron-xslt1/iso_dsdl_include.xsl');
@@ -96,7 +150,7 @@ class Weboai {
     $validation=null;
     $this->xsl->load(dirname(__FILE__) . $xmlValidator);
     $this->proc->importStylesheet($this->xsl);
-    $this->proc->setParameter('axsl', 'fileNameParameter', $this->srcFileName);
+    $this->proc->setParameter('axsl', 'fileNameParameter', $this->srcfilename);
     $svrl_report = $this->proc->transformToDoc($this->doc);
     $failed_assert_nodes = $svrl_report->getElementsByTagNameNS('http://purl.oclc.org/dsdl/svrl','failed-assert');
     //($failed_assert_nodes->length==0) ? $validation=true : $validation=false;
@@ -114,12 +168,11 @@ class Weboai {
    * OAI conversion
    */
   public function tei2oai() {
-    //if ($this->xmlValidation()==false) exit("===================$this->srcFileName non valide======================\n");
+    //if ($this->xmlValidation()==false) exit("===================$this->srcfilename non valide======================\n");
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
-    $this->proc->setParameter(null, 'filename', $this->srcFileName);
-    $oai = $this->proc->transformToXML($this->doc);
-    return $oai;
+    $this->proc->setParameter(null, 'filename', $this->srcfilename);
+    $this->doc = $this->proc->transformToDoc($this->doc);
   }
   
   /**
@@ -134,57 +187,66 @@ class Weboai {
     $this->proc->importStylesheet($this->xsl);
     return $this->proc->transformToXML($xmlDOM);
   }
-  
-    
   /**
-   * Load an OAI record in the weboai SQLITE database
-   * TODO : tester qu’on envoie bien OAI valide
+   * Préparer l’indexation dans sqlite
    */
-  public function sqlite($sqlFile, $sets=array()) {
-    self::connect($sqlFile);
-    // build an oai identifier 
-    $publisher=current($sets);
-    // TODO 
-    $oai_identifier = 'cahier:'.substr($publisher, strpos($publisher, ':')+1).':'.pathinfo($this->srcFileName, PATHINFO_FILENAME);
-    //prepare statements
-    //self::$stmt['delRecord']=self::$pdo->prepare("DELETE FROM record WHERE title = ?"); // idéalement faire porter clause WHERE sur identifier
-    
-    self::$stmt['insRecord']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
-                             VALUES (?,             ?,              ?,      ?,     ?,          ?,      ?,    ?,     ?)
+  private static function sqlitepre() {
+    // reconnecter, pour préparer les requêtes
+    self::connect();
+    self::$stmt['ins_record']=self::$pdo->prepare("
+      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, xml, title, identifier, byline, date, date2, issued)
+                             VALUES (?,             ?,              ?,   ?,     ?,          ?,      ?,    ?,     ?)
       ;
     ");
-    self::$stmt['insFt']=self::$pdo->prepare("
+    self::$stmt['ins_ft']=self::$pdo->prepare("
       INSERT OR REPLACE INTO ft (docid, heading, description)
                          VALUES (?,     ?,       ?)
       ;
     ");
-    self::$stmt['insAuthor']=self::$pdo->prepare("
+    self::$stmt['ins_author']=self::$pdo->prepare("
       INSERT INTO author (heading, family, given, sort, sort1, sort2, birth, death, uri)
                   VALUES (?,       ?,      ?,     ?,    ?,     ?,     ?,     ?,     ?);
     ");
-    self::$stmt['insWrites']=self::$pdo->prepare("
+    self::$stmt['ins_writes']=self::$pdo->prepare("
       INSERT INTO writes (author, record, role)
                   VALUES (?,      ?,        ?);
     ");
-    // déplacer dans la méthode insAuthor()? [FG] Why? Interest of prepared statement is to avoid repetition 
-    self::$stmt['selAuthorId']=self::$pdo->prepare("
-      SELECT id FROM author WHERE sort1 = ? AND sort2 = ? AND birth = ? AND death = ?; 
+    self::$stmt['sel_author_rowid']=self::$pdo->prepare("
+      SELECT rowid FROM author WHERE sort1 = ? AND sort2 = ? AND birth = ? AND death = ?; 
     ");
-    // idem, repérer les homonymes
-    self::$stmt['selAuthorId2']=self::$pdo->prepare("
-      SELECT id FROM author WHERE sort1 = ? AND sort2 = ?; 
+    self::$stmt['sel_author_rowid2']=self::$pdo->prepare("
+      SELECT rowid FROM author WHERE sort1 = ? AND sort2 = ?; 
+    ");
+    self::$stmt['ins_member']=self::$pdo->prepare("
+      INSERT INTO member (record, oaiset) SELECT ?, oaiset.rowid FROM oaiset WHERE setspec=?
     ");
 
-    
-    //start transaction
+    //start transaction ?
     self::$pdo->beginTransaction();
-    // pour meilleure lisibilité
+
+  }
+  /**
+   * Finir l’indexation de notices dans sqlite
+   */
+  public static function sqlitepost() {
+    self::$pdo->commit();
+  }
+  /**
+   * Load an OAI record in the weboai SQLITE database
+   * TODO : tester qu’on envoie bien OAI valide
+   */
+  public function sqlite($setspec) {
+    $oai_identifier = $setspec . ':' . $this->srcfilename;
     $oai = $this->doc;
-    
+    // TODO, log error
     $oai_datestamp  = time();
     // title, just the first one
-    $title          = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title')->item(0)->nodeValue;
+    $titlelist = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
+    if(!$titlelist->length) {
+      self::log("$oai_identifier : ERROR NO dc:title" );
+      return;
+    }
+    $title = $titlelist->item(0)->nodeValue;
     // prepare the byline
     $creatorList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
     $byline=NULL;
@@ -200,6 +262,9 @@ class Weboai {
     $identifier=NULL;
     $idList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
     if ($idList->length) $identifier= $idList->item(0)->nodeValue;
+    else {
+      self::log("$oai_identifier : WARN NO dc:identifier" );
+    }
     // be nice or block ?
     $date=NULL;
     $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
@@ -212,7 +277,7 @@ class Weboai {
     if ($dateList->length) $issued = $dateList->item(0)->nodeValue;
     $record=$oai->saveXML();
     // (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
-    self::$stmt['insRecord']->execute(array(
+    self::$stmt['ins_record']->execute(array(
       $oai_datestamp,
       $oai_identifier,
       $record,
@@ -224,16 +289,16 @@ class Weboai {
       $issued
     ));
     // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
-    self::$pars['recordId']=self::$pdo->lastInsertId();
+    self::$pars['record_rowid']=self::$pdo->lastInsertId();
     // full text version
-    $heading=(($byline)?$byline.'. ':'').$title;
-    $description=$heading;
-    $descList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
+    $heading = (($byline)?$byline.'. ':'') . $title;
+    $description = $heading;
+    $descList = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
     for ($i =0; $i < $descList->length; $i++ ) {
-      $description.="\n\n".$descList->item($i)->nodeValue;
+      $description .= "\n\n".$descList->item($i)->nodeValue;
     }
-    self::$stmt['insFt']->execute(array(
-      self::$pars['recordId'],
+    self::$stmt['ins_ft']->execute(array(
+      self::$pars['record_rowid'],
       $heading,
       $heading.(($description)?"\n".$description:''),
     ));
@@ -243,30 +308,26 @@ class Weboai {
     $nodeList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
     for ($i =0; $i < $nodeList->length; $i++ ) {
       $value=$nodeList->item($i)->nodeValue;
-      if (strpos(strtolower($value), 'fr') === 0) $sets[]='lang:fr';
-      else $sets[]='lang:xx';
-    }
-    
-    if (count($sets)) {
-      $member=self::$pdo->prepare("INSERT INTO member (record, oaiset) SELECT ?, oaiset.id FROM oaiset WHERE spec=? ");
-      // unifier les sets
-      $sets=array_flip(array_flip($sets));
-      foreach ($sets as $spec) {
-        $member->execute(array(self::$pars['recordId'], $spec));
-        if (!$member->rowCount()) echo "$spec — SET UNKNOWN\n";
+      $value = strtolower($value);
+      if (isset(self::$setlang[$value])) {
+        self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], self::$setlang[$value]));
+      }
+      else if ($i>1) {
+        self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], 'lang:xx'));
       }
     }
+    self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], $setspec));
 
     // Shall we inform when replace ?
     /* [FG] No more used with INSERT OR REPLACE
     // id d’une notice déjà soumise pour mise à jour -- TODO régler la politique ID pour améliorer la clause WHERE
-    self::$stmt['selrecordId']=self::$pdo->prepare("
+    self::$stmt['sel_record_rowid']=self::$pdo->prepare("
       SELECT id FROM record WHERE title= ?;
     ");
     if (substr(self::$stmt['insRecord']->errorCode(), 0, 2) == 23) {
-      echo '<mark>' . $title . ' (notice déjà insérée, record.id=' . self::$pars['recordId'] . ')</mark>';      
-      self::$stmt['selRecordId']->execute(array($title));
-      self::$pars['recordId']=self::$stmt['selRecordId']->fetchColumn();
+      echo '<mark>' . $title . ' (notice déjà insérée, record.id=' . self::$pars['record_rowid'] . ')</mark>';      
+      self::$stmt['sel_record_rowid']->execute(array($title));
+      self::$pars['record_rowid']=self::$stmt['sel_record_rowid']->fetchColumn();
       // on sort pour l’instant -- TODO: proposer mise à jour de la notice
       exit;
     }
@@ -274,32 +335,11 @@ class Weboai {
     
     // insertions
     foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
-      self::insAuthor($creator->nodeValue, 1);// arg2, 1=creator
+      self::ins_author($creator->nodeValue, 1);// arg2, 1=creator
     }
     foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
-      self::insAuthor($contributor->nodeValue, 2);// arg2, 2=contributor
+      self::ins_author($contributor->nodeValue, 2);// arg2, 2=contributor
     }
-    
-    /* 
-    [FG] <teiHeader> is not reliable enough to get an information about the publisher
-    The list should be provided externally
-    
-    foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher') as $publisher) {
-      $label = $publisher->nodeValue;
-      self::$stmt['insPublisher']->execute(array($label)); // $label UNIQUE in weboai.sql
-      $publisherId=null;
-      // si publisher existe déjà
-      if (substr(self::$stmt['insPublisher']->errorCode(), 0, 2) == 23) {
-        self::$stmt['selPublisherId']->execute(array($label));
-        $publisherId=self::$stmt['selPublisherId']->fetchColumn();
-      }
-      // insertion d’un nouveau publisher
-      else $publisherId=self::$pdo->lastInsertId();
-      self::$stmt['insPublishes']->execute(array($publisherId, self::$pars['recordId']));
-    }
-    */
-    // publisher provided as sets
-    self::$pdo->commit();
   }
   
   /**
@@ -308,7 +348,7 @@ class Weboai {
    * Montaigne, Françoise de (153.?-....)
    * Bernard de Clairvaux (saint ; 1090?-1153)
    */
-  public static function insAuthor($text, $role=NULL, $uri=NULL) {
+  public static function ins_author($text, $role=NULL, $uri=NULL) {
     // bug ?
     if (!$text) return;
     $heading=$text;
@@ -361,66 +401,47 @@ class Weboai {
     $death=0+$death;
     if (!$death) $death=null;
     // ? negative dates ?
-    self::$stmt['selAuthorId']->execute(array( $sort1, $sort2, $birth, $death ));
-    $authorId=self::$stmt['selAuthorId']->fetchColumn();
+    self::$stmt['sel_author_rowid']->execute(array( $sort1, $sort2, $birth, $death ));
+    $authorId=self::$stmt['sel_author_rowid']->fetchColumn();
     // be nice if no dates
     if (!$authorId && !$birth) {
-      self::$stmt['selAuthorId2']->execute(array( $sort1, $sort2));
-      $authorId=self::$stmt['selAuthorId2']->fetchColumn();
+      self::$stmt['sel_author_rowid2']->execute(array( $sort1, $sort2));
+      $authorId=self::$stmt['sel_author_rowid2']->fetchColumn();
       // homonyms ? ALERT ?
-      if ($authorId and self::$stmt['selAuthorId2']->fetchColumn()) $authorId=null;
+      if ($authorId and self::$stmt['sel_author_rowid2']->fetchColumn()) $authorId=null;
     }
     if (!$authorId) {
       // (heading, family, given, sort, sort1, sort2, birth, death, uri)
-      self::$stmt['insAuthor']->execute(array(
+      self::$stmt['ins_author']->execute(array(
         $heading, $family, $given, $sort1.$sort2, $sort1, $sort2, $birth, $death, $uri
       ));
       // echo $text.' — '.$dates.' — '.$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'')."\n";
       $authorId=self::$pdo->lastInsertId();
     }
-    $recordId=self::$pars['recordId'];
-    self::$stmt['insWrites']->execute(array($authorId, $recordId, $role));
+    $record_rowid=self::$pars['record_rowid'];
+    self::$stmt['ins_writes']->execute(array($authorId, $record_rowid, $role));
   }
   /**
    * Connect to database
    */
-  function connect($sqlFile) {
+  function connect($sqlitefile=null) {
+    if ($sqlitefile) self::$sqlitefile = $sqlitefile;
+    self::$pdo = null;
     // create database
-    if (!file_exists($sqlFile)) self::create($sqlFile);
-    else {
-      self::$pdo=new PDO("sqlite:".$sqlFile);
+    if (!file_exists(self::$sqlitefile)) {
+      if (!file_exists($dir = dirname(self::$sqlitefile))) {
+        mkdir($dir, 0775, true);
+        @chmod($dir, 0775);
+      }
+      self::$pdo=new PDO("sqlite:" . self::$sqlitefile);
+      self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+      self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
+    } else {
+      self::$pdo=new PDO("sqlite:" . self::$sqlitefile);
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     }
     // send some pragmas before work
     self::$pdo->exec("PRAGMA recursive_triggers = TRUE;"); // triggers ON CONFLICT
-  }
-  /**
-   * Create database 
-   */
-  function create($sqlFile) {
-    if (!file_exists($dir=dirname($sqlFile))) {
-      mkdir($dir, 0775, true);
-      @chmod($dir, 0775);
-    }
-    self::$pdo=new PDO("sqlite:".$sqlFile);
-    @chmod($sqlFile, 0775);
-    self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
-    self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
-    // for creation load sets
-    if(!file_exists($json=dirname(__FILE__).'/local/set.json')) return;
-    $set=self::json($json);
-    $ins=self::$pdo->prepare(
-    'INSERT INTO oaiset (spec, name, uri, image, description)
-                 VALUES (?,    ?,    ?,   ?,     ?);'
-    );
-    foreach($set as $spec=>$array) {
-      $name=$array[0];
-      $uri=(isset($array[1]))?$array[1]:null;
-      // TODO, check links ?
-      $image=(isset($array[2]))?$array[2]:null;
-      $description=(isset($array[3]))?$array[3]:null;
-      $ins->execute(array($spec, $name, $uri, $image, $description));
-    }
   }
 
   /**
@@ -457,13 +478,13 @@ class Weboai {
   
   public static function doPost() {
     // a file seems uploaded
-    $fileName="";
+    $filename="";
     if(count($_FILES)) {
       reset($_FILES);
       $tmp=current($_FILES);
       if($tmp['tmp_name']) {
         $src=$tmp['tmp_name'];
-        if ($tmp['name']) $fileName=substr($tmp['name'], 0, strrpos($tmp['name'], '.'));
+        if ($tmp['name']) $filename=substr($tmp['name'], 0, strrpos($tmp['name'], '.'));
       }
       else if($tmp['name']){
         echo $tmp['name'],' seems bigger than allowed size for upload in your php.ini : upload_max_filesize=',ini_get('upload_max_filesize'),', post_max_size=',ini_get('post_max_size');
@@ -484,7 +505,7 @@ class Weboai {
     elseif(pathinfo($tmp['name'], PATHINFO_EXTENSION) == 'xml') {
       $weboai=new Weboai($src);
       // renvoyer le nom du fichier chargé (TODO trop fragile, à revoir...)
-      $weboai->srcFileName = $fileName;
+      $weboai->srcfilename = $filename;
       // aiguillage : sch compilation, validation, sqlite load
       if(isset($_POST['validation'])) echo $weboai->xmlValidation();
       if(isset($_POST['sqlite'])) $weboai->sqlite($src,'weboai.sqlite');
@@ -504,98 +525,65 @@ class Weboai {
    * php -f Weboai.php tei2oai file.tei
    * php -f Webaoi.php sqlite file.oai
    */
-  public static function doCli() {
+  public static function docli() {
     $timeStart = microtime(true);
     array_shift($_SERVER['argv']); // shift arg 1, the script filepath
-    if (!count($_SERVER['argv'])) exit("usage : php -f Weboai.php (sch2xsl|validation|tei2oai|sqlite|tei2sqlite) (src.xml|dir/)\n");
-    $method=null;//method to call
+    $ops = "(sch2xsl|sets|tei2oai|validation)";
+    if (!count($_SERVER['argv'])) exit("usage : php -f Weboai.php $ops dest.sqlite? (src.xml)+|dir/\n");
+    $method=null; // method to call
     $src=null;//XML src
-    $srcFileName=null;
+    $srcfilename=null;
     $dest=null;
-    $args=array();
     while ($arg=array_shift($_SERVER['argv'])) {
       // method
-      if ($arg=="sch2xsl" || $arg=="tei2oai" || $arg=="validation" || $arg=="sqlite" || $arg=="tei2sqlite") $method=$arg;
-      // first non method argument is supposed to be the source document
-      else if(!$src) $src=$arg;
-      // record other args for some commands
-      else $args[]=$arg;
+      if (!preg_match('@^' . $ops . '$@', $arg)) continue;
+      $method=$arg;
+      break;
     }
+    echo "$method $src $dest\n";
     switch ($method) {
       case "sch2xsl":
-        $weboai = new Weboai($src);
+        $weboai = new Weboai($_SERVER['argv'][0]);
         $weboai->sch2xsl();
         echo "$src compiled\n";
         break;
       case "validation":
-        if (is_dir($src)) {
-          foreach(glob($src . '/*.xml') as $xml) {
+        if (is_dir($_SERVER['argv'][0])) {
+          foreach(glob($_SERVER['argv'][0] . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
-            echo "===============\n$weboai->srcFileName\n===============\n$oai";
+            echo "===============\n$weboai->srcfilename\n===============\n$oai";
             $weboai->xmlValidation();
           }
         }
         else {
-          $weboai = new Weboai($src);
-            echo "===============\n$weboai->srcFileName\n===============\n$oai";
+          $weboai = new Weboai($_SERVER['argv'][0]);
+          echo "===============\n$weboai->srcfilename\n===============\n$oai";
           $weboai->xmlValidation();
           echo "\n";
         }
         break;
       case "tei2oai":
-        if (is_dir($src)) {
-          foreach(glob($src . '/*.xml') as $xml) {
+        if (is_dir($_SERVER['argv'][0])) {
+          foreach(glob($_SERVER['argv'][0] . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
-            echo "===============\n$weboai->srcFileName\n===============\n$oai";
-            echo $weboai->tei2oai();
+            echo "===============\n$weboai->srcfilename\n===============\n$oai";
+            $weboai->tei2oai();
+            echo $this->src->saveXML();
           }
         }
         else {
-        $weboai=new Weboai($src);
-        echo "===============\n$weboai->srcFileName\n===============\n$oai";
-        echo $weboai->tei2oai();
+          $weboai=new Weboai($_SERVER['argv'][0]);
+          echo "===============\n$weboai->srcfilename\n===============\n$oai";
+          echo $weboai->tei2oai();
+          echo $this->src->saveXML();
         }
         break;
-      //default: oai2sqlite
-      case "sqlite":
-        if (is_dir($src)) {
-          foreach(glob($src . '/*.xml') as $xml) {
-            $weboai = new Weboai($xml);
-            echo "try to load $weboai->srcFileName in weboai.sqlite\n";
-            $weboai->sqlite('weboai.sqlite');
-          }
-        }
-        else {
-          $weboai = new Weboai($src);
-          $weboai->sqlite('weboai.sqlite');
-        }
+      // set2sqlite, load a set from a list of TEI files (all record should be in a set)
+      case "sets":
+        $sqlitefile = array_shift($_SERVER['argv']);
+        Weboai::set2sqlite($sqlitefile, $_SERVER['argv']);
         break;
-      //hook: tei2sqlite
-      // use some args as setSpec
-      case "tei2sqlite":
-        if (is_dir($src)) {
-          foreach(glob($src . '/*.xml') as $tei) {
-            $weboai = new Weboai($tei);
-            $oai = $weboai->tei2oai();
-            // [FG] please, one line by file is enough, let it
-            echo "$weboai->srcFileName\n";
-            $oaiDOM = new DOMDocument();
-            $oaiDOM->loadXML($oai);
-            $weboai->doc = $oaiDOM;
-            // other args are set
-            $weboai->sqlite('weboai.sqlite', $args);          
-          }
-        }
-        else {
-          $weboai = new Weboai($src);
-          $oai = $weboai->tei2oai();
-          echo "===============\n$weboai->srcFileName\n===============\n$oai";
-          $oaiDOM = new DOMDocument();
-          $oaiDOM->loadXML($oai);
-          $weboai->doc = $oaiDOM;
-          $weboai->sqlite('weboai.sqlite', $args);
-        }
-        break;
+
     }
   }
 

@@ -2,7 +2,7 @@
 /**
  * Methods to search and display records produced with Weboai
  */  
-class Oaiweb {
+class Pub {
   /** Sqlite connexion, is not dynamic, parameters by constructor, public, maybe useful externally */
   public $pdo;
   /** some regex tools, probably static, no constructor params, maybe useful externally */
@@ -66,9 +66,9 @@ class Oaiweb {
   /**
    * Constructor, class is build around a connexion to an sqlite file
    */
-  function __construct($sqliteFile, $lang='fr') {
+  function __construct($sqlitefile, $lang='fr') {
     $this->lang=$lang;
-    $this->pdo=new PDO("sqlite:".$sqliteFile);
+    $this->pdo=new PDO("sqlite:".$sqlitefile);
     $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     $this->pdo->exec("PRAGMA temp_store = 2;");
     // load a json resource, no test for errors, bet it works
