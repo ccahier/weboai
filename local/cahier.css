@@ -22,6 +22,8 @@ div.sets {margin-top:1em; margin-bottom:1em;color:#999A9A}
 div.sets .level0 {color:#000000}
 div.sets .level1 {margin-left:2em;}
 div.sets .level2 {margin-left:4em;}
+/** OAI transformation */
+body.oai main { margin-left: auto; margin-right: auto; width: 80ex; padding-top: 5em; }
 
 #content a {color:#6C3A55;}
 
@@ -39,7 +41,9 @@ div.sets .level2 {margin-left:4em;}
   font-weight: normal;
   font-style: normal;
 }
-body {background-color: #3F1F2C; background-image: url('http://cahier.paris-sorbonne.fr/wp-content/uploads/2011/11/bg_red33.jpg'); background-repeat: repeat-x; background-position: 50% 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+body, html { height: 100%; padding: 0; margin: 0; }
+body {background-color: #3F1F2C; background-image: url('http://cahier.paris-sorbonne.fr/wp-content/uploads/2011/11/bg_red33.jpg'); background-repeat: repeat-x; background-position: 50% 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #FFFFFF; }
+a {color: #D8E2DB; }
 #body-pattern {background-image: url(http://www.cahier.paris-sorbonne.fr/wp-content/themes/positive/lib/imgs/navigation-pattern.png); background-repeat: repeat; }
 #header, #header-widget {color: #E7E7E8; }
 #header a {color: #E7E7E8; }
@@ -60,7 +64,6 @@ ul#navigation-menu-items ul li a, ul#navigation-menu-items ul li ul li a {border
 #the-home:hover .the-home-roof-color {border-bottom-color: #21131a; }
 #blurb {color: #D8E2DB; padding-top: 50px; padding-left: 20px; }
 #blurb a {color: #D8E2DB; }
-#content {margin-top: -185px; }
 .content {color: #6b6768; }
 #footer, #footer p, #footer-text {color: #ffffff; text-shadow:0 1px 0 #142830; }
 #footer a {color: #ffffff; }

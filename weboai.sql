@@ -2,11 +2,10 @@
 -- Format of an SQLite base feed with OAI
 CREATE TABLE record (
   -- OAI record of a resource, should be enough for an OAI engine, and to display a short result for the resource
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
   deleted BOOLEAN NOT NULL DEFAULT FALSE, -- ! required by OAI protocol to inform harvester
   oai_datestamp   INTEGER NOT NULL,       -- ! OAI record's submission date http://www.sqlite.org/lang_datefunc.html, time string format 6 : YYYY-MM-DDTHH:MM:SS
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
-  record          TEXT NOT NULL,          -- ! the oai record
+  xml             BLOB NOT NULL,          -- ! the oai record
   identifier      TEXT,                   -- ! a link for the full-text, should be unique dc:identifier, but life sometimes…
   title           TEXT NOT NULL,          -- ! dc:title, just for display 
   byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
@@ -24,7 +23,6 @@ CREATE VIRTUAL TABLE ft USING FTS3 (
 
 CREATE TABLE author (
   -- person facets for dc:creator or dc:contributor
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
   heading         TEXT NOT NULL, -- normalize key, ex: Baudelaire, Charles (1821-1867)
   family          TEXT NOT NULL, -- family name, ex: Baudelaire
   given           TEXT, -- given name, ex: Charles (could be null, medieval)
@@ -36,56 +34,77 @@ CREATE TABLE author (
   uri             TEXT,  -- ? an URI identifier for the entity
   protect         INTEGER  -- protected from automatic deletion (ex: external referential)
 );
-CREATE INDEX authorHeading ON author(heading);
-CREATE INDEX authorFamily  ON author(family);
-CREATE INDEX authorGiven   ON author(given);
-CREATE INDEX authorSort1   ON author(sort1);
-CREATE INDEX authorSort2   ON author(sort2);
-CREATE INDEX authorProtect ON author(protect);
+CREATE INDEX author_heading ON author(heading);
+CREATE INDEX author_family  ON author(family);
+CREATE INDEX author_given   ON author(given);
+CREATE INDEX author_sort1   ON author(sort1);
+CREATE INDEX author_sort2   ON author(sort2);
+CREATE INDEX author_protect ON author(protect);
 
 CREATE TABLE writes (
   -- relation table
-  author      INTEGER NOT NULL REFERENCES author(id),
-  record      INTEGER NOT NULL REFERENCES record(id),
+  author      INTEGER NOT NULL REFERENCES author(rowid),
+  record      INTEGER NOT NULL REFERENCES record(rowid),
   role        INTEGER NOT NULL -- 1=dc:creator | 2=dc:contributor (NB: dc:contributor = tei:editor)
 );
-CREATE INDEX writesAuthor   ON writes(author);
-CREATE INDEX writesRecord   ON writes(record); -- revoir la sémantique de la base ???? [FG] Pourquoi ? plutôt "text" ?
-CREATE INDEX writesRole     ON writes(role);
+CREATE INDEX writes_author   ON writes(author);
+CREATE INDEX writes_record   ON writes(record); -- revoir la sémantique de la base ???? [FG] Pourquoi ? plutôt "text" ?
+CREATE INDEX writes_role     ON writes(role);
 
 
 CREATE TABLE oaiset (
   -- external list of sets, also used for publishers http://www.openarchives.org/OAI/openarchivesprotocol.html#Set
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
-  spec         TEXT UNIQUE NOT NULL, -- OAI, setSpec, a colon [:] separated list indicating the path from the root of the set hierarchy to the respective node.
-  name         TEXT,   -- OAI, setName, a short human-readable string naming the set.
-  uri          TEXT,   -- not in OAI protocol but useful for links
-  image        BLOB,   -- not in OAI protocol, useful for human interface
-  description  TEXT    -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set 
+  setspec      TEXT UNIQUE NOT NULL, -- OAI, setSpec, a colon [:] separated list indicating the path from the root of the set hierarchy to the respective node.
+  setname      TEXT,   -- OAI, setName, a short human-readable string naming the set.
+  identifier   TEXT,   -- not in OAI protocol but useful for links
+  description  TEXT,   -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set
+  sitemap      TEXT,   -- URI of a sitemap.xml, list of URIs pointing on XML-TEI source text
+  xml          BLOB,   -- <set> XML description of set
+  image        BLOB    -- not in OAI protocol, useful for human interface
 );
-CREATE INDEX oaisetSpec ON oaiset(spec);
+CREATE INDEX oaiset_setspec ON oaiset(setspec);
 
 CREATE TABLE member (
-  oaiset      INTEGER NOT NULL REFERENCES oaiset(id),
-  record      INTEGER NOT NULL REFERENCES record(id)
+  oaiset      INTEGER NOT NULL REFERENCES oaiset(rowid),
+  record      INTEGER NOT NULL REFERENCES record(rowid)
 );
-CREATE INDEX memberOaiset   ON member(oaiset);
-CREATE INDEX memberRecord   ON member(record);
+CREATE INDEX member_oaiset   ON member(oaiset);
+CREATE INDEX member_record   ON member(record);
+
+
 
 -- TRIGGERS
-CREATE TRIGGER recordDel
-  -- on resource's record deletion, delete search index, relations to author (dc:creator | dc:contributor), relation to sets
-  BEFORE DELETE ON record
-  FOR EACH ROW BEGIN
-    DELETE FROM ft WHERE ft.rowid = OLD.id;
-    DELETE FROM writes WHERE writes.record = OLD.id;
-    DELETE FROM member WHERE member.record = OLD.id;
+CREATE TRIGGER set_ins
+  -- when a set already exists, delete it before reinsert
+  BEFORE INSERT ON oaiset
+  FOR EACH ROW
+  BEGIN
+    DELETE FROM oaiset WHERE setspec = NEW.setspec;
 END;
 
-CREATE TRIGGER writesDel
+
+CREATE TRIGGER set_del
+  -- when a set with a source is deleted, delete record from this source
+  BEFORE DELETE ON oaiset
+  FOR EACH ROW WHEN OLD.sitemap IS NOT NULL
+  BEGIN
+    DELETE FROM record WHERE rowid IN (SELECT record FROM member WHERE oaiset = OLD.rowid);
+END;
+
+CREATE TRIGGER record_del
+  -- on resource's record deletion, delete search index, relations to author (dc:creator | dc:contributor), relation to sets
+  BEFORE DELETE ON record
+  FOR EACH ROW 
+  BEGIN
+    DELETE FROM ft WHERE ft.rowid = OLD.rowid;
+    DELETE FROM writes WHERE writes.record = OLD.rowid;
+    DELETE FROM member WHERE member.record = OLD.rowid;
+END;
+
+CREATE TRIGGER writes_del
   -- delete orphan authors (dc:creator | dc:contributor) when not protected
   AFTER DELETE ON writes
   FOR EACH ROW WHEN NOT EXISTS (SELECT * FROM writes WHERE author=OLD.author)
   BEGIN
-    DELETE FROM author WHERE id=OLD.author AND protect IS NULL;
+    DELETE FROM author WHERE rowid=OLD.author AND protect IS NULL;
 END;
