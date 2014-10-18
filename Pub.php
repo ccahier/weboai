@@ -310,7 +310,7 @@ class Pub {
     echo implode("\n",$html);
     $list->execute(array());
     $i=0;
-    while($record=$list->fetch(PDO::FETCH_ASSOC)) {
+    while($record = $list->fetch(PDO::FETCH_ASSOC)) {
       $i++;
       $html=array();
       $html[]='  <tr>';

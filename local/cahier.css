@@ -18,13 +18,18 @@ table.sortable tr.mod5 td { border-top:dashed 1px #6C3A55; }
 table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
 td.n { text-align:right; color:#999A9A; font-size:80%;}
 /** Sets */
+div.set { width: 12em; height: 12em; margin: 1ex 1em 1ex 0; float:left; background: #FFFFFF; padding: 0 1ex 0 1ex; color: #6b6768; text-align: center; }
+div.set > * { line-height: normal; }
+div.set a { color: #3F1F2C; }
+div.set div.title { padding-top: 2em; }
+div.set label { display: block; color: #3F1F2C; }
 div.sets {margin-top:1em; margin-bottom:1em;color:#999A9A}
 div.sets .level0 {color:#000000}
 div.sets .level1 {margin-left:2em;}
 div.sets .level2 {margin-left:4em;}
 /** OAI transformation */
 body.oai main { margin-left: auto; margin-right: auto; width: 80ex; padding-top: 5em; }
-
+body.oai a.request { display: block; }
 #content a {color:#6C3A55;}
 
 /** CAHIER, local design, not weboai */

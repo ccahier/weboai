@@ -37,6 +37,8 @@ class Weboai {
     $this->load($srcuri);
     // json replace table
     self::$re['fr_sort_tr'] = self::json(dirname(__FILE__).'/lib/fr_sort.json');
+    date_default_timezone_set(ini_get('date.timezone'));
+    // date_default_timezone_set('Europe/Paris');
   }
   
   /**
@@ -168,11 +170,11 @@ class Weboai {
    * OAI conversion
    */
   public function tei2oai() {
-    //if ($this->xmlValidation()==false) exit("===================$this->srcfilename non valide======================\n");
     $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
     $this->proc->setParameter(null, 'filename', $this->srcfilename);
     $this->doc = $this->proc->transformToDoc($this->doc);
+    $this->doc->preserveWhiteSpace = false;    
   }
   
   /**
@@ -237,18 +239,17 @@ class Weboai {
    */
   public function sqlite($setspec) {
     $oai_identifier = $setspec . ':' . $this->srcfilename;
-    $oai = $this->doc;
     // TODO, log error
-    $oai_datestamp  = time();
+    $oai_datestamp  = date(DATE_W3C);
     // title, just the first one
-    $titlelist = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
+    $titlelist = $this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
     if(!$titlelist->length) {
       self::log("$oai_identifier : ERROR NO dc:title" );
       return;
     }
     $title = $titlelist->item(0)->nodeValue;
     // prepare the byline
-    $creatorList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
+    $creatorList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
     $byline=NULL;
     if ($length=$creatorList->length) {
       $byline='';
@@ -260,27 +261,30 @@ class Weboai {
     }
     // be nice or block ?
     $identifier=NULL;
-    $idList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
+    $idList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
     if ($idList->length) $identifier= $idList->item(0)->nodeValue;
     else {
       self::log("$oai_identifier : WARN NO dc:identifier" );
     }
     // be nice or block ?
     $date=NULL;
-    $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
+    $dateList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if ($dateList->length) $date= $dateList->item(0)->nodeValue;
     $date2=NULL;
-    $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
+    $dateList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
     if ($dateList->length) $date2 = $dateList->item(0)->nodeValue;
     $issued=NULL;
-    $dateList=$oai->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
+    $dateList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
     if ($dateList->length) $issued = $dateList->item(0)->nodeValue;
-    $record=$oai->saveXML();
+    $this->doc->formatOutput = true;
+    $xml=$this->doc->saveXML();
+    
+    $xml = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $xml);
     // (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
     self::$stmt['ins_record']->execute(array(
       $oai_datestamp,
       $oai_identifier,
-      $record,
+      $xml,
       $title,
       $identifier,
       $byline,
@@ -293,7 +297,7 @@ class Weboai {
     // full text version
     $heading = (($byline)?$byline.'. ':'') . $title;
     $description = $heading;
-    $descList = $oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
+    $descList = $this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
     for ($i =0; $i < $descList->length; $i++ ) {
       $description .= "\n\n".$descList->item($i)->nodeValue;
     }
@@ -305,7 +309,7 @@ class Weboai {
     
     // add the setSpecs to the OAI file
     // add language set
-    $nodeList=$oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
+    $nodeList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
     for ($i =0; $i < $nodeList->length; $i++ ) {
       $value=$nodeList->item($i)->nodeValue;
       $value = strtolower($value);
@@ -334,10 +338,10 @@ class Weboai {
     */
     
     // insertions
-    foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
+    foreach($this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
       self::ins_author($creator->nodeValue, 1);// arg2, 1=creator
     }
-    foreach($oai->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
+    foreach($this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
       self::ins_author($contributor->nodeValue, 2);// arg2, 2=contributor
     }
   }
@@ -551,13 +555,13 @@ class Weboai {
         if (is_dir($_SERVER['argv'][0])) {
           foreach(glob($_SERVER['argv'][0] . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
-            echo "===============\n$weboai->srcfilename\n===============\n$oai";
+            echo "===============\n$weboai->srcfilename\n===============\n";
             $weboai->xmlValidation();
           }
         }
         else {
           $weboai = new Weboai($_SERVER['argv'][0]);
-          echo "===============\n$weboai->srcfilename\n===============\n$oai";
+          echo "===============\n$weboai->srcfilename\n===============\n";
           $weboai->xmlValidation();
           echo "\n";
         }
@@ -566,19 +570,19 @@ class Weboai {
         if (is_dir($_SERVER['argv'][0])) {
           foreach(glob($_SERVER['argv'][0] . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
-            echo "===============\n$weboai->srcfilename\n===============\n$oai";
+            echo "===============\n$weboai->srcfilename\n===============\n";
             $weboai->tei2oai();
             echo $this->src->saveXML();
           }
         }
         else {
           $weboai=new Weboai($_SERVER['argv'][0]);
-          echo "===============\n$weboai->srcfilename\n===============\n$oai";
+          echo "===============\n$weboai->srcfilename\n===============\n";
           echo $weboai->tei2oai();
           echo $this->src->saveXML();
         }
         break;
-      // set2sqlite, load a set from a list of TEI files (all record should be in a set)
+      // load sets with a list of TEI files (all record should be in a set)
       case "sets":
         $sqlitefile = array_shift($_SERVER['argv']);
         Weboai::set2sqlite($sqlitefile, $_SERVER['argv']);
@@ -597,8 +601,7 @@ class Weboai {
     //$oldError=set_error_handler(array($this,"err"), E_ALL);
     $this->doc = new DOMDocument("1.0", "UTF-8");
     $this->doc->recover=true;
-    // if not set here, no indent possible for output
-    $this->doc->preserveWhiteSpace = false;
+    $this->doc->preserveWhiteSpace = false; // if not set here, no indent possible for output
     $this->doc->formatOutput=true;
     $this->doc->substituteEntities=true;
 
