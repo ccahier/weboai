@@ -36,4 +36,54 @@
   <xsl:template match="oai:error[@code='badVerb']">
     <p>Pour explorer cet entrepôt, commencez par <a href="?verb=ListSets">choisir une collection</a></p>
   </xsl:template>
+  <xsl:template match="oai:set">
+    <a class="set" href="?verb=ListRecords&amp;set={oai:setSpec}">
+      <div class="set">
+        <xsl:variable name="desc" select="oai:setDescription/oai_dc:dc/dc:description"/>
+        <xsl:if test="$desc">
+          <xsl:attribute name="title">
+            <xsl:value-of select="normalize-space($desc)"/>
+          </xsl:attribute>
+        </xsl:if>
+        <xsl:apply-templates select="oai:setName"/>
+        <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:publisher"/>
+        <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:title"/>
+      </div>
+    </a>
+  </xsl:template>
+  <xsl:template match="oai:request">
+    <a class="{local-name()}" href="{normalize-space(.)}">
+      <xsl:apply-templates/>
+    </a>
+  </xsl:template>
+  <xsl:template match="oai:setName">
+    <label>
+      <xsl:text>[</xsl:text>
+      <xsl:value-of select="../oai:setSpec"/>
+      <xsl:text>] </xsl:text>
+      <xsl:apply-templates/>
+    </label>
+  </xsl:template>
+  <xsl:template match="oai:debug">
+    <pre>
+      <xsl:copy-of select="node()"/>
+      <xsl:text>
+</xsl:text>
+    </pre>
+  </xsl:template>
+  <xsl:template match="dc:*">
+    <div class="{local-name()}">
+      <xsl:apply-templates/>
+    </div>
+  </xsl:template>
+  <xsl:template match="dc:publisher">
+    <a class="{local-name()}" href="{normalize-space(../dc:publisher)}">
+      <xsl:apply-templates/>
+    </a>
+  </xsl:template>
+  <xsl:template match="dc:identifier">
+    <a class="{local-name()}" href="{normalize-space(.)}">
+      <xsl:apply-templates/>
+    </a>
+  </xsl:template>
 </xsl:transform>
