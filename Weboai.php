@@ -90,6 +90,7 @@ class Weboai {
     else $source = null;
     $xml = preg_replace('@<\?[^\n]*\?>@', '', $xml);
     // en cas de remplacement de set (même setspec), des triggers s’occupent de supprimer les records qui en dépendent
+    // ICI UNE ERREUR DE LOCK SQLITE
     self::$stmt['setins']->execute(array($setspec, $setname, $identifier, $description, $source, $xml, null));
     // pas de sitemap à parser, sortir.
     if (!$source) return;
@@ -240,7 +241,7 @@ class Weboai {
   public function sqlite($setspec) {
     $oai_identifier = $setspec . ':' . $this->srcfilename;
     // TODO, log error
-    $oai_datestamp  = date(DATE_W3C);
+    $oai_datestamp  = date(DATE_ISO8601);
     // title, just the first one
     $titlelist = $this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
     if(!$titlelist->length) {

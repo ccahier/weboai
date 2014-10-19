@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Diple, fichier des messages générés en XSLT
+1) Intitulés pour certains éléments TEI
+
+-->
+<rdf:RDF
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:xf="http://www.w3.org/2002/xforms"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+  <rdf:Description>
+    <rdfs:label xml:lang="fr">Titre court en français</rdfs:label>
+    <rdfs:label xml:lang="en">english label</rdfs:label>
+    <dc:title>Titre développé</dc:title>
+    <dc:description>Description avec <abbr>HTML</abbr> autorisé.</dc:description>
+  </rdf:Description>
+  <rdf:Property xml:id="contributor">
+    <rdfs:label xml:lang="fr">Contributeur</rdfs:label>
+    <rdfs:label xml:lang="en">Contributor</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="coverage">
+    <rdfs:label xml:lang="fr">Lieu/temps</rdfs:label>
+    <rdfs:label xml:lang="en">Coverage</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="creator">
+    <rdfs:label xml:lang="fr">Auteur</rdfs:label>
+    <rdfs:label xml:lang="en">Creator</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="date">
+    <rdfs:label xml:lang="fr">Date</rdfs:label>
+    <rdfs:label xml:lang="en">Date</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="description">
+    <rdfs:label xml:lang="fr">Présentation</rdfs:label>
+    <rdfs:label xml:lang="en">Description</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="format">
+    <rdfs:label xml:lang="fr">Format</rdfs:label>
+    <rdfs:label xml:lang="en">Format</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="identifier">
+    <rdfs:label xml:lang="fr">Identifiant</rdfs:label>
+    <rdfs:label xml:lang="en">Identifier</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="language">
+    <rdfs:label xml:lang="fr">Langue</rdfs:label>
+    <rdfs:label xml:lang="en">Language</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="no">
+    <rdfs:label xml:lang="fr">n°</rdfs:label>
+    <rdfs:label xml:lang="en">n°</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="publisher">
+    <rdfs:label xml:lang="fr">Éditeur</rdfs:label>
+    <rdfs:label xml:lang="en">Publisher</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="relation">
+    <rdfs:label xml:lang="fr">Lien</rdfs:label>
+    <rdfs:label xml:lang="en">Relation</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="rights">
+    <rdfs:label xml:lang="fr">Droits</rdfs:label>
+    <rdfs:label xml:lang="en">Rights</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="see">
+    <rdfs:label xml:lang="fr">Voir</rdfs:label>
+    <rdfs:label xml:lang="en">See</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="set">
+    <rdfs:label xml:lang="fr">Collection</rdfs:label>
+    <rdfs:label xml:lang="en">Set</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="setSpec">
+    <rdfs:label xml:lang="fr">Set</rdfs:label>
+    <rdfs:label xml:lang="en">Set</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="source">
+    <rdfs:label xml:lang="fr">Source</rdfs:label>
+    <rdfs:label xml:lang="en">Source</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="subject">
+    <rdfs:label xml:lang="fr">Sujet</rdfs:label>
+    <rdfs:label xml:lang="en">Subject</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="title">
+    <rdfs:label xml:lang="fr">Titre</rdfs:label>
+    <rdfs:label xml:lang="en">Title</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="type">
+    <rdfs:label xml:lang="fr">Type</rdfs:label>
+    <rdfs:label xml:lang="en">Type</rdfs:label>
+  </rdf:Property>
+</rdf:RDF>

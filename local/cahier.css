@@ -10,27 +10,41 @@ table.chrono {margin-top:1em;margin-bottom:1em;}
 .chrono .bar {border-top:2px ridge #6C3A55; border-left:1px solid #CCCCCC; background-color:#6C3A55; background-image: -webkit-gradient(linear, left bottom, right top,from(#FFFFFF),to(#6C3A55)); background-image: -webkit-linear-gradient(bottom,#FFFFFF, #6C3A55); background-image: -moz-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: -ms-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: -o-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: linear-gradient(bottom, #FFFFFF, #6C3A55);}
 /** sortable for biblio */
 table.sortable { border:1px #6C3A55 solid; }
-table.sortable td{ vertical-align:top; border:#CCCCCC 1px solid; border-bottom:none; border-top:none; padding:2px 1ex; }
-table.sortable tr:hover {background-color:#E9E2E6}
-table.sortable th{ vertical-align:top; padding:1px 0; text-align:center; background-color:#6C3A55; color:#FFFFFF; border-left:1px #FFF solid; }
+table.sortable caption { text-align: left; background-color: #d8e2db; padding: 0 1em; color: #000; font-weight: bold; font-size: 150%; }
+.oai table.sortable { border:1px #d8e2db solid; }
+table.sortable td{ vertical-align:top; border-left:#CCCCCC 1px solid; padding:2px 1ex; }
+table.sortable tr:hover {background-color:#E9E2E6; color: #000; }
+table.sortable tr:hover a { color: #000; }
+table.sortable th{ vertical-align:top; padding: 1px 0; text-align: center; background-color: rgb(108, 58, 85, 0.7); color:#FFFFFF; border-left:1px #FFF solid; }
 table.sortable th a {color:#FFFFFF !important;}
 table.sortable tr.mod5 td { border-top:dashed 1px #6C3A55; }
 table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
 td.n { text-align:right; color:#999A9A; font-size:80%;}
 /** Sets */
-div.set { width: 12em; height: 12em; margin: 1ex 1em 1ex 0; float:left; background: #FFFFFF; padding: 0 1ex 0 1ex; color: #6b6768; text-align: center; }
+div.set { width: 12em; height: 12em; margin: 1ex 1em 1ex 0; float:left; background: #FFFFFF; padding: 0 1ex 0 1ex; color: #6b6768; text-align: center; border: 2px solid; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); border-radius: 6px; }
 div.set > * { line-height: normal; }
 div.set a { color: #3F1F2C; }
 div.set div.title { padding-top: 2em; }
 div.set label { display: block; color: #3F1F2C; }
-div.sets {margin-top:1em; margin-bottom:1em;color:#999A9A}
+div.sets {margin-top:1em; margin-bottom:1em; color:#999A9A}
 div.sets .level0 {color:#000000}
 div.sets .level1 {margin-left:2em;}
 div.sets .level2 {margin-left:4em;}
 /** OAI transformation */
-body.oai main { margin-left: auto; margin-right: auto; width: 80ex; padding-top: 5em; }
-body.oai a.request { display: block; }
+body.oai main { margin-left: auto; margin-right: auto; width: 100ex; padding: 3em 0 5em 0; }
+a.identifier { text-decoration: none; }
 #content a {color:#6C3A55;}
+body.oai article.record { background: #FFFFFF; color: #6b6768; padding: 1em; margin: 1em 0 1em 0; border: 2px solid; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); border-radius: 6px; }
+body.oai article.record a { color: #3F1F2C; display: block; }
+body.oai article.record header { background:  #72405B; color: #FFFFFF; padding: 0.3ex 1em 0.5ex 1em; margin-bottom: 1em; border-radius: 6px; border: 1px solid #FFFFFF; }
+body.oai article.record header a { color: #d8e2db; text-decoration: none; }
+body.oai a:hover { background: rgba(255, 255, 255, 0.5); color: #000 !important; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); }
+div.dc a:hover, div.set a:hover { background: rgba(114, 64, 91, 0.5); box-shadow: 0px 0px 10px rgba(114, 64, 91, 0.7); }
+article.record div.creator { text-align: center; font-variant: small-caps; }
+article.record div.title { text-align: center; font-size: 2em; margin-top: 1ex; margin-bottom: 1em;}
+article.record div.date { text-align: center; margin-top: 0; margin-bottom: 1em;}
+div.creator label, div.title label, div.date label { display: none; }
+div.title a { text-decoration: none; }
 
 /** CAHIER, local design, not weboai */
 /* cross-domain problem with Firefox, fonts are local */
@@ -78,7 +92,8 @@ ul#navigation-menu-items ul li a, ul#navigation-menu-items ul li ul li a {border
 #navigation {box-shadow:0 4px 10px rgba(0,0,0,0.3); -moz-box-shadow:0 4px 10px rgba(0,0,0,0.3); -webkit-box-shadow:0 4px 10px rgba(0,0,0,0.3); }
 .global-radius {border-radius: 4px; }
 .galleria-thumb-nav-left, .galleria-thumb-nav-right {background-color: #3F1F2C; }
-h1 {font-size: 20px; line-height: 1em; }
+h1 {font-size: 20px; line-height: 1em; text-align: center; }
+h1 a { text-decoration: none; }
 h2 {font-size: 28px; line-height: 1em; }
 h3 {font-size: 24px; line-height: 1em; }
 h4 {font-size: 20px; line-height: 1em; }

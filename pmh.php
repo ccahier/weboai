@@ -3,18 +3,29 @@ new Pmh('cahier.sqlite');
 class Pmh {
   public $pdo;
   public $verb;
-  public $servlet;
   public $set;
+  public static $ini = array(
+    'repositoryName' => 'Weboai Test',
+    'adminEmail' => 'frederic.glorieux@algone.net',
+    'test' => True,
+  );
   function __construct($sqlitefile) {
+    $uri = explode('?', $_SERVER['REQUEST_URI'], 2);
+    self::$ini['baseURL'] = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $uri[0];
+    // charger de la configuration locale
+    if (file_exists($f = dirname(__FILE__).'/local/weboai.ini')) {
+      self::$ini = array_merge(self::$ini, parse_ini_file ($f));
+    }
     if (!file_exists($sqlitefile)) {
       $this->prolog();
       echo '  <error code="badArgument">Server configuration error, bad datalink</error>'."\n";
       $this->epilog();
       exit();
     }
-    $this->servlet = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     if (isset($_REQUEST['verb'])) $this->verb = $_REQUEST['verb'];
     $verbs = array(
+      'GetRecord' => '', 
+      'Identify' => '', 
       'ListSets' => '', 
       'ListRecords' => '',
       'ListMetadataFormats' => '',
@@ -33,7 +44,54 @@ class Pmh {
     $this->epilog();
     exit();
   }
-
+  
+  public function Identify() {
+    echo '
+  <Identify>
+    <repositoryName>' . self::$ini['repositoryName'] . '</repositoryName>
+    <baseURL>' . htmlspecialchars(self::$ini['baseURL']) . '</baseURL>
+    <protocolVersion>2.0</protocolVersion>
+    <adminEmail>' . self::$ini['adminEmail'] . '</adminEmail>
+    <earliestDatestamp>1990-02-01T12:00:00Z</earliestDatestamp>
+    <deletedRecord>no</deletedRecord>
+    <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
+  </Identify>
+';
+  }
+  
+  public function GetRecord() {
+    if (isset($_REQUEST['metadataPrefix']) && $_REQUEST['metadataPrefix'] != 'oai_dc') {
+      echo '  <error code="cannotDisseminateFormat">This OAI repository support oai_dc only as a metadata format.</error>'."\n";
+    }
+    if (!isset($_REQUEST['identifier']) || !$_REQUEST['identifier']) {
+      echo '  <error code="badArgument">The parameter identifier is required to obtain a record.</error>' . "\n";
+      return;
+    }
+    $stmt = $this->pdo->prepare("SELECT rowid, * FROM record WHERE oai_identifier = ?");
+    $stmt->execute(array($_REQUEST['identifier']));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+      echo '  <error code="idDoesNotExist">The id “' . $_REQUEST['identifier'] . '” in this OAI repository.</error>' . "\n";
+      return;
+    }
+    $xml = array();
+    $xml[] = '  <GetRecord>';
+    $xml[] = '    <record>';
+    $xml[] = '      <header>';
+    $xml[] = "        <identifier>" . $row['oai_identifier'] . "</identifier>";
+    $xml[] = "        <datestamp>" . $row['oai_datestamp'] . "</datestamp>";
+    foreach ( $this->pdo->query("SELECT setspec FROM oaiset, member WHERE member.oaiset = oaiset.rowid AND member.record = " . $row['rowid']) as $setrow) {
+      $xml[] = "        <setSpec>" . $setrow['setspec'] . "</setSpec>";
+    }
+    $xml[] = '      </header>';
+    $xml[] = "      <metadata>";
+    $xml[] = $row['xml'];
+    $xml[] = "      </metadata>";
+    $xml[] = '    </record>';
+    $xml[] = "  </GetRecord>\n";
+    echo implode($xml, "\n");
+  }
+  
   public function ListMetadataFormats() {
     echo '  <ListMetadataFormats>
     <metadataFormat>
@@ -99,11 +157,14 @@ class Pmh {
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
          http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
   <responseDate>' . $date . '</responseDate>
+  <repositoryName>' . self::$ini['repositoryName'] . '</repositoryName>
   ';
     $xml[] = "<request";
     if ($this->verb) $xml[] = ' verb="' . $this->verb . '"';
     if ($this->verb == 'ListRecords') $xml[] = ' metadataPrefix="oai_dc"';
-    $xml[] = '>' . htmlspecialchars($this->servlet) . "</request>\n";
+    if (isset($_REQUEST['set'])) $xml[] = ' set="' . $_REQUEST['set'] . '"';
+    if (isset($_REQUEST['identifier'])) $xml[] = ' identifier="' . $_REQUEST['identifier'] . '"';
+    $xml[] = '>' . htmlspecialchars(self::$ini['baseURL']) . "</request>\n";
     
     echo implode($xml, '');
   }
