@@ -43,35 +43,6 @@
         </xsl:when>
         <!-- Ajouter ici un filename ? -->
       </xsl:choose>
-      <!-- closed, do not allow ordering, or to test if an expected element is not there
-      <xsl:apply-templates select="
-        tei:fileDesc/tei:publicationStmt/tei:idno |
-        tei:fileDesc/tei:titleStmt/tei:title[1] |
-        tei:fileDesc/tei:titleStmt/tei:author |
-        tei:fileDesc/tei:titleStmt/tei:editor |
-        tei:fileDesc/tei:publicationStmt/tei:publisher |
-        tei:fileDesc/tei:publicationStmt/tei:availability |
-        tei:fileDesc/tei:seriesStmt/tei:idno |
-        tei:fileDesc/tei:notesStmt/tei:note[@type='abstract'] |
-        tei:fileDesc/tei:sourceDesc/tei:bibl |
-        tei:profileDesc/tei:creation |
-        tei:profileDesc/tei:textClass//tei:term[@type='subject']"/>
-        -->
-      <!-- 1! identifier -->
-      <xsl:choose>
-        <xsl:when test="tei:fileDesc/tei:publicationStmt/tei:idno">
-            <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno"/>
-        </xsl:when>
-        <!-- specific  -->
-        <xsl:when test="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base">
-          <dc:identifier>
-            <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base"/>
-          </dc:identifier>
-        </xsl:when>
-      </xsl:choose>
-      <!-- 1! title -->
-      <!-- TODO: Aggregate subtitles ? translated titles ? -->
-      <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:title[1]"/>
       <!-- n? creator -->
       <xsl:choose>
         <xsl:when test="tei:fileDesc/tei:titleStmt/tei:author">
@@ -85,6 +56,9 @@
           <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]/tei:author"/>
         </xsl:when>
       </xsl:choose>
+      <!-- 1! title -->
+      <!-- TODO: Aggregate subtitles ? translated titles ? -->
+      <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:title[1]"/>
       <!-- 1? significant date -->
       <xsl:variable name="date">
         <xsl:choose>
@@ -124,10 +98,22 @@
       </xsl:if>
       <!-- n? contributor -->
       <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:editor"/>
-      <!-- n? description -->
-      <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
       <!-- n? publisher -->
       <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:publisher"/>
+      <!-- 1! identifier -->
+      <xsl:choose>
+        <xsl:when test="tei:fileDesc/tei:publicationStmt/tei:idno">
+            <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:idno"/>
+        </xsl:when>
+        <!-- specific  -->
+        <xsl:when test="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base">
+          <dc:identifier>
+            <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base"/>
+          </dc:identifier>
+        </xsl:when>
+      </xsl:choose>
+      <!-- n? description -->
+      <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
       <!-- n? language -->
       <xsl:apply-templates select="tei:profileDesc/tei:langUsage/tei:language"/>
       <!-- 1! rights -->
