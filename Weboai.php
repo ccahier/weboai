@@ -1,15 +1,24 @@
 <?php
 /**
- * Classe de chargement des notices pour exposition OAI
+Classe de chargement des notices pour exposition OAI
+ 
+http://www.bnf.fr/documents/Guide_oaipmh.pdf
  */
 
-//if($_SERVER['REQUEST_METHOD']=='POST') Weboai::doPost();
 
 // cli usage
 set_time_limit(-1);
+if (file_exists($f = dirname(__FILE__).'/local/weboai.ini')) {
+  Weboai::$ini = array_merge(Weboai::$ini, parse_ini_file ($f));
+}
+// json replace table
+Weboai::$re['fr_sort_tr'] = Weboai::json(dirname(__FILE__).'/lib/fr_sort.json');
+date_default_timezone_set(ini_get('date.timezone'));
+// date_default_timezone_set('Europe/Paris');
 if (php_sapi_name() == "cli") Weboai::docli();
 
 class Weboai {
+  static $date_format = 'Y-m-d\TH:i:s\Z';
   static $debug; // debug mode
   private $srcuri; //path du fichier chargé
   private $srcfilename; // nom du fichier chargé
@@ -24,10 +33,14 @@ class Weboai {
   private static $stmt=array(); // store PDOStatement in array
   private static $pars=array(); // parameters (as record_rowid) for SQL
   public static $setlang = array( // liste des langue utilisée pour les sets
-    'fr' => 'lang:fr',
-    'fre' => 'lang:fr',
+    'fr' => 'lang:fre',
+    'fre' => 'lang:fre',
+    'fra' => 'lang:fre',
   ); // lang sets 
   public static $re=array();
+  public static $ini = array(
+    'domain' => 'cahier.paris-sorbonne.fr',
+  ); // array of parameters
   
   function __construct($srcuri) {
     $this->srcuri = $srcuri;
@@ -35,10 +48,6 @@ class Weboai {
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
     $this->load($srcuri);
-    // json replace table
-    self::$re['fr_sort_tr'] = self::json(dirname(__FILE__).'/lib/fr_sort.json');
-    date_default_timezone_set(ini_get('date.timezone'));
-    // date_default_timezone_set('Europe/Paris');
   }
   
   /**
@@ -60,7 +69,7 @@ class Weboai {
     self::connect($sqlitefile);
     
     self::$stmt['setins']=self::$pdo->prepare(
-    'INSERT INTO oaiset (setspec, setname, identifier, description, sitemap, xml, image)
+    'INSERT INTO oaiset (setspec, setname, identifier, description, sitemap, oai, image)
                  VALUES (?,       ?,       ?,          ?,           ?,       ?,   ?);'
     );
     if (!is_array($sets)) $sets = array($sets);
@@ -84,7 +93,10 @@ class Weboai {
     $setspec = $doc->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'setSpec')->item(0)->textContent;
     $setname = $doc->getElementsByTagNameNS('http://www.openarchives.org/OAI/2.0/', 'setName')->item(0)->textContent;
     $identifier = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier')->item(0)->textContent;
-    $description = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description')->item(0)->textContent;
+    // requis ?
+    $descns = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
+    if ($descns->length) $description = $descns->item(0)->textContent;
+    else $description = null;
     $sourcelist = $doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'source');
     if ($sourcelist->length) $source = $sourcelist->item(0)->textContent;
     else $source = null;
@@ -104,7 +116,6 @@ class Weboai {
         $teiuri = $reader->expand()->textContent;
         echo "$teiuri\n";
         $weboai = new Weboai($teiuri);
-        $weboai->tei2oai();
         $weboai->sqlite($setspec);
       }
     }
@@ -197,8 +208,8 @@ class Weboai {
     // reconnecter, pour préparer les requêtes
     self::connect();
     self::$stmt['ins_record']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, xml, title, identifier, byline, date, date2, issued)
-                             VALUES (?,             ?,              ?,   ?,     ?,          ?,      ?,    ?,     ?)
+      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, issued, oai, html, tei)
+                             VALUES (?,             ?,              ?,     ?,     ?,          ?,      ?,    ?,      ?,   ?,    ?)
       ;
     ");
     self::$stmt['ins_ft']=self::$pdo->prepare("
@@ -239,18 +250,34 @@ class Weboai {
    * TODO : tester qu’on envoie bien OAI valide
    */
   public function sqlite($setspec) {
-    $oai_identifier = $setspec . ':' . $this->srcfilename;
+    $oai_identifier = 'oai:' . self::$ini['domain']  . ':' . $setspec . ':' . $this->srcfilename;
     // TODO, log error
-    $oai_datestamp  = date(DATE_ISO8601);
+    $oai_datestamp  = date(self::$date_format);
+    
+    $this->xsl->load(dirname(__FILE__) . '/transform/tei2oai.xsl');
+    $this->proc->importStylesheet($this->xsl);
+    $this->proc->setParameter(null, 'filename', $this->srcfilename);
+    $oaidoc = $this->proc->transformToDoc($this->doc);
+
+    $this->xsl->load(dirname(__FILE__) . '/transform/teiHeader2html.xsl');
+    $this->proc->importStylesheet($this->xsl);
+    $html = $this->proc->transformToXML($this->doc);
+    $html = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $html);
+    
+    $tei = $this->doc->saveXML();
+    $tei = substr($tei, strpos($tei, '<teiHeader'));
+    $stop = '</teiHeader>';
+    $tei = substr($tei, 0, strpos($tei, $stop) + strlen($stop));
+    
     // title, just the first one
-    $titlelist = $this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
+    $titlelist = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
     if(!$titlelist->length) {
       self::log("$oai_identifier : ERROR NO dc:title" );
       return;
     }
     $title = $titlelist->item(0)->nodeValue;
     // prepare the byline
-    $creatorList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
+    $creatorList=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
     $byline=NULL;
     if ($length=$creatorList->length) {
       $byline='';
@@ -262,43 +289,45 @@ class Weboai {
     }
     // be nice or block ?
     $identifier=NULL;
-    $idList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
+    $idList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
     if ($idList->length) $identifier= $idList->item(0)->nodeValue;
     else {
       self::log("$oai_identifier : WARN NO dc:identifier" );
     }
     // be nice or block ?
-    $date=NULL;
-    $dateList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
+    $date = NULL;
+    $dateList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if ($dateList->length) $date= $dateList->item(0)->nodeValue;
-    $date2=NULL;
-    $dateList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
+    $date2 = NULL;
+    $dateList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
     if ($dateList->length) $date2 = $dateList->item(0)->nodeValue;
-    $issued=NULL;
-    $dateList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
+    $issued = NULL;
+    $dateList=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
     if ($dateList->length) $issued = $dateList->item(0)->nodeValue;
-    $this->doc->formatOutput = true;
-    $xml=$this->doc->saveXML();
+    $oaidoc->formatOutput = true;
+    $oai = $oaidoc->saveXML();
     
-    $xml = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $xml);
+    $oai = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $oai);
     // (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
     self::$stmt['ins_record']->execute(array(
       $oai_datestamp,
       $oai_identifier,
-      $xml,
       $title,
       $identifier,
       $byline,
       $date,
       $date2,
-      $issued
+      $issued,
+      $oai,
+      $html,
+      $tei,
     ));
     // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
     self::$pars['record_rowid']=self::$pdo->lastInsertId();
     // full text version
     $heading = (($byline)?$byline.'. ':'') . $title;
     $description = $heading;
-    $descList = $this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
+    $descList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
     for ($i =0; $i < $descList->length; $i++ ) {
       $description .= "\n\n".$descList->item($i)->nodeValue;
     }
@@ -310,7 +339,7 @@ class Weboai {
     
     // add the setSpecs to the OAI file
     // add language set
-    $nodeList=$this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
+    $nodeList=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
     for ($i =0; $i < $nodeList->length; $i++ ) {
       $value=$nodeList->item($i)->nodeValue;
       $value = strtolower($value);
@@ -339,10 +368,10 @@ class Weboai {
     */
     
     // insertions
-    foreach($this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
+    foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
       self::ins_author($creator->nodeValue, 1);// arg2, 1=creator
     }
-    foreach($this->doc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
+    foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
       self::ins_author($contributor->nodeValue, 2);// arg2, 2=contributor
     }
   }
@@ -430,8 +459,8 @@ class Weboai {
    * Connect to database
    */
   function connect($sqlitefile=null) {
+    if (self::$pdo) return; // no way found to prevent lock, do not reopen connection
     if ($sqlitefile) self::$sqlitefile = $sqlitefile;
-    self::$pdo = null;
     // create database
     if (!file_exists(self::$sqlitefile)) {
       if (!file_exists($dir = dirname(self::$sqlitefile))) {

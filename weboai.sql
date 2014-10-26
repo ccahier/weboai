@@ -4,14 +4,16 @@ CREATE TABLE record (
   -- OAI record of a resource, should be enough for an OAI engine, and to display a short result for the resource
   oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission date http://www.sqlite.org/lang_datefunc.html, time string format 6 : YYYY-MM-DDTHH:MM:SS
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
-  xml             BLOB NOT NULL,          -- ! the oai record
-  identifier      TEXT,                   -- ! a link for the full-text, should be unique dc:identifier, but life sometimes…
+  oai             BLOB NOT NULL,          -- ! the oai record
+  html            BLOB,                   -- ! a displayable title page for web navigation
+  tei             BLOB,                   -- ! store teiHeader maybe useful for later transformations
+  identifier      TEXT,                   -- ! a link for the full-text, should be unique 
   title           TEXT NOT NULL,          -- ! dc:title, just for display 
   byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
   date            INTEGER NOT NULL,       -- ! dc:date, creation date of the text, should be not null
   date2           INTEGER,                -- ? second important date in life of resoource (ex: edition date of a medieval text)
   issued          INTEGER,                -- ? publication date of electronic resource
-  deleted BOOLEAN NOT NULL DEFAULT FALSE  -- ! required by OAI protocol to inform harvester but not really supported
+  deleted BOOLEAN NOT NULL DEFAULT FALSE  -- ! required by OAI protocol to inform harvester but not supported
 );
 
 CREATE VIRTUAL TABLE ft USING FTS3 (
@@ -59,7 +61,7 @@ CREATE TABLE oaiset (
   identifier   TEXT,   -- not in OAI protocol but useful for links
   description  TEXT,   -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set
   sitemap      TEXT,   -- URI of a sitemap.xml, list of URIs pointing on XML-TEI source text
-  xml          BLOB,   -- <set> XML description of set
+  oai          BLOB,   -- <set> XML description of set
   image        BLOB    -- not in OAI protocol, useful for human interface
 );
 CREATE INDEX oaiset_setspec ON oaiset(setspec);

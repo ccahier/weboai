@@ -13,22 +13,9 @@
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
   exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei"
   >
-  <!-- Langue du document, sert aussi pour les messages générés -->
-  <xsl:param name="lang">
-    <xsl:choose>
-      <xsl:when test="/*/@xml:lang">
-        <xsl:value-of select="/*/@xml:lang"/>
-      </xsl:when>
-      <xsl:when test="//dc:language">
-        <xsl:value-of select="//dc:language"/>
-      </xsl:when>
-      <xsl:otherwise>fr</xsl:otherwise>
-    </xsl:choose>
-  </xsl:param>
+  <xsl:import href="weboai.xsl"/>
   <xsl:param name="css">local/cahier.css</xsl:param>
   <xsl:param name="js">lib/Sortable.js</xsl:param>
-  <!--  charger le fichier de messages, document('') permet de résoudre les chemin relativement à ce fichier  -->
-  <xsl:variable name="rdf:Property" select="document('oai.rdfs', document(''))/*/rdf:Property"/>
   <xsl:template match="/">
     <html>
       <head>
@@ -157,6 +144,26 @@
     </a>
   </xsl:template>
   <xsl:template match="oai:setSpec">
+    <div class="{local-name()}">
+      <label>
+        <xsl:call-template name="message"/>
+      </label>
+      <a href="?verb=ListRecords&amp;set={.}">
+        <xsl:value-of select="."/>
+      </a>
+    </div>
+  </xsl:template>
+  <xsl:template match="oai:header/oai:setSpec">
+    <div class="{local-name()}">
+      <label>
+        <xsl:call-template name="message"/>
+      </label>
+      <a href="?verb=ListRecords&amp;set={.}">
+        <xsl:value-of select="."/>
+      </a>
+    </div>
+  </xsl:template>
+  <xsl:template match="oai:setSpec">
     <a href="?verb=ListRecords&amp;set={.}">
       <xsl:value-of select="."/>
     </a>
@@ -180,9 +187,16 @@
     </header>
   </xsl:template>
   <xsl:template match="oai:identifier">
-    <a href="?verb=GetRecord&amp;identifier={.}">
-      <xsl:value-of select="."/>
-    </a>
+    <div class="oai_identifier">
+      <label>
+        <xsl:call-template name="message">
+          <xsl:with-param name="id">oai_identifier</xsl:with-param>
+        </xsl:call-template>
+      </label>
+      <a href="?verb=GetRecord&amp;identifier={.}">
+        <xsl:value-of select="."/>
+      </a>
+    </div>
   </xsl:template>
   <xsl:template match="oai:debug">
     <pre>
@@ -192,13 +206,26 @@
     </pre>
   </xsl:template>
   <xsl:template match="dc:*">
-    <div class="{local-name()}">
-      <label>
-        <xsl:call-template name="message"/>
-        <xsl:text> — </xsl:text>
-      </label>
+    <xsl:variable name="message">
+      <xsl:call-template name="message"/>
+    </xsl:variable>
+    <xsl:variable name="el">
+    <xsl:choose>
+      <xsl:when test="self::dc:source">p</xsl:when>
+      <xsl:otherwise>div</xsl:otherwise>
+    </xsl:choose>
+    </xsl:variable>
+    <xsl:element name="{$el}">
+      <xsl:attribute name="class">
+        <xsl:value-of select="local-name()"/>
+      </xsl:attribute>
+      <xsl:if test="$message">
+        <label>
+          <xsl:copy-of select="$message"/>
+        </label>
+      </xsl:if>
       <xsl:apply-templates/>
-    </div>
+    </xsl:element>
   </xsl:template>
   <xsl:template match="dc:title">
     <div class="title">
@@ -227,7 +254,7 @@
       <xsl:apply-templates/>
     </div>
   </xsl:template>
-  <xsl:template match="oai:responseDate | oai:request | oai:datestamp | dc:language"/>
+  <xsl:template match="oai:datestamp | dc:format | dc:language | oai:request | oai:responseDate | dc:type"/>
   <xsl:template match="oai:repositoryName | processing-instruction('repositoryName')">
     <h1>
       <a>
@@ -245,24 +272,33 @@
       </a>
     </h1>
   </xsl:template>
-  <xsl:template match="dc:identifier">
-    <a class="{local-name()}" href="{normalize-space(.)}">
-      <xsl:apply-templates/>
-    </a>
-  </xsl:template>
-  <!-- Message, intitulé court d'un élément TEI lorsque disponible -->
-  <xsl:template name="message">
-    <xsl:param name="id" select="local-name()"/>
-    <xsl:choose>
-      <xsl:when test="$rdf:Property[@xml:id = $id]/rdfs:label[starts-with( $lang, @xml:lang)]">
-        <xsl:copy-of select="$rdf:Property[@xml:id = $id]/rdfs:label[starts-with( $lang, @xml:lang)]/node()"/>
-      </xsl:when>
-      <xsl:when test="$rdf:Property[@xml:id = $id]/rdfs:label">
-        <xsl:copy-of select="$rdf:Property[@xml:id = $id]/rdfs:label[1]/node()"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$id"/>
-      </xsl:otherwise>
-    </xsl:choose>
+  <xsl:template match="dc:identifier | dc:rights">
+    <div class="{local-name()}">
+      <xsl:if test="self::dc:rights">
+        <label>
+          <xsl:call-template name="message"/>
+        </label>
+      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="starts-with(., 'http')">
+          <a>
+            <xsl:attribute name="href">
+              <xsl:value-of select="."/>
+            </xsl:attribute>
+            <xsl:choose>
+              <xsl:when test="@type">
+                <xsl:value-of select="@type"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:apply-templates/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </a>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </div>
   </xsl:template>
 </xsl:transform>

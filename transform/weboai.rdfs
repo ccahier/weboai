@@ -17,9 +17,14 @@ Diple, fichier des messages générés en XSLT
     <dc:title>Titre développé</dc:title>
     <dc:description>Description avec <abbr>HTML</abbr> autorisé.</dc:description>
   </rdf:Description>
+  <rdf:Property xml:id="and">
+    <rdfs:label xml:lang="fr">et</rdfs:label>
+    <rdfs:label xml:lang="en">and</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="availability"/>
   <rdf:Property xml:id="contributor">
-    <rdfs:label xml:lang="fr">Contributeur</rdfs:label>
-    <rdfs:label xml:lang="en">Contributor</rdfs:label>
+    <!-- Pas d’intitulé, rôle à préciser entre parenthèses -->
+    <rdfs:label xml:lang="fr"/>
   </rdf:Property>
   <rdf:Property xml:id="coverage">
     <rdfs:label xml:lang="fr">Lieu/temps</rdfs:label>
@@ -37,9 +42,38 @@ Diple, fichier des messages générés en XSLT
     <rdfs:label xml:lang="fr">Présentation</rdfs:label>
     <rdfs:label xml:lang="en">Description</rdfs:label>
   </rdf:Property>
+  <rdf:Property xml:id="edition">
+    <rdfs:label xml:lang="fr">Édition</rdfs:label>
+    <rdfs:label xml:lang="en">Edition</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="editionStmt">
+    <rdfs:label xml:lang="fr">Autres participations à cette édition électronique : </rdfs:label>
+    <rdfs:label xml:lang="en">Participation: </rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="editor">
+    <rdfs:label xml:lang="fr">Édition : </rdfs:label>
+    <rdfs:label xml:lang="en">Edition: </rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="editor-role">
+    <rdfs:label xml:lang="fr">édition</rdfs:label>
+    <rdfs:label xml:lang="en">edition</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="editorialDecl">
+    <rdfs:label xml:lang="fr">L'édition électronique</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="extent">
+    <!-- rdfs:label xml:lang="fr">Source électronique</rdfs:label -->
+  </rdf:Property>
   <rdf:Property xml:id="format">
     <rdfs:label xml:lang="fr">Format</rdfs:label>
     <rdfs:label xml:lang="en">Format</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="funder">
+    <rdfs:label xml:lang="fr">Financement</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="oai_identifier">
+    <rdfs:label xml:lang="fr">Identifiant OAI : </rdfs:label>
+    <rdfs:label xml:lang="en">OAI dentifier: </rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="identifier">
     <rdfs:label xml:lang="fr">Identifiant</rdfs:label>
@@ -49,21 +83,38 @@ Diple, fichier des messages générés en XSLT
     <rdfs:label xml:lang="fr">Langue</rdfs:label>
     <rdfs:label xml:lang="en">Language</rdfs:label>
   </rdf:Property>
+  <rdf:Property xml:id="licence">
+    <rdfs:label xml:lang="fr">Licence</rdfs:label>
+  </rdf:Property>
   <rdf:Property xml:id="no">
     <rdfs:label xml:lang="fr">n°</rdfs:label>
     <rdfs:label xml:lang="en">n°</rdfs:label>
   </rdf:Property>
+  <rdf:Property xml:id="principal-role">
+    <rdfs:label xml:lang="fr">direction</rdfs:label>
+    <rdfs:label xml:lang="en">direction</rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="principal">
+    <rdfs:label xml:lang="fr">Sous la direction de : </rdfs:label>
+    <rdfs:label xml:lang="en">Direction: </rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="projectDesc">
+    <!-- rdfs:label xml:lang="fr">Le projet</rdfs:label -->
+  </rdf:Property>
   <rdf:Property xml:id="publisher">
-    <rdfs:label xml:lang="fr">Éditeur</rdfs:label>
-    <rdfs:label xml:lang="en">Publisher</rdfs:label>
+    <!-- Pas d’intitulé, doit s’expliquer de soi -->
+    <rdfs:label xml:lang="fr"/>
   </rdf:Property>
   <rdf:Property xml:id="relation">
     <rdfs:label xml:lang="fr">Lien</rdfs:label>
     <rdfs:label xml:lang="en">Relation</rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="rights">
-    <rdfs:label xml:lang="fr">Droits</rdfs:label>
-    <rdfs:label xml:lang="en">Rights</rdfs:label>
+    <rdfs:label xml:lang="fr">Licence : </rdfs:label>
+    <rdfs:label xml:lang="en">Rights: </rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="samplingDecl">
+    <rdfs:label xml:lang="fr">Textes sélectionnés</rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="see">
     <rdfs:label xml:lang="fr">Voir</rdfs:label>
@@ -74,12 +125,15 @@ Diple, fichier des messages générés en XSLT
     <rdfs:label xml:lang="en">Set</rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="setSpec">
-    <rdfs:label xml:lang="fr">Set</rdfs:label>
-    <rdfs:label xml:lang="en">Set</rdfs:label>
+    <rdfs:label xml:lang="fr">Collection OAI : </rdfs:label>
+    <rdfs:label xml:lang="en">OAI set: </rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="source">
+    <rdfs:label xml:lang="fr">Source : </rdfs:label>
+    <rdfs:label xml:lang="en">Source: </rdfs:label>
+  </rdf:Property>
+  <rdf:Property xml:id="sourceDesc">
     <rdfs:label xml:lang="fr">Source</rdfs:label>
-    <rdfs:label xml:lang="en">Source</rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="subject">
     <rdfs:label xml:lang="fr">Sujet</rdfs:label>

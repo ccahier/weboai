@@ -4,6 +4,7 @@ class Pmh {
   public $pdo;
   public $verb;
   public $set;
+  static $date_format = 'Y-m-d\TH:i:s\Z';
   public static $ini = array(
     'repositoryName' => 'Weboai Test',
     'adminEmail' => 'frederic.glorieux@algone.net',
@@ -85,7 +86,7 @@ class Pmh {
     }
     $xml[] = '      </header>';
     $xml[] = "      <metadata>";
-    $xml[] = $row['xml'];
+    $xml[] = $row['oai'];
     $xml[] = "      </metadata>";
     $xml[] = '    </record>';
     $xml[] = "  </GetRecord>\n";
@@ -105,7 +106,7 @@ class Pmh {
   public function ListSets() {
     echo '  <ListSets>' . "\n";
     foreach ($this->pdo->query('SELECT * FROM oaiset') as $row) {
-      echo $row['xml'];
+      echo $row['oai'];
     }
     echo '  </ListSets>' . "\n";
   }
@@ -134,7 +135,7 @@ class Pmh {
       $xml[] = "        <datestamp>" . $row['oai_datestamp'] . "</datestamp>";
       $xml[] = "      </header>";
       $xml[] = "      <metadata>";
-      $xml[] = $row['xml'];
+      $xml[] = $row['oai'];
       $xml[] = "      </metadata>";
       $xml[] = "    </record>\n";
       echo implode($xml, "\n");
@@ -148,7 +149,7 @@ class Pmh {
     // header ("Content-Type:text/plain");
     header ("Content-Type:text/xml");
     if (!ini_get("zlib.output_compression")) ob_start('ob_gzhandler');
-    $date = date(DATE_ATOM);
+    $date = date(self::$date_format);
     $xml = array();
     $xml[] = '<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="transform/oai2html.xsl"?>
