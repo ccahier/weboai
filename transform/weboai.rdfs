@@ -132,6 +132,10 @@ Diple, fichier des messages générés en XSLT
     <rdfs:label xml:lang="fr">Source : </rdfs:label>
     <rdfs:label xml:lang="en">Source: </rdfs:label>
   </rdf:Property>
+  <rdf:Property xml:id="sponsor">
+    <rdfs:label xml:lang="fr">Sponsor : </rdfs:label>
+    <rdfs:label xml:lang="en">Sponsor: </rdfs:label>
+  </rdf:Property>
   <rdf:Property xml:id="sourceDesc">
     <rdfs:label xml:lang="fr">Source</rdfs:label>
   </rdf:Property>
