@@ -40,9 +40,9 @@ body.oai article.record header { background:  #72405B; color: #FFFFFF; padding: 
 body.oai article.record header a { color: #d8e2db; text-decoration: none; }
 body.oai a:hover { background: rgba(255, 255, 255, 0.5); color: #000 !important; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); }
 div.dc a:hover, div.set a:hover { background: rgba(114, 64, 91, 0.5); box-shadow: 0px 0px 10px rgba(114, 64, 91, 0.7); }
-article.record div.creator { text-align: center; font-variant: small-caps; }
+article.record div.creator { text-align: center; font-variant: small-caps; font-size: 1.5em; }
 article.record div.title { text-align: center; font-size: 2em; margin-top: 1ex; margin-bottom: 1em;}
-article.record div.date { text-align: center; margin-top: 0; margin-bottom: 1em;}
+article.record div.date { text-align: center; margin-top: 0; margin-bottom: 1em; font-size: 1.5em; }
 div.creator label, div.title label, div.date label { display: none; }
 div.title a { text-decoration: none; }
 

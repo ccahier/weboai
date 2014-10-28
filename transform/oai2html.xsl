@@ -13,7 +13,7 @@
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
   exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei"
   >
-  <xsl:import href="weboai.xsl"/>
+  <xsl:import href="common.xsl"/>
   <xsl:param name="css">local/cahier.css</xsl:param>
   <xsl:param name="js">lib/Sortable.js</xsl:param>
   <xsl:template match="/">
@@ -125,16 +125,23 @@
         <xsl:value-of select="oai:metadata/oai_dc:dc/dc:date"/>
       </td>
       <td>
-        <a href="{oai:metadata/oai_dc:dc/dc:identifier}">
-          <xsl:choose>
-            <xsl:when test="oai:metadata/oai_dc:dc/dc:publisher">
-              <xsl:value-of select="oai:metadata/oai_dc:dc/dc:publisher"/>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:value-of select="oai:metadata/oai_dc:dc/dc:identifier"/>
-            </xsl:otherwise>
-          </xsl:choose>
-        </a>
+        <xsl:choose>
+          <xsl:when test="oai:metadata/oai_dc:dc/dc:identifier">
+            <a href="{oai:metadata/oai_dc:dc/dc:identifier}">
+              <xsl:choose>
+                <xsl:when test="oai:metadata/oai_dc:dc/dc:publisher">
+                  <xsl:value-of select="oai:metadata/oai_dc:dc/dc:publisher"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="oai:metadata/oai_dc:dc/dc:identifier"/>
+                </xsl:otherwise>
+              </xsl:choose>
+            </a>
+          </xsl:when>
+          <xsl:when test="oai:metadata/oai_dc:dc/dc:publisher">
+            <xsl:value-of select="oai:metadata/oai_dc:dc/dc:publisher"/>
+          </xsl:when>
+        </xsl:choose>
       </td>
     </tr>
   </xsl:template>

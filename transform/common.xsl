@@ -13,6 +13,9 @@
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
   exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei"
   >
+  <xsl:variable name="iso">ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÉÈÊÏÎÔÖÛÜÇàâäéèêëïîöôüû ,.</xsl:variable>
+  <xsl:variable name="min">abcdefghijklmnopqrstuvwxyzaaaeeeiioouucaaaeeeeiioouu-</xsl:variable>
+  <xsl:param name="debug" select="processing-instruction('debug')"/>
   <!-- Langue du document, sert aussi pour les messages générés -->
   <xsl:param name="lang">
     <xsl:choose>
@@ -25,6 +28,30 @@
       <xsl:otherwise>fr</xsl:otherwise>
     </xsl:choose>
   </xsl:param>
+    <!-- <*>, modèle par défaut d'interception des éléments non pris en charge -->
+  <xsl:template name="tag">
+    <div>
+    <b style="color:red">
+      <xsl:text>&lt;</xsl:text>
+      <xsl:value-of select="name()"/>
+      <xsl:for-each select="@*">
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="name()"/>
+        <xsl:text>="</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>"</xsl:text>
+      </xsl:for-each>
+      <xsl:text>&gt;</xsl:text>
+    </b>
+      <xsl:apply-templates/>
+      <b style="color:red">
+        <xsl:text>&lt;/</xsl:text>
+        <xsl:value-of select="name()"/>
+        <xsl:text>&gt;</xsl:text>
+      </b>
+    </div>
+  </xsl:template>
+
   <!--  charger le fichier de messages, document('') permet de résoudre les chemin relativement à ce fichier  -->
   <xsl:variable name="rdf:Property" select="document('weboai.rdfs', document(''))/*/rdf:Property"/>
   <!-- Message, intitulé court d'un élément TEI lorsque disponible -->
@@ -32,7 +59,7 @@
     <xsl:param name="id" select="local-name()"/>
     <xsl:choose>
       <xsl:when test="$rdf:Property[@xml:id = $id]/rdfs:label[starts-with( $lang, @xml:lang)]">
-        <xsl:copy-of select="$rdf:Property[@xml:id = $id]/rdfs:label[starts-with( $lang, @xml:lang)]/node()"/>
+        <xsl:copy-of select="$rdf:Property[@xml:id = $id]/rdfs:label[starts-with( $lang, @xml:lang)][1]/node()"/>
       </xsl:when>
       <xsl:when test="$rdf:Property[@xml:id = $id]/rdfs:label">
         <xsl:copy-of select="$rdf:Property[@xml:id = $id]/rdfs:label[1]/node()"/>

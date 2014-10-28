@@ -15,7 +15,7 @@
   xmlns:dc="http://purl.org/dc/elements/1.1/"
   xmlns:dcterms="http://purl.org/dc/terms/"
   exclude-result-prefixes="tei date">
-  <xsl:import href="weboai.xsl"/>
+  <xsl:import href="common.xsl"/>
   <xsl:output encoding="UTF-8" indent="yes" method="xml"/>
   <xsl:param name="filename"/>
   <xsl:variable name="ABC">ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÉÈÊÏÎÔÖÛÜÇàâäéèêëïîöôüû</xsl:variable>
@@ -294,7 +294,10 @@
     <xsl:choose>
       <xsl:when test=".='' or .='?'"/>
       <xsl:otherwise>
-        <dc:source><xsl:value-of select="normalize-space(.)"/></dc:source>
+        <xsl:variable name="txt">
+          <xsl:apply-templates mode="txt"/>
+        </xsl:variable>
+        <dc:source><xsl:value-of select="normalize-space($txt)"/></dc:source>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
