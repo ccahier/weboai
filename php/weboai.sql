@@ -57,12 +57,14 @@ CREATE INDEX writes_role     ON writes(role);
 CREATE TABLE oaiset (
   -- external list of sets, also used for publishers http://www.openarchives.org/OAI/openarchivesprotocol.html#Set
   setspec      TEXT UNIQUE NOT NULL, -- OAI, setSpec, a colon [:] separated list indicating the path from the root of the set hierarchy to the respective node.
-  setname      TEXT,   -- OAI, setName, a short human-readable string naming the set.
-  identifier   TEXT,   -- not in OAI protocol but useful for links
-  description  TEXT,   -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set
-  sitemap      TEXT,   -- URI of a sitemap.xml, list of URIs pointing on XML-TEI source text
-  oai          BLOB,   -- <set> XML description of set
-  image        BLOB    -- not in OAI protocol, useful for human interface
+  setname      TEXT,    -- OAI, setName, a short human-readable string naming the set.
+  identifier   TEXT,    -- not in OAI protocol but useful for links
+  title        TEXT,    -- A short description of the set
+  description  TEXT,    -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set
+  sitemaptei   TEXT,    -- URI of a sitemap.xml, list of URIs pointing on XML-TEI source text
+  oai          BLOB,    -- <set> XML description of set
+  image        BLOB,    -- not in OAI protocol, useful for human interface
+  public       BOOLEAN  -- a set should be public to be published (this allow temp load 
 );
 CREATE INDEX oaiset_setspec ON oaiset(setspec);
 
