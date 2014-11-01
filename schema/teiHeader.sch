@@ -30,7 +30,7 @@
       <assert test="count(tei:publisher) >=1">Au moins un éditeur de la ressource (dc:publisher) doit être renseigné [fileDesc/publicationStmt/publisher]</assert>
       <!-- à revoir car on ne déclare pas nécessairement le fichier source mais parfois la seule application de consultation -->
       <assert test="count(tei:availability/tei:licence) = 1">Une unique URI de référence de la licence de distribution (dc:rights) de la ressource doit être renseignée [fileDesc/publicationStmt/availability/licence/@target]</assert>
-      <assert test="count(tei:date) = 1">Une unique date de publication de la ressource (dc:issued) doit être renseignée.</assert>
+      <assert test="count(tei:date) = 1">Une unique date de publication de la ressource (dc:date) doit être renseignée.</assert>
     </rule>
     <rule context="tei:sourceDesc">
       <assert test="count(tei:bibl) = 1">Une unique référence bibliographique de la ressource (dc:source) doit être renseignée [fileDesc/sourceDesc/bibl]</assert>

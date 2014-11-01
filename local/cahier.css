@@ -13,10 +13,10 @@ table.sortable { border:1px #6C3A55 solid; }
 table.sortable caption { text-align: left; background-color: #d8e2db; padding: 0 1em; color: #000; font-weight: bold; font-size: 150%; }
 .oai table.sortable { border:1px #d8e2db solid; }
 table.sortable td{ vertical-align:top; border-left:#CCCCCC 1px solid; padding:2px 1ex; }
-table.sortable tr:hover {background-color:#E9E2E6; color: #000; }
+table.sortable tr:hover { background-color:#E9E2E6; color: #000; }
 table.sortable tr:hover a { color: #000; }
+table.sortable tr:hover a:hover { color: #000; background-color: #FFF; display: block; }
 table.sortable th{ vertical-align:top; padding: 1px 0; text-align: center; background-color: rgb(108, 58, 85, 0.7); color:#FFFFFF; border-left:1px #FFF solid; }
-table.sortable th a {color:#FFFFFF !important;}
 table.sortable tr.mod5 td { border-top:dashed 1px #6C3A55; }
 table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
 td.n { text-align:right; color:#999A9A; font-size:80%;}

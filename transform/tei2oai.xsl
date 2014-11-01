@@ -21,8 +21,8 @@
   <xsl:variable name="ABC">ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÉÈÊÏÎÔÖÛÜÇàâäéèêëïîöôüû</xsl:variable>
   <xsl:variable name="abc">abcdefghijklmnopqrstuvwxyzaaaeeeiioouucaaaeeeeiioouu</xsl:variable>
   
-  <xsl:template match="/">
-    <xsl:apply-templates select="tei:TEI/tei:teiHeader"/>
+  <xsl:template match="tei:TEI">
+    <xsl:apply-templates select="tei:teiHeader"/>
   </xsl:template>
     
   <xsl:template match="tei:teiHeader">

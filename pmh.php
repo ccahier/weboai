@@ -1,22 +1,14 @@
 <?php
-new Pmh('cahier.sqlite');
+include (dirname(__FILE__).'/Conf.php'); // importer la configuration
+new Pmh(Conf::$sqlite);
+
 class Pmh {
   public $pdo;
   public $verb;
   public $set;
-  static $date_format = 'Y-m-d\TH:i:s\Z';
-  public static $ini = array(
-    'repositoryName' => 'Weboai Test',
-    'adminEmail' => 'frederic.glorieux@algone.net',
-    'test' => True,
-  );
   function __construct($sqlitefile) {
     $uri = explode('?', $_SERVER['REQUEST_URI'], 2);
-    self::$ini['baseURL'] = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $uri[0];
-    // charger de la configuration locale
-    if (file_exists($f = dirname(__FILE__).'/local/weboai.ini')) {
-      self::$ini = array_merge(self::$ini, parse_ini_file ($f));
-    }
+    if (!isset(Conf::$baseURL)) Conf::$baseURL = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $uri[0];
     if (!file_exists($sqlitefile)) {
       $this->prolog();
       echo '  <error code="badArgument">Server configuration error, bad datalink</error>'."\n";
@@ -49,10 +41,10 @@ class Pmh {
   public function Identify() {
     echo '
   <Identify>
-    <repositoryName>' . self::$ini['repositoryName'] . '</repositoryName>
-    <baseURL>' . htmlspecialchars(self::$ini['baseURL']) . '</baseURL>
+    <repositoryName>' . htmlspecialchars(Conf::$repositoryName) . '</repositoryName>
+    <baseURL>' . htmlspecialchars(Conf::$baseURL) . '</baseURL>
     <protocolVersion>2.0</protocolVersion>
-    <adminEmail>' . self::$ini['adminEmail'] . '</adminEmail>
+    <adminEmail>' . htmlspecialchars(Conf::$adminEmail) . '</adminEmail>
     <earliestDatestamp>1990-02-01T12:00:00Z</earliestDatestamp>
     <deletedRecord>no</deletedRecord>
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
@@ -149,7 +141,7 @@ class Pmh {
     // header ("Content-Type:text/plain");
     header ("Content-Type:text/xml");
     if (!ini_get("zlib.output_compression")) ob_start('ob_gzhandler');
-    $date = date(self::$date_format);
+    $date = date(Conf::$date_format);
     $xml = array();
     $xml[] = '<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="transform/oai2html.xsl"?>
@@ -158,14 +150,14 @@ class Pmh {
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
          http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
   <responseDate>' . $date . '</responseDate>
-  <repositoryName>' . self::$ini['repositoryName'] . '</repositoryName>
+  <repositoryName>' . htmlspecialchars(Conf::$repositoryName) . '</repositoryName>
   ';
     $xml[] = "<request";
     if ($this->verb) $xml[] = ' verb="' . $this->verb . '"';
     if ($this->verb == 'ListRecords') $xml[] = ' metadataPrefix="oai_dc"';
     if (isset($_REQUEST['set'])) $xml[] = ' set="' . $_REQUEST['set'] . '"';
     if (isset($_REQUEST['identifier'])) $xml[] = ' identifier="' . $_REQUEST['identifier'] . '"';
-    $xml[] = '>' . htmlspecialchars(self::$ini['baseURL']) . "</request>\n";
+    $xml[] = '>' . htmlspecialchars(Conf::$baseURL) . "</request>\n";
     
     echo implode($xml, '');
   }
