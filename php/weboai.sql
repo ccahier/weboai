@@ -2,11 +2,11 @@
 -- Format of an SQLite base feed with OAI
 CREATE TABLE record (
   -- OAI record of a resource, should be enough for an OAI engine, and to display a short result for the resource
-  oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission date http://www.sqlite.org/lang_datefunc.html, time string format 6 : YYYY-MM-DDTHH:MM:SS
+  oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission 
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
-  oai             BLOB NOT NULL,          -- ! the oai record
+  oai             BLOB NOT NULL,          -- ! the oai xml record
   html            BLOB,                   -- ! a displayable title page for web navigation
-  tei             BLOB,                   -- ! store teiHeader maybe useful for later transformations
+  teiheader       BLOB,                   -- ! store xml <teiHeader> maybe useful for later transformations
   identifier      TEXT,                   -- ! a link for the full-text, should be unique 
   title           TEXT NOT NULL,          -- ! dc:title, just for display 
   byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
@@ -58,13 +58,13 @@ CREATE TABLE oaiset (
   -- external list of sets, also used for publishers http://www.openarchives.org/OAI/openarchivesprotocol.html#Set
   setspec      TEXT UNIQUE NOT NULL, -- OAI, setSpec, a colon [:] separated list indicating the path from the root of the set hierarchy to the respective node.
   setname      TEXT,    -- OAI, setName, a short human-readable string naming the set.
+  publisher    TEXT,    -- the editor
   identifier   TEXT,    -- not in OAI protocol but useful for links
   title        TEXT,    -- A short description of the set
   description  TEXT,    -- OAI, setDescription, an optional and repeatable container that may hold community-specific XML-encoded data about the set
   sitemaptei   TEXT,    -- URI of a sitemap.xml, list of URIs pointing on XML-TEI source text
   oai          BLOB,    -- <set> XML description of set
-  image        BLOB,    -- not in OAI protocol, useful for human interface
-  public       BOOLEAN  -- a set should be public to be published (this allow temp load 
+  image        BLOB     -- not in OAI protocol, useful for human interface
 );
 CREATE INDEX oaiset_setspec ON oaiset(setspec);
 
@@ -78,19 +78,11 @@ CREATE INDEX member_record   ON member(record);
 
 
 -- TRIGGERS
-CREATE TRIGGER set_ins
-  -- when a set already exists, delete it before reinsert
-  BEFORE INSERT ON oaiset
-  FOR EACH ROW
-  BEGIN
-    DELETE FROM oaiset WHERE setspec = NEW.setspec;
-END;
-
 
 CREATE TRIGGER set_del
   -- when a set with a source is deleted, delete record from this source
   BEFORE DELETE ON oaiset
-  FOR EACH ROW WHEN OLD.sitemap IS NOT NULL
+  FOR EACH ROW WHEN OLD.sitemaptei IS NOT NULL
   BEGIN
     DELETE FROM record WHERE rowid IN (SELECT record FROM member WHERE oaiset = OLD.rowid);
 END;
