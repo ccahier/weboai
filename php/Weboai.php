@@ -4,8 +4,7 @@ Classe de chargement des notices pour exposition OAI
  
 http://www.bnf.fr/documents/Guide_oaipmh.pdf
  */
-
-
+ini_set( 'default_charset', 'UTF-8' );
 set_time_limit(-1);
 include (dirname(__FILE__).'/Conf.php'); // importer la configuration
 Weboai::$re['fr_sort_tr'] = Weboai::json(dirname(__FILE__).'/fr_sort.json'); // clé de tri pour noms propres
@@ -58,8 +57,9 @@ class Weboai {
     while (@$reader->read()) {
       if ($reader->name != 'teiHeader') continue;
       $this->doc = new DOMDocument("1.0", "UTF-8");
-      $this->doc->preserveWhiteSpace = false; // if not set here, no indent possible for output
-      $this->doc->substituteEntities=true;
+      $this->doc->preserveWhiteSpace = false;
+      $this->doc->substituteEntities = true;
+      $this->doc->formatOutput = true;
       $this->doc->appendChild($reader->expand());
       break;
     }
@@ -80,24 +80,6 @@ class Weboai {
    */
   public static function setform() {
     self::connect();
-    $xml='<set 
-  xmlns="http://www.openarchives.org/OAI/2.0/"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
-  xmlns:dc="http://purl.org/dc/elements/1.1/"
->
-  <setSpec>code</setSpec>
-  <setName>Nom plus long</setName>
-  <setDescription>
-    <oai_dc:dc>
-      <dc:publisher>Université de Neuchâtel</dc:publisher>
-      <dc:identifier xsi:type="dcterms:URI">http://www.artamene.org/</dc:identifier>
-      <dc:language xsi:type="dcterms:ISO639-2">fre</dc:language>
-      <dc:source xsi:type="sitemaptei">http://localhost/cellf/artamene/sitemaptei.xml</dc:source>
-    </oai_dc:dc>
-  </setDescription>
-</set>
-';
     $html = array();
     $html[] = '<style type="text/css">
 * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
@@ -105,66 +87,136 @@ class Weboai {
 :-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
 ::-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
 :-ms-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important;  } 
-form.set { background: #EED; padding: 1em 1em 1em 1em; width: 80ex; margin: 0 auto 0 auto; }
-form.set input.text, form.set textarea { font-family: Arial, sans-serif; font-size: inherit; border: none; margin: 1px 0 1px 0; outline: none; padding: 0 1ex 0 1ex; }
-form.set button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; border-radius: 1.5ex; border-style: ridge; background-color: #DDB}
+form.oai { background: #E8E0D0; border: #FFFFFF solid 1px; padding: 1em 1em 1em 1em; width: 80ex; margin: 0 auto 0 auto;}
+form.oai input.text, form.oai textarea { font-family: Arial, sans-serif; font-size: inherit; border: none; margin: 1px 0 1px 0; outline: none; padding: 0 1ex 0 1ex; }
+form.oai button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; border-radius: 1.5ex; border-style: ridge; background-color: #E0D0B0}
 .error { color:red; font-weight: bold;}
 </style>';
-    $set = $setspec = $setname = $identifier = $title = $description = $sitemaptei = $oai = false;
-    self::$stmt['selset']=self::$pdo->prepare('SELECT setspec, setname, identifier, title, description, sitemaptei, oai  FROM oaiset WHERE setspec = ?');
+    $set = $setspec = $setname = $publisher = $identifier = $title = $description = $sitemaptei = $oai = null;
+    if (isset($_REQUEST['setspec'])) $setspec = $_REQUEST['setspec'];
+    if (isset($_REQUEST['setname'])) $setname = $_REQUEST['setname'];
+    if (isset($_REQUEST['publisher'])) $publisher = $_REQUEST['publisher'];
+    if (isset($_REQUEST['identifier'])) $identifier = $_REQUEST['identifier'];
+    if (isset($_REQUEST['title'])) $title = $_REQUEST['title'];
+    if (isset($_REQUEST['description'])) $description = $_REQUEST['description'];
+    if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
+    
+    self::$stmt['selset']=self::$pdo->prepare('SELECT rowid, setspec, setname, publisher, identifier, title, description, sitemaptei, oai  FROM oaiset WHERE setspec = ?');
     // pas de set demandé, donner la liste
-    if (!isset($_REQUEST['setspec'])) {
+    if (!$setspec) {
       $html[] = '<ul>';
       foreach (self::$pdo->query('SELECT * FROM oaiset') as $row) {
-        $html[] = '<li><a href="?setspec=' . $row['setspec'] . '">[' . $row['setspec'] . '] ' . $row['setname'] . '</a></li>';
+        $html[] = '<li><a href="?setspec=' . htmlspecialchars($row['setspec'], ENT_NOQUOTES) . '">[' . htmlspecialchars($row['setspec'], ENT_NOQUOTES) . '] ' . htmlspecialchars($row['setname'], ENT_NOQUOTES) . '</a></li>';
       }
       $html[] = '</ul>';
       $html[] = '
-<form name="create" class="set">
-  <input name="setspec" pattern="[a-z\:]{3,20}" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" size="10"/>
-  <button name="new">Créer</button>
+<form name="create" class="oai">
+  <input name="setspec" required="required" pattern="[a-z\:]{3,20}" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" size="10"/>
+  <button name="new" value="1">Créer</button>
+</form>
+<form name="test" class="oai" method="POST">
+  <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Source de données TEI" class="text" size="49" value="' . $sitemaptei . '"/>
+  <button name="test" title="Tester une source de données" value="1">Test</button>
 </form>
       ';
+      print(implode("\n", $html));
+      if (isset($_POST['test']) && $_POST['test']) {
+        echo '<h1>Test d’un Sitemap TEI</h1>';
+        if (!isset($_POST['sitemaptei'])) echo '<div class="error">Aucun Sitemap TEI à tester</div>';
+        else self::sitemaptei($_POST['sitemaptei'], $setspec);
+      }
+      return;
     }
-    // un set est demandé en GET, soit pour lecture, soit pour édition
-    else if (isset($_GET['setspec'])) {
-      $setspec = $_GET['setspec'];
-      self::$stmt['selset']->execute(array($setspec));
-      list($setspec, $setname, $identifier, $title, $description, $sitemaptei, $oai) = self::$stmt['selset']->fetch( PDO::FETCH_NUM);
-      if (!$set) $html[] = '<p class="error">La set “' . $setspec . '” n’existe pas encore, voulez-vous le créer ?</p>';
+    
+    // à partir d’ici un set est demandé 
+    self::$stmt['selset']->execute(array($setspec));
+    $set = self::$stmt['selset']->fetch( PDO::FETCH_NUM);
+    
+    if (preg_match('@[^a-z:]@', $setspec)) { // setspec invalide
+      $html[] = '<div class="error">“' . $setspec . '” contient des caractères invalides, un code de collection &lt;setSpec&gt; ne contient que des lettres minuscules non accentuées (et éventuellement le caractère deux points ‘:’)</div>';
+      $setspec = false;
     }
-    // un set est demandé en POST, c’est un remplacement
-    else if (isset($_GET['setspec'])) {
-      $setspec = $_GET['setspec'];
-      self::$stmt['selset']->execute(array($setspec));
-      $set = self::$stmt['selset']->fetch();
+    else if(isset($_POST['delete']) && $_POST['delete']) { // demande de suppression
+      if (!$set) {
+        $html[] = '<div class="error">Impossible de supprimer la collection “' . $setspec . '”, elle n’existe pas encore.</div>';
+      }
+      else {
+        $stmt = $pdo->prepare("DELETE FROM set WHERE setspec = ?");
+        $stmt->execute(array($setspec));
+        $html[] = '<div class="message">La collection “' . $setspec . '” a été supprimée, avec toutes les notices qui en dépendent. Il est encore possible de recréer la notice, le formulaire a été pré-rempli (mais il faudra recharger les données).</div>';
+      }
     }
-    // un set trouvé, le charger en formulaire
+    else if (isset($_POST['modify']) && $_POST['modify']) { // demande de modification
+      $err = false;
+      if (!$setname && ($err = true)) $html[] = '<div class="error">&lt;setName&gt; quel est le nom court de collection ?</div>';
+      if (!$publisher && ($err = true)) $html[] = '<div class="error">&lt;publisher&gt; qui est éditeur (responsable du contenu) de l’organisation ?</div>';
+      if (!$identifier && ($err = true)) $html[] = '<div class="error">&lt;identifier&gt; où (URI, adresse) trouver la collection sur Internet ?</div>';
+      if (!$title) $html[] = '<div class="error">&lt;dc:title&gt; quel est le titre de la collection ?</div>';
+      $oai='<set 
+xmlns="http://www.openarchives.org/OAI/2.0/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+xmlns:dc="http://purl.org/dc/elements/1.1/"
+>
+<setSpec>' . htmlspecialchars($setspec, ENT_NOQUOTES) . '</setSpec>
+<setName>' . htmlspecialchars($setname, ENT_NOQUOTES) . '</setName>
+<setDescription>
+  <oai_dc:dc>
+    <dc:publisher>' . htmlspecialchars($publisher, ENT_NOQUOTES) . '</dc:publisher>
+    <dc:identifier xsi:type="dcterms:URI">' . htmlspecialchars($identifier, ENT_NOQUOTES) . '</dc:identifier>
+    <dc:title>' . htmlspecialchars($title, ENT_NOQUOTES) . '</dc:title>
+    <dc:description>' . htmlspecialchars($description, ENT_NOQUOTES) . '</dc:description>
+    <dc:source xsi:type="sitemaptei">' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '</dc:source>
+  </oai_dc:dc>
+</setDescription>
+</set>
+';
+      if ($err); // ne rien faire
+      else if ($set){ // remplacement
+        $stmt=self::$pdo->prepare(
+        'UPDATE oaiset SET setspec = ?, setname = ?, publisher = ?, identifier = ?, title = ?, description = ?, sitemaptei = ?, oai = ? WHERE rowid = ?'
+        );
+        $stmt->execute(array($setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei, $oai, $set[0]));
+        $html[] = '<div class="message">La fiche de la collection “' . $setspec . '” a été modifiée (aucune notice OAI n’a été affectée)</div>';
+      }
+      else { // insertion
+        $stmt=self::$pdo->prepare(
+        'INSERT INTO oaiset (setspec, setname, publisher, identifier, title, description, sitemaptei, oai)
+                     VALUES (?,       ?,       ?,         ?,          ?,     ?,           ?,          ?);'
+        );
+        $stmt->execute(array($setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei, $oai));
+        $html[] = '<div class="message">La collection “' . $setspec . '” a été ajoutée (aucune notices n’a été affectée)</div>';
+      }
+    }
+    else if($set) { // affichier un set chargé depuis la base
+      list($rowid, $setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei) = $set;
+    }
     $html[] = '
-<form name="set" id="set" class="set" method="post">
+<form name="set" id="set" class="oai" method="post">
   <div style="clear: both">
-    <input style="float: left" name="setspec" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" readonly="readonly" size="10"  value="' . ((isset($_REQUEST['setspec']))?$_REQUEST['setspec']:'') . '"/>
-    <input style="float: right" name="setName" placeholder="&lt;setName&gt; nom court" title="&lt;setName&gt; Nom court de la collection"  class="text" size="20" value="' . ((isset($_REQUEST['setname']))?$_REQUEST['setname']:'') . '"/>
+    <input style="float: left" name="setspec" required="required" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" readonly="readonly" size="10"  value="' . htmlspecialchars($setspec, ENT_NOQUOTES) . '"/>
+    <input style="float: right" name="setname" required="required" placeholder="&lt;setName&gt; Nom court" title="&lt;setName&gt; Nom court de la collection"  class="text" size="20" value="' . htmlspecialchars($setname, ENT_NOQUOTES) . '"/>
   </div>
-  <input style="width: 100%" name="identifier" placeholder="Site de la collection (URI)" title="&lt;dc:identifier&gt; Lien vers la page d’accueil de la collection" class="text" size="60" value="' . ((isset($_REQUEST['identifier']))?$_REQUEST['identifier']:'') . '"/>
-  <br/><input style="width: 100%" name="title" placeholder="Titre" title="[dc:title] Titre pour la  collection (1 ligne)"  class="text" size="60" value="' . (($_REQUEST['title'])?$_REQUEST['title']:'') . '"/>
-  <br/><textarea style="width: 100%" name="description" placeholder="Description" title="&lt;dc:description&gt; Description de la collection (quelques lignes)" cols="60" rows="4">' . ((isset($_REQUEST['description']))?$_REQUEST['description']:'') . '</textarea>
-  <br/><input style="width: 100%" name="sitemaptei" placeholder=" Sitemap TEI (URI)" title="[sitemaptei] Lien vers une liste de fichiers TEI en ligne pour la collection (liste au format sitemaps.org)" class="text" size="60" value="' . ((isset($_REQUEST['sitemaptei']))?$_REQUEST['sitemaptei']:'') . '"/>
+  <input style="width: 100%" name="publisher" required="required" placeholder="&lt;dc:publisher&gt; Éditeur de la collection" title="&lt;dc:publisher&gt; Organisation responsable de la collection" class="text" size="60" value="' . htmlspecialchars($publisher, ENT_NOQUOTES) . '"/>
+  <input style="width: 100%" name="identifier" required="required" placeholder="&lt;dc:identifier&gt; Site de la collection (URI)" title="&lt;dc:identifier&gt; Lien vers la page d’accueil de la collection" class="text" size="60" value="' . htmlspecialchars($identifier, ENT_NOQUOTES) . '"/>
+  <br/><input style="width: 100%" name="title" placeholder="&lt;dc:title&gt; Titre" title="&lt;dc:title&gt; Titre pour la  collection (1 ligne)"  class="text" size="60" value="' . htmlspecialchars($title, ENT_NOQUOTES) . '"/>
+  <br/><textarea style="width: 100%" name="description" placeholder="&lt;dc:description&gt; Description" title="&lt;dc:description&gt; Description de la collection (quelques lignes)" cols="60" rows="4">' . htmlspecialchars($description, ENT_NOQUOTES) . '</textarea>
+  <br/><input style="width: 100%" name="sitemaptei" placeholder=" Sitemap TEI (URI)" title="[sitemaptei] Lien vers une liste de fichiers TEI en ligne pour la collection (liste au format sitemaps.org)" class="text" size="60" value="' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '"/>
   <div style="clear:both; text-align: center; margin: 1em 0 0 0;">
-    <button style="float: left;" name="replace" value="1" title="Corriger la fiche (sans modifier les notices OAI)" type="submit">Corriger</button>
-    <button style="float: left;" name="delete" value="1" type="submit">Supprimer</button>
-     
-    <button style="float: right;" name="test" value="1" title="Tester l’adresse de “Sitemap TEI” (avant chargement)" type="submit">Tester</button>
-    <button style="float: right;" name="load" value="1" title="Obtenir les notices OAI depuis les fichiers TEI" type="submit">Charger</button>
+    <button style="float: left;" name="delete" value="1" type="submit" title="Supprimer la collection, avec toutes les notices OAI qui en dépendent">Supprimer</button>
+    <button name="load" value="1" title="Charger les notices OAI depuis la source de données" type="submit">Charger</button>
+    <button style="float: right;" name="modify" value="1" title="Modifier la fiche de la collection (sans affecter les notices OAI)" type="submit">Modifier</button>
   </div>
 </form>
     ';
     print(implode("\n", $html));
-    if (isset($_POST['test']) && $_POST['test']) {
-      echo '<h1>Test d’un Sitemap TEI</h1>';
-      if (!isset($_POST['sitemaptei'])) echo '<p class="error">Le champ Sitemap TEI n’a pas été renseigné.</p>';
-      else self::sitemaptei_test($_POST['sitemaptei'], $setspec);
+    if(isset($_POST['load']) && $_POST['load']) { // chargement de notices
+      self::sqlitepre(); // nécessaire
+      self::sitemaptei($sitemaptei, $setspec);
+      self::sqlitepost(); // pareil
+      
     }
+
   }
   
   /**
@@ -219,23 +271,11 @@ form.set button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; borde
     $reader = new XMLReader();
     $reader->open($source);
     
-    // préparer l’indexation de plusieurs notices
-    self::sqlitepre();
-    while($reader->read()) {
-      if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'loc') {
-        $teiuri = $reader->expand()->textContent;
-        echo "$teiuri\n";
-        $weboai = new Weboai();
-        $weboai->teiheader($teiuri);
-        $weboai->sqlite($setspec);
-      }
-    }
-    $reader->close();
-    // finir l’indexation de plusieurs notices
-    self::sqlitepost();
   }
-  
-  public static function sitemaptei_test($uri, $setspec=null) {
+  /**
+   * Traitement d’un sitemap TEI
+   */
+  public static function sitemaptei($uri, $setspec=null) {
     // juste pour tester le sitemap
     $reader = new XMLReader();
     if (!@$reader->open($uri)) {
@@ -270,7 +310,7 @@ textarea.xml { width: 100%; border: none; }
     $reader->close();
   }
   /**
-   * Visualisation d’un fichier TEI comme une ligne de tableau HTML pour vérification
+   * Traitement d’un fichier TEI
    */
   public function tei2tr($setspec=false) {
     if (!$setspec) $setspec='&lt;setSpec&gt;';
@@ -284,57 +324,137 @@ textarea.xml { width: 100%; border: none; }
       echo "
 <tr>
   <th>$th</th>
-  <td colspan=\"5\"><p class=\"error\">ERREUR DE CHARGEMENT {$this->srcuri}</p></td>
+  <td colspan=\"5\"><p class=\"error\">FICHIER NON TROUVÉ {$this->srcuri}</p></td>
 </tr>
 ";
       return false;
     }
-    
-    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/tei2oai.xsl');
-    $this->proc->importStylesheet($this->xsl);
-    $this->proc->setParameter(null, 'filename', $this->srcfilename);
 
-    $oaidoc = $this->proc->transformToDoc($this->doc);
-    // $oaidoc->preserveWhiteSpace = false; // if not set here, no indent possible for output
-    $oaidoc->formatOutput = true;
+    $oaidoc = $this->tei2oai();
 
 
-    $title = '<b class="error">TITRE NON TROUVÉ &lt;dc:title&gt; /TEI/teiHeader/fileDesc/titleStmt/title</b>';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
-    if($nl->length) $title = $nl->item(0)->nodeValue;
+    if($nl->length) $title = $head = $nl->item(0)->nodeValue;
+    else $head = '<b class="error">TITRE NON TROUVÉ &lt;dc:title&gt; /TEI/teiHeader/fileDesc/titleStmt/title</b>';
     
+    $identifier = null;
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
     if ($nl->length) $identifier = $nl->item(0)->nodeValue;
-    if (isset($identifier)) $title = '<a href="' . $identifier . '">' . $title . '</a>';
-    else $title = $title . ' <div class="error">LIEN NON TROUVÉ &lt;dc:identifier&gt; /TEI/teiHeader/fileDesc/publicationStmt/idno</div>';
+    if (isset($identifier)) $head = '<a href="' . $identifier . '">' . $head . '</a>';
+    else $head = $head . ' <div class="error">LIEN NON TROUVÉ &lt;dc:identifier&gt; /TEI/teiHeader/fileDesc/publicationStmt/idno</div>';
 
     $creator = '';
+    $byline='';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
-    if($nl->length) $creator = $nl->item(0)->nodeValue;
+    if($nl->length) {
+      $creator = $nl->item(0)->nodeValue;
+      $sep='';
+      for ($i =0; $i < $nl->length; $i++ ) {
+        $byline .= $sep . $nl->item($i)->nodeValue;
+        $sep=' ; ';
+      }
+    }
     
-    $date = '<b class="error">DATE NON TROUVÉE &lt;dc:date&gt; /TEI/teiHeader/profileDesc/creation/date</b>';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
-    if($nl->length) $date = $nl->item(0)->nodeValue;
+    if($nl->length) $date = $dateline = $nl->item(0)->nodeValue;
+    else $dateline = '<b class="error">DATE NON TROUVÉE &lt;dc:date&gt; /TEI/teiHeader/profileDesc/creation/date</b>';
     
-    $publisher = '<b class="error">ÉDITEUR NON TROUVÉ &lt;dc:publisher&gt; /TEI/teiHeader/fileDesc/publicationStmt/publisher</b>';
+    $publisher = '';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher');
-    if($nl->length) $publisher = $nl->item(0)->nodeValue;
-    $publisher = '<a href="' . $this->srcuri . '">' . $publisher . '</a>';
+    if($nl->length) $publisher = $org = $nl->item(0)->nodeValue;
+    else $org = '<b class="error">ÉDITEUR NON TROUVÉ &lt;dc:publisher&gt; /TEI/teiHeader/fileDesc/publicationStmt/publisher</b>';
+    $org = '<a href="' . $this->srcuri . '">' . $org . '</a>';
     
     echo "
 <tr>
   <th>$th</th>
-  <td>$title</td>
-  <td>$creator</td>
-  <td>$date</td>
-  <td>$publisher</td>
+  <td>$head</td>
+  <td>$byline</td>
+  <td>$dateline</td>
+  <td>$org</td>
 </tr>
 ";
 
     echo '<tr id="' . $oai_identifier . '" class="xml" style="display: none"><td colspan="5"><textarea class="xml" cols="80" rows="10">' . $oaidoc->saveXML() . '</textarea></td></tr>';
 
-    // voir la notice OAI, le <teiHeader> ?
-    return $oai_identifier;
+  
+    // à partir d’ici, insertion sqlite ou pas ?
+    if (!isset(self::$stmt['ins_record'])) return;
+
+    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/teiHeader2html.xsl');
+    $this->proc->importStylesheet($this->xsl);
+    $html = $this->proc->transformToXML($this->doc);
+    $html = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $html);
+
+    $oai_datestamp  = date(Conf::$date_format);
+    
+    $date = NULL;
+    $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
+    if ($nl->length) $date= $nl->item(0)->nodeValue;
+    $date2 = NULL;
+    $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
+    if ($nl->length) $date2 = $nl->item(0)->nodeValue;
+    $issued = NULL;
+    $nl=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
+    if ($nl->length) $issued = $nl->item(0)->nodeValue;
+    $oaidoc->formatOutput = true;
+    $oai = $oaidoc->saveXML();
+    
+    $oai = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $oai);
+    $teiheader = $this->doc->saveXML();
+
+    // (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, issued, oai, html, tei)
+    self::$stmt['ins_record']->execute(array(
+      $oai_datestamp,
+      $oai_identifier,
+      $title,
+      $identifier,
+      $byline,
+      $date,
+      $date2,
+      $issued,
+      $oai,
+      $html,
+      $teiheader,
+    ));
+    // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
+    self::$pars['record_rowid']=self::$pdo->lastInsertId();
+    // full text version
+    $heading = (($byline)?$byline.'. ':'') . $title;
+    $description = $heading;
+    $descList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
+    for ($i =0; $i < $descList->length; $i++ ) {
+      $description .= "\n\n".$descList->item($i)->nodeValue;
+    }
+    self::$stmt['ins_ft']->execute(array(
+      self::$pars['record_rowid'],
+      $heading,
+      $heading.(($description)?"\n".$description:''),
+    ));
+    
+    self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], $setspec));
+    /* ajouter un set de langue ?
+    $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
+    for ($i =0; $i < $nl->length; $i++ ) {
+      $value=$nl->item($i)->nodeValue;
+      $value = strtolower($value);
+      if (isset(self::$setlang[$value])) {
+        self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], self::$setlang[$value]));
+      }
+      else if ($i>1) {
+        self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], 'lang:xx'));
+      }
+    }
+    */
+
+    
+    // insertions
+    foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
+      self::ins_author($creator->nodeValue, 1);// arg2, 1=creator
+    }
+    foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
+      self::ins_author($contributor->nodeValue, 2);// arg2, 2=contributor
+    }
   }
 
   /**
@@ -398,8 +518,10 @@ textarea.xml { width: 100%; border: none; }
     $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
     $this->proc->setParameter(null, 'filename', $this->srcfilename);
-    $this->doc = $this->proc->transformToDoc($this->doc);
-    $this->doc->preserveWhiteSpace = false;    
+    $doc = $this->proc->transformToDoc($this->doc);
+    $doc->preserveWhiteSpace = false;
+    $doc->formatOutput = true;
+    return $doc;
   }
   
   /**
@@ -421,7 +543,7 @@ textarea.xml { width: 100%; border: none; }
     // reconnecter, pour préparer les requêtes
     self::connect();
     self::$stmt['ins_record']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, issued, oai, html, tei)
+      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, issued, oai, html, teiheader)
                              VALUES (?,             ?,              ?,     ?,     ?,          ?,      ?,    ?,      ?,   ?,    ?)
       ;
     ");
@@ -457,136 +579,6 @@ textarea.xml { width: 100%; border: none; }
    */
   public static function sqlitepost() {
     self::$pdo->commit();
-  }
-  /**
-   * Load an OAI record in the weboai SQLITE database
-   * TODO : tester qu’on envoie bien OAI valide
-   */
-  public function tei2sqlite($setspec) {
-    $oai_identifier = 'oai:' . Conf::$domain  . ':' . $setspec . ':' . $this->srcfilename;
-    // TODO, log error
-    $oai_datestamp  = date(Conf::$date_format);
-    
-    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/tei2oai.xsl');
-    $this->proc->importStylesheet($this->xsl);
-    $this->proc->setParameter(null, 'filename', $this->srcfilename);
-    $oaidoc = $this->proc->transformToDoc($this->doc);
-
-    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/teiHeader2html.xsl');
-    $this->proc->importStylesheet($this->xsl);
-    $html = $this->proc->transformToXML($this->doc);
-    $html = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $html);
-    
-    $tei = $this->doc->saveXML();
-    $tei = substr($tei, strpos($tei, '<teiHeader'));
-    $stop = '</teiHeader>';
-    $tei = substr($tei, 0, strpos($tei, $stop) + strlen($stop));
-    
-    // title, just the first one
-    $titlelist = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
-    if(!$titlelist->length) {
-      self::log("$oai_identifier : ERROR NO dc:title" );
-      return;
-    }
-    $title = $titlelist->item(0)->nodeValue;
-    // prepare the byline
-    $creatorList=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator');
-    $byline=NULL;
-    if ($length=$creatorList->length) {
-      $byline='';
-      $sep='';
-      for ($i =0; $i < $length; $i++ ) {
-        $byline.=$sep.$creatorList->item($i)->nodeValue;
-        $sep=' ; ';
-      }
-    }
-    // be nice or block ?
-    $identifier=NULL;
-    $idList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
-    if ($idList->length) $identifier= $idList->item(0)->nodeValue;
-    else {
-      self::log("$oai_identifier : WARN NO dc:identifier" );
-    }
-    // be nice or block ?
-    $date = NULL;
-    $dateList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
-    if ($dateList->length) $date= $dateList->item(0)->nodeValue;
-    $date2 = NULL;
-    $dateList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'dateCopyrighted');
-    if ($dateList->length) $date2 = $dateList->item(0)->nodeValue;
-    $issued = NULL;
-    $dateList=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/terms/', 'issued');
-    if ($dateList->length) $issued = $dateList->item(0)->nodeValue;
-    $oaidoc->formatOutput = true;
-    $oai = $oaidoc->saveXML();
-    
-    $oai = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $oai);
-    // (oai_datestamp, oai_identifier, record, title, identifier, byline, date, date2, issued)
-    self::$stmt['ins_record']->execute(array(
-      $oai_datestamp,
-      $oai_identifier,
-      $title,
-      $identifier,
-      $byline,
-      $date,
-      $date2,
-      $issued,
-      $oai,
-      $html,
-      $tei,
-    ));
-    // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
-    self::$pars['record_rowid']=self::$pdo->lastInsertId();
-    // full text version
-    $heading = (($byline)?$byline.'. ':'') . $title;
-    $description = $heading;
-    $descList = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'description');
-    for ($i =0; $i < $descList->length; $i++ ) {
-      $description .= "\n\n".$descList->item($i)->nodeValue;
-    }
-    self::$stmt['ins_ft']->execute(array(
-      self::$pars['record_rowid'],
-      $heading,
-      $heading.(($description)?"\n".$description:''),
-    ));
-    
-    // add the setSpecs to the OAI file
-    // add language set
-    $nodeList=$oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
-    for ($i =0; $i < $nodeList->length; $i++ ) {
-      $value=$nodeList->item($i)->nodeValue;
-      $value = strtolower($value);
-      if (isset(self::$setlang[$value])) {
-        self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], self::$setlang[$value]));
-      }
-      else if ($i>1) {
-        self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], 'lang:xx'));
-      }
-    }
-    self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], $setspec));
-
-    // Shall we inform when replace ?
-    /* [FG] No more used with INSERT OR REPLACE
-    // id d’une notice déjà soumise pour mise à jour -- TODO régler la politique ID pour améliorer la clause WHERE
-    self::$stmt['sel_record_rowid']=self::$pdo->prepare("
-      SELECT id FROM record WHERE title= ?;
-    ");
-    if (substr(self::$stmt['insRecord']->errorCode(), 0, 2) == 23) {
-      echo '<mark>' . $title . ' (notice déjà insérée, record.id=' . self::$pars['record_rowid'] . ')</mark>';      
-      self::$stmt['sel_record_rowid']->execute(array($title));
-      self::$pars['record_rowid']=self::$stmt['sel_record_rowid']->fetchColumn();
-      // on sort pour l’instant -- TODO: proposer mise à jour de la notice
-      exit;
-    }
-    */
-    
-    // insertions
-    foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
-      self::ins_author($creator->nodeValue, 1);// arg2, 1=creator
-    }
-    foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'contributor') as $contributor) {
-      self::ins_author($contributor->nodeValue, 2);// arg2, 2=contributor
-    }
   }
   
   /**
@@ -813,15 +805,13 @@ textarea.xml { width: 100%; border: none; }
           foreach(glob($_SERVER['argv'][0] . '/*.xml') as $xml) {
             $weboai = new Weboai($xml);
             echo "===============\n$weboai->srcfilename\n===============\n";
-            $weboai->tei2oai();
-            echo $this->src->saveXML();
+            echo $weboai->tei2oai()->saveXML();
           }
         }
         else {
           $weboai=new Weboai($_SERVER['argv'][0]);
           echo "===============\n$weboai->srcfilename\n===============\n";
-          echo $weboai->tei2oai();
-          echo $this->src->saveXML();
+          echo $weboai->tei2oai()->saveXML();
         }
         break;
       // load sets with a list of TEI files (all record should be in a set)

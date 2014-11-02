@@ -1,5 +1,5 @@
 <?php
-include (dirname(__FILE__).'/Conf.php'); // importer la configuration
+include (dirname(__FILE__).'/php/Conf.php'); // importer la configuration
 new Pmh(Conf::$sqlite);
 
 class Pmh {
