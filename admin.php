@@ -11,10 +11,12 @@ include('php/Weboai.php');
     <meta charset="UTF-8" />
     <link rel="stylesheet" type="text/css" href="<?php echo $basehref ?>local/cahier.css" />
   </head>
-  <body>
+  <body class="oai">
+    <h1><a href="<?php echo $basehref; ?>admin.php">Consortium CAHIER, administration du catalogue</a></h1>
+    <main>
   <?php
 Weboai::setform();
-  
   ?>
+    </main>
   </body>
 </html>

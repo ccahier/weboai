@@ -106,7 +106,7 @@ form.oai button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; borde
     if (!$setspec) {
       $html[] = '<ul>';
       foreach (self::$pdo->query('SELECT * FROM oaiset') as $row) {
-        $html[] = '<li><a href="?setspec=' . htmlspecialchars($row['setspec'], ENT_NOQUOTES) . '">[' . htmlspecialchars($row['setspec'], ENT_NOQUOTES) . '] ' . htmlspecialchars($row['setname'], ENT_NOQUOTES) . '</a></li>';
+        $html[] = '<li><a href="?setspec=' . htmlspecialchars($row['setspec']) . '">[' . htmlspecialchars($row['setspec'], ENT_NOQUOTES) . '] ' . htmlspecialchars($row['setname'], ENT_NOQUOTES) . '</a></li>';
       }
       $html[] = '</ul>';
       $html[] = '
@@ -115,7 +115,7 @@ form.oai button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; borde
   <button name="new" value="1">Créer</button>
 </form>
 <form name="test" class="oai" method="POST">
-  <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Source de données TEI" class="text" size="49" value="' . $sitemaptei . '"/>
+  <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Source de données TEI" onclick="select()" class="text" size="55" value="' . $sitemaptei . '"/>
   <button name="test" title="Tester une source de données" value="1">Test</button>
 </form>
       ';
@@ -141,7 +141,7 @@ form.oai button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; borde
         $html[] = '<div class="error">Impossible de supprimer la collection “' . $setspec . '”, elle n’existe pas encore.</div>';
       }
       else {
-        $stmt = $pdo->prepare("DELETE FROM set WHERE setspec = ?");
+        $stmt = self::$pdo->prepare("DELETE FROM oaiset WHERE setspec = ?");
         $stmt->execute(array($setspec));
         $html[] = '<div class="message">La collection “' . $setspec . '” a été supprimée, avec toutes les notices qui en dépendent. Il est encore possible de recréer la notice, le formulaire a été pré-rempli (mais il faudra recharger les données).</div>';
       }
@@ -177,7 +177,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
         'UPDATE oaiset SET setspec = ?, setname = ?, publisher = ?, identifier = ?, title = ?, description = ?, sitemaptei = ?, oai = ? WHERE rowid = ?'
         );
         $stmt->execute(array($setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei, $oai, $set[0]));
-        $html[] = '<div class="message">La fiche de la collection “' . $setspec . '” a été modifiée (aucune notice OAI n’a été affectée)</div>';
+        $html[] = '<div class="message">La fiche de la collection “' . $setspec . '” a été modifiée (mais aucune notice OAI n’a été modifiée)</div>';
       }
       else { // insertion
         $stmt=self::$pdo->prepare(
@@ -185,23 +185,25 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
                      VALUES (?,       ?,       ?,         ?,          ?,     ?,           ?,          ?);'
         );
         $stmt->execute(array($setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei, $oai));
-        $html[] = '<div class="message">La collection “' . $setspec . '” a été ajoutée (aucune notices n’a été affectée)</div>';
+        $html[] = '<div class="message">La collection “' . $setspec . '” a été ajoutée.</div>';
+        if (!$sitemaptei) $html[] = '<div class="error">[sitemaptei] Aucune source de données n’a été indiquée pour charger des notices.</div>';
+        else $html[] = '<div class="message">Pour charger des notices dans cette collection, cliquer le bouton Charger</div>';
       }
     }
     else if($set) { // affichier un set chargé depuis la base
       list($rowid, $setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei) = $set;
     }
     $html[] = '
-<form name="set" id="set" class="oai" method="post">
+<form name="set" id="set" class="oai" method="post" action="?">
   <div style="clear: both">
-    <input style="float: left" name="setspec" required="required" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" readonly="readonly" size="10"  value="' . htmlspecialchars($setspec, ENT_NOQUOTES) . '"/>
-    <input style="float: right" name="setname" required="required" placeholder="&lt;setName&gt; Nom court" title="&lt;setName&gt; Nom court de la collection"  class="text" size="20" value="' . htmlspecialchars($setname, ENT_NOQUOTES) . '"/>
+    <input style="float: left" name="setspec" required="required" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" readonly="readonly" size="10"  value="' . htmlspecialchars($setspec) . '"/>
+    <input style="float: right" name="setname" required="required" placeholder="&lt;setName&gt; Nom court" title="&lt;setName&gt; Nom court de la collection"  class="text" size="25" value="' . htmlspecialchars($setname) . '"/>
   </div>
-  <input style="width: 100%" name="publisher" required="required" placeholder="&lt;dc:publisher&gt; Éditeur de la collection" title="&lt;dc:publisher&gt; Organisation responsable de la collection" class="text" size="60" value="' . htmlspecialchars($publisher, ENT_NOQUOTES) . '"/>
-  <input style="width: 100%" name="identifier" required="required" placeholder="&lt;dc:identifier&gt; Site de la collection (URI)" title="&lt;dc:identifier&gt; Lien vers la page d’accueil de la collection" class="text" size="60" value="' . htmlspecialchars($identifier, ENT_NOQUOTES) . '"/>
-  <br/><input style="width: 100%" name="title" placeholder="&lt;dc:title&gt; Titre" title="&lt;dc:title&gt; Titre pour la  collection (1 ligne)"  class="text" size="60" value="' . htmlspecialchars($title, ENT_NOQUOTES) . '"/>
-  <br/><textarea style="width: 100%" name="description" placeholder="&lt;dc:description&gt; Description" title="&lt;dc:description&gt; Description de la collection (quelques lignes)" cols="60" rows="4">' . htmlspecialchars($description, ENT_NOQUOTES) . '</textarea>
-  <br/><input style="width: 100%" name="sitemaptei" placeholder=" Sitemap TEI (URI)" title="[sitemaptei] Lien vers une liste de fichiers TEI en ligne pour la collection (liste au format sitemaps.org)" class="text" size="60" value="' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '"/>
+  <input style="width: 100%" name="publisher" required="required" placeholder="&lt;dc:publisher&gt; Éditeur de la collection" title="&lt;dc:publisher&gt; Organisation responsable de la collection" class="text" size="60" value="' . htmlspecialchars($publisher) . '"/>
+  <input style="width: 100%" name="identifier" required="required" placeholder="&lt;dc:identifier&gt; Site de la collection (URI)" title="&lt;dc:identifier&gt; Lien vers la page d’accueil de la collection" class="text" size="60" value="' . htmlspecialchars($identifier) . '"/>
+  <br/><input style="width: 100%" name="title" placeholder="&lt;dc:title&gt; Titre" title="&lt;dc:title&gt; Titre pour la  collection (1 ligne)"  class="text" size="60" value="' . htmlspecialchars($title) . '"/>
+  <br/><textarea style="width: 100%" name="description" placeholder="&lt;dc:description&gt; Description" title="&lt;dc:description&gt; Description de la collection (quelques lignes)" cols="60" rows="4">' . htmlspecialchars($description) . '</textarea>
+  <br/><input style="width: 100%" name="sitemaptei" placeholder=" Sitemap TEI (URI)" title="[sitemaptei] Lien vers une liste de fichiers TEI en ligne pour la collection (liste au format sitemaps.org)" class="text" size="60" value="' . htmlspecialchars($sitemaptei) . '"/>
   <div style="clear:both; text-align: center; margin: 1em 0 0 0;">
     <button style="float: left;" name="delete" value="1" type="submit" title="Supprimer la collection, avec toutes les notices OAI qui en dépendent">Supprimer</button>
     <button name="load" value="1" title="Charger les notices OAI depuis la source de données" type="submit">Charger</button>
@@ -289,7 +291,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
 textarea.xml { width: 100%; border: none; }
 </style>
 <table class="sortable sets">
-  <caption>' . $uri . ' ' . $setspec . '</caption>
+  <caption>[' . $setspec . '] ' . $uri . '</caption>
   <thead>
     <th title="Pour voir la source OAI/XML, cliquer l’identifiant">Identifiant</th>
     <th title="&lt;dc:title&gt; /TEI/teiHeader/fileDesc/titleStmt/title">Titre</th>
