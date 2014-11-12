@@ -41,6 +41,33 @@ class Weboai {
     }
   }
   /**
+   * Sortir de l’authentification
+   */
+  public static function logout() {
+    echo '<h1>Weboai::logout()</h1>'; 
+    if(session_id() == '' || !isset($_SESSION)) return;
+    if (isset($_SESSION)) $_SESSION = array();
+    if (ini_get("session.use_cookies")) {
+      $params = session_get_cookie_params();
+      setcookie(session_name(), '', time() - 42000,
+          $params["path"], $params["domain"],
+          $params["secure"], $params["httponly"]
+      );
+    }
+    session_destroy();
+  }
+  /**
+   * Renvoit un message, ou true si c’est OK
+   */
+  public static function allowed($user, $pass) {
+    $message = array();
+    if (!isset(Conf::$user)) return '<div class="message">Pas d’utilisateurs configurés.</div>';
+    else if (!isset(Conf::$user[$user])) return '<p class="error">Utilisateur ou mot de passe inconnu</p>';
+    else if (!isset(Conf::$user[$user]['pass'])) return '<div class="message">Utilisateur inutilisable (pour ce rôle).</div>';
+    else if (Conf::$user[$user]['pass'] != $pass) return '<p class="error">Utilisateur ou mot de passe inconnu</p>';
+    else return '';
+  }
+  /**
    * Chargement optimisé d’un tei header (ne pas tout télécharger)
    */
   function teiheader($uri) {
@@ -81,17 +108,6 @@ class Weboai {
   public static function setform() {
     self::connect();
     $html = array();
-    $html[] = '<style type="text/css">
-* { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
-::-webkit-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-:-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-::-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-:-ms-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important;  } 
-form.oai { background: #E8E0D0; border: #FFFFFF solid 1px; padding: 1em 1em 1em 1em; width: 80ex; margin: 0 auto 0 auto;}
-form.oai input.text, form.oai textarea { font-family: Arial, sans-serif; font-size: inherit; border: none; margin: 1px 0 1px 0; outline: none; padding: 0 1ex 0 1ex; }
-form.oai button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; border-radius: 1.5ex; border-style: ridge; background-color: #E0D0B0}
-.error { color:red; font-weight: bold;}
-</style>';
     $set = $setspec = $setname = $publisher = $identifier = $title = $description = $sitemaptei = $oai = null;
     if (isset($_REQUEST['setspec'])) $setspec = $_REQUEST['setspec'];
     if (isset($_REQUEST['setname'])) $setname = $_REQUEST['setname'];
