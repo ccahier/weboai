@@ -1,22 +1,24 @@
 <?php
 include('php/Weboai.php');
-session_start();
 $message = array();
+session_start();
+
 // logout
-if (isset($_REQUEST['logout'])) {
+if (isset($_POST['logout'])) {
   Weboai::logout();
 }
 // essai de login, par défaut, logout
 else if (isset($_POST['user']) && isset($_POST['pass'])) {
-  Weboai::logout();
+  // Weboai::logout(); // NO, will send cookie destruction order
+  $_SESSION = array();
   $allowed =  Weboai::allowed($_POST['user'], $_POST['pass']);
   if ($allowed === '') {
-    session_start();
-    $_SESSION = array();
     $_SESSION['user'] = $_POST['user'];
     // $_SESSION['pass'] = $_POST['pass'];
   }
   else $message[] = $allowed;
+}
+else {
 }
 /*
 // faut-il revérifier l’authentification ?
@@ -53,7 +55,7 @@ if (!$basehref) $basehref = "./";
     <h1><a href="<?php echo $basehref; ?>admin.php">Consortium CAHIER, gestion du catalogue</a></h1>
     <?php
 if (isset($_SESSION['user'])) {
-  echo '<form style="float: right"><button name="logout">Déconnexion</button></form>';
+  echo '<form style="float: right" method="POST"><button name="logout">Déconnexion</button></form>';
 } 
 else {
   echo '<form method="POST" style="float: right">
@@ -81,6 +83,11 @@ else {
   <button name="test" title="Tester une source de données" value="1">Test</button>
 </form>
 ';
+  if (isset($_POST['test']) && $_POST['test']) {
+    echo '<h1>Test d’un Sitemap TEI</h1>';
+    if (!isset($_POST['sitemaptei'])) echo '<div class="error">Aucun Sitemap TEI à tester</div>';
+    else Weboai::sitemaptei($_POST['sitemaptei']);
+  }
 
 
 }
