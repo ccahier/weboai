@@ -369,7 +369,7 @@ class Pub {
       if ($col == 'date2')   $html[]='    <th title="Autre date importante, comme la date d’édition d’un texte ancien">Date <br/>seconde</th>';
       if ($col == 'title')  $html[]='    <th class="nosort">'.$this->msg('title').'</th>';
       if ($col == 'oai_identifier')  $html[]=' <th>'.$this->msg('titlepage').'</th>';
-      if ($col == 'publisher')  $html[]=' <th>'.$this->msg('see').'</th>';
+      if ($col == 'publisher')  $html[]=' <th class="nosort">'.$this->msg('see').'</th>';
     }
     echo implode("\n",$html);
     $list->execute(array());
