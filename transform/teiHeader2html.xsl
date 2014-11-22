@@ -24,20 +24,24 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
 <xsl:transform version="1.1"   xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
 
   xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:tei="http://www.tei-c.org/ns/1.0" 
-  xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns:epub="http://www.idpf.org/2007/ops"
+  xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-  exclude-result-prefixes="tei html epub rdf rdfs"
+  xmlns:tei="http://www.tei-c.org/ns/1.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  exclude-result-prefixes="tei html epub rdf rdfs xsi"
 >
   <xsl:import href="common.xsl"/>
-  <xsl:output encoding="UTF-8" indent="yes" method="xml"/>
+  <xsl:output encoding="UTF-8" indent="yes" method="xml" omit-xml-declaration="yes"/>
   <!-- 
 <h3>teiHeader</h3>
   -->
   <xsl:template match="tei:TEI">
     <xsl:apply-templates select="tei:teiHeader/tei:fileDesc"/>
+  </xsl:template>
+  <xsl:template match="tei:teiHeader">
+    <xsl:apply-templates select="tei:fileDesc"/>
   </xsl:template>
   <xsl:template match="*" priority="-5">
     <xsl:call-template name="tag"/>
@@ -66,21 +70,23 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     <xsl:choose>
       <xsl:when test="normalize-space(.) = ''"/>
       <xsl:otherwise>
-        <xsl:element name="{$el}">
+        <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
           <xsl:call-template name="headatts"/>
           <!-- Envoyer la page de titre -->
           <xsl:apply-templates select="tei:titleStmt"/>
           <xsl:apply-templates select="tei:publicationStmt"/>
           <xsl:apply-templates select="tei:sourceDesc"/>
           <xsl:apply-templates select="tei:editionStmt"/>
+          <!-- En faire quelque chose ?
           <xsl:apply-templates select="tei:notesStmt"/>
+          -->
         </xsl:element>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-    <xsl:template match="tei:titleStmt/tei:title">
+  <xsl:template match="tei:notesStmt"/>
+  <xsl:template match="tei:titleStmt/tei:title">
     <h1>
-      
       <xsl:choose>
         <xsl:when test="@type">
           <xsl:attribute name="class">
@@ -99,7 +105,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     <xsl:choose>
       <xsl:when test="normalize-space(tei:publisher) =''"/>
       <xsl:otherwise>
-        <xsl:element name="div">
+        <xsl:element name="div" namespace="http://www.w3.org/1999/xhtml">
           <xsl:call-template name="headatts"/>
           <xsl:if test="tei:idno">
             <div class="idno">
@@ -138,15 +144,15 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
   <xsl:template match="tei:encodingDesc"/>
   <xsl:template match="tei:availability | tei:editorialDecl | tei:projectDesc | tei:samplingDecl ">
     <xsl:param name="el">div</xsl:param>
-    <xsl:element name="{$el}">
+    <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
       <xsl:call-template name="headatts"/>
       <xsl:variable name="message">
         <xsl:call-template name="message"/>
       </xsl:variable>
       <xsl:if test="string($message) != '' and string($message) != local-name()">
-        <label class="{local-name()}">
+        <span class="label">
           <xsl:value-of select="$message"/>
-        </label>
+        </span>
       </xsl:if>
       <xsl:apply-templates/>
     </xsl:element>
@@ -163,10 +169,10 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         </xsl:variable>
         <xsl:choose>
           <xsl:when test="tei:bibl">
-            <label>
+            <span class="label">
               <xsl:value-of select="$message"/>
-            </label>
-            <xsl:text> : </xsl:text>
+              <xsl:text> : </xsl:text>
+            </span>
             <xsl:apply-templates select="tei:bibl[1]/node()"/>
           </xsl:when>
           <xsl:otherwise>
@@ -210,7 +216,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         <xsl:call-template name="message"/>
       </xsl:variable>
       <xsl:if test="string($message) != ''">
-        <label><xsl:value-of select="$message"/><xsl:text> : </xsl:text></label>
+        <span class="label"><xsl:value-of select="$message"/><xsl:text> : </xsl:text></span>
       </xsl:if>
       <xsl:apply-templates/>
     </div>
@@ -238,7 +244,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         <xsl:call-template name="message"/>
       </xsl:variable>
       <xsl:if test="string($message) != ''">
-        <label><xsl:value-of select="$message"/></label>
+        <span class="label"><xsl:value-of select="$message"/></span>
       </xsl:if>
       <xsl:variable name="name" select="local-name()"/>
       <xsl:apply-templates/>
@@ -274,7 +280,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       <xsl:when test=". =''"/>
       <!-- si @rend est un nom d'élément HTML -->
       <xsl:when test="contains( ' b big em i s small strike strong sub sup tt u ', concat(' ', $rend, ' '))">
-        <xsl:element name="{$rend}">
+        <xsl:element name="{$rend}" namespace="http://www.w3.org/1999/xhtml">
           <xsl:if test="@type">
             <xsl:attribute name="class">
               <xsl:value-of select="@type"/>
@@ -321,10 +327,10 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <xsl:call-template name="headatts"/>
           <!-- Reorder -->
           <xsl:apply-templates select="tei:author"/>
+          <xsl:apply-templates select="/tei:TEI/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
           <xsl:apply-templates select="tei:title"/>
           <xsl:apply-templates select="tei:editor | tei:funder | tei:meeting | tei:principal | tei:sponsor"/>
           <xsl:apply-templates select="tei:respStmt"/>
-          <xsl:apply-templates select="/tei:TEI/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
         </div>
       </xsl:otherwise>
     </xsl:choose>
@@ -463,7 +469,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     <xsl:choose>
       <xsl:when test=". = '' and $value = ''"/>
       <xsl:when test=". = '' and $value != ''">
-        <xsl:element name="{$el}">
+        <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
           <xsl:call-template name="headatts"/>
           <xsl:attribute name="{$att}">
             <xsl:value-of select="$value"/>
@@ -472,7 +478,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         </xsl:element>
        </xsl:when>
       <xsl:otherwise>
-        <xsl:element name="{$el}">
+        <xsl:element name="{$el}" namespace="http://www.w3.org/1999/xhtml">
           <xsl:call-template name="headatts"/>
           <xsl:if test="$value != ''">
             <xsl:attribute name="{$att}">

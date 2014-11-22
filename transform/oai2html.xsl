@@ -50,21 +50,6 @@
   <xsl:template match="oai:error[@code='badVerb']">
     <p>Pour explorer cet entrepôt, commencez par <a href="?verb=ListSets">choisir une collection</a></p>
   </xsl:template>
-  <xsl:template match="oai:set">
-    <a class="set" href="?verb=ListRecords&amp;set={oai:setSpec}">
-      <div class="set">
-        <xsl:variable name="desc" select="oai:setDescription/oai_dc:dc/dc:description"/>
-        <xsl:if test="$desc">
-          <xsl:attribute name="title">
-            <xsl:value-of select="normalize-space($desc)"/>
-          </xsl:attribute>
-        </xsl:if>
-        <xsl:apply-templates select="oai:setName"/>
-        <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:publisher"/>
-        <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:title"/>
-      </div>
-    </a>
-  </xsl:template>
   <xsl:template match="oai:ListRecords">
     <table width="100%" class="sortable" cellpadding="0" cellspacing="0">
       <caption>
@@ -150,16 +135,6 @@
       <xsl:apply-templates/>
     </a>
   </xsl:template>
-  <xsl:template match="oai:setSpec">
-    <div class="{local-name()}">
-      <label>
-        <xsl:call-template name="message"/>
-      </label>
-      <a href="?verb=ListRecords&amp;set={.}">
-        <xsl:value-of select="."/>
-      </a>
-    </div>
-  </xsl:template>
   <xsl:template match="oai:header/oai:setSpec">
     <div class="{local-name()}">
       <label>
@@ -170,18 +145,41 @@
       </a>
     </div>
   </xsl:template>
-  <xsl:template match="oai:setSpec">
-    <a href="?verb=ListRecords&amp;set={.}">
-      <xsl:value-of select="."/>
+  <xsl:template match="oai:set">
+    <a class="set" href="?verb=ListRecords&amp;set={oai:setSpec}">
+      <table class="set">
+        <xsl:variable name="desc" select="oai:setDescription/oai_dc:dc/dc:description"/>
+        <xsl:if test="$desc != ''">
+          <xsl:attribute name="title">
+            <xsl:value-of select="normalize-space($desc)"/>
+          </xsl:attribute>
+        </xsl:if>
+        <tr>
+          <td class="publisher">
+            <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:publisher"/>
+          </td>
+        </tr>
+        <tr>
+          <td class="title">
+            <xsl:choose>
+              <xsl:when test="oai:setDescription/oai_dc:dc/dc:title != ''">
+                <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:title"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:apply-templates select="oai:setName"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </td>
+        </tr>
+        <tr>
+          <td class="count">
+            <xsl:text>[</xsl:text>
+              <xsl:apply-templates select="oai:setSpec"/>
+            <xsl:text>]</xsl:text>
+          </td>
+        </tr>
+      </table>
     </a>
-  </xsl:template>
-  <xsl:template match="oai:setName">
-    <label>
-      <xsl:text>[</xsl:text>
-      <xsl:apply-templates select="../oai:setSpec"/>
-      <xsl:text>] </xsl:text>
-      <xsl:apply-templates/>
-    </label>
   </xsl:template>
   <xsl:template match="oai:GetRecord/oai:record">
     <article class="record">
@@ -250,11 +248,6 @@
         </xsl:otherwise>
       </xsl:choose>
     </div>
-  </xsl:template>
-  <xsl:template match="oai:setDescription/oai_dc:dc/dc:publisher">
-    <a class="{local-name()}" href="{normalize-space(../dc:identifier)}">
-      <xsl:apply-templates/>
-    </a>
   </xsl:template>
   <xsl:template match="oai_dc:dc">
     <div class="dc">

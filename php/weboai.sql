@@ -12,6 +12,7 @@ CREATE TABLE record (
   byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
   date            INTEGER NOT NULL,       -- ! dc:date, creation date of the text, should be not null
   date2           INTEGER,                -- ? second important date in life of resoource (ex: edition date of a medieval text)
+  publisher       TEXT,                   -- ! required, publisher of electronic resource
   issued          INTEGER,                -- ? publication date of electronic resource
   deleted BOOLEAN NOT NULL DEFAULT FALSE  -- ! required by OAI protocol to inform harvester but not supported
 );

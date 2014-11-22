@@ -44,17 +44,16 @@ class Weboai {
    * Sortir de l’authentification
    */
   public static function logout() {
-    echo '<h1>Weboai::logout()</h1>'; 
-    if(session_id() == '' || !isset($_SESSION)) return;
+    // if(session_id() == '' || !isset($_SESSION)) return;
     if (isset($_SESSION)) $_SESSION = array();
     if (ini_get("session.use_cookies")) {
       $params = session_get_cookie_params();
-      setcookie(session_name(), '', time() - 42000,
+      if(session_name()) setcookie(session_name(), '', time() - 42000,
           $params["path"], $params["domain"],
           $params["secure"], $params["httponly"]
       );
     }
-    session_destroy();
+    if(session_id()) session_destroy();
   }
   /**
    * Renvoit un message, ou true si c’est OK
@@ -127,7 +126,7 @@ class Weboai {
       $html[] = '</ul>';
       $html[] = '
 <form name="create" class="oai">
-  <input name="setspec" required="required" pattern="[a-z\:]{3,20}" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection" class="text" size="10"/>
+  <input name="setspec" required="required" pattern="[a-z\:_\-]{3,20}" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection, lettres minuscules sans accent, possibilité de séparateur ‘-’ ‘_’" class="text" size="10"/>
   <button name="new" value="1">Créer</button>
 </form>
 <form name="test" class="oai" method="POST">
@@ -148,7 +147,7 @@ class Weboai {
     self::$stmt['selset']->execute(array($setspec));
     $set = self::$stmt['selset']->fetch( PDO::FETCH_NUM);
     
-    if (preg_match('@[^a-z:]@', $setspec)) { // setspec invalide
+    if (preg_match('@[^a-z:_\-]@', $setspec)) { // setspec invalide
       $html[] = '<div class="error">“' . $setspec . '” contient des caractères invalides, un code de collection &lt;setSpec&gt; ne contient que des lettres minuscules non accentuées (et éventuellement le caractère deux points ‘:’)</div>';
       $setspec = false;
     }
@@ -168,32 +167,33 @@ class Weboai {
       if (!$publisher && ($err = true)) $html[] = '<div class="error">&lt;publisher&gt; qui est éditeur (responsable du contenu) de l’organisation ?</div>';
       if (!$identifier && ($err = true)) $html[] = '<div class="error">&lt;identifier&gt; où (URI, adresse) trouver la collection sur Internet ?</div>';
       if (!$title) $html[] = '<div class="error">&lt;dc:title&gt; quel est le titre de la collection ?</div>';
-      $oai='<set 
+      $oai = array();
+      $oai[] = '<set 
 xmlns="http://www.openarchives.org/OAI/2.0/"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
 xmlns:dc="http://purl.org/dc/elements/1.1/"
->
-<setSpec>' . htmlspecialchars($setspec, ENT_NOQUOTES) . '</setSpec>
-<setName>' . htmlspecialchars($setname, ENT_NOQUOTES) . '</setName>
-<setDescription>
-  <oai_dc:dc>
-    <dc:publisher>' . htmlspecialchars($publisher, ENT_NOQUOTES) . '</dc:publisher>
-    <dc:identifier xsi:type="dcterms:URI">' . htmlspecialchars($identifier, ENT_NOQUOTES) . '</dc:identifier>
-    <dc:title>' . htmlspecialchars($title, ENT_NOQUOTES) . '</dc:title>
-    <dc:description>' . htmlspecialchars($description, ENT_NOQUOTES) . '</dc:description>
-    <dc:source xsi:type="sitemaptei">' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '</dc:source>
-  </oai_dc:dc>
-</setDescription>
-</set>
-';
+>';
+      $oai[] = '  <setSpec>' . htmlspecialchars($setspec, ENT_NOQUOTES) . '</setSpec>';
+      $oai[] = '  <setName>' . htmlspecialchars($setname, ENT_NOQUOTES) . '</setName>';
+      $oai[] = '  <setDescription>';
+      $oai[] = '    <oai_dc:dc>';
+      $oai[] = '      <dc:publisher>' . htmlspecialchars($publisher, ENT_NOQUOTES) . '</dc:publisher>';
+      $oai[] = '      <dc:identifier xsi:type="dcterms:URI">' . htmlspecialchars($identifier, ENT_NOQUOTES) . '</dc:identifier>';
+      if (trim($title)) $oai[] = '      <dc:title>' . htmlspecialchars($title, ENT_NOQUOTES) . '</dc:title>';
+      if (trim($description)) $oai[] = '      <dc:description>' . htmlspecialchars($description, ENT_NOQUOTES) . '</dc:description>';
+      if (trim($sitemaptei)) $oai[] = '      <dc:source xsi:type="sitemaptei">' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '</dc:source>';
+      $oai[] = '    </oai_dc:dc>';
+      $oai[] = '  </setDescription>';
+      $oai[] = '</set>';
+      $oai = implode("\n", $oai);
       if ($err); // ne rien faire
       else if ($set){ // remplacement
         $stmt=self::$pdo->prepare(
         'UPDATE oaiset SET setspec = ?, setname = ?, publisher = ?, identifier = ?, title = ?, description = ?, sitemaptei = ?, oai = ? WHERE rowid = ?'
         );
         $stmt->execute(array($setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei, $oai, $set[0]));
-        $html[] = '<div class="message">La fiche de la collection “' . $setspec . '” a été modifiée (mais aucune notice OAI n’a été modifiée)</div>';
+        $html[] = '<div class="message">La fiche de la collection “' . $setspec . '” a été modifiée (pour actualiser les notices OAI, recharger la source de données)</div>';
       }
       else { // insertion
         $stmt=self::$pdo->prepare(
@@ -379,9 +379,15 @@ textarea.xml { width: 100%; border: none; }
     
     $publisher = '';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher');
-    if($nl->length) $publisher = $org = $nl->item(0)->nodeValue;
+    if($nl->length)  {
+      $org = '<a href="' . $this->srcuri . '">' . $nl->item(0)->nodeValue. '</a>';
+      $sep = '';
+      for ($i =0; $i < $nl->length; $i++ ) {
+        $publisher .= $sep . $nl->item($i)->nodeValue;
+        $sep=' ; ';
+      }
+    }
     else $org = '<b class="error">ÉDITEUR NON TROUVÉ &lt;dc:publisher&gt; /TEI/teiHeader/fileDesc/publicationStmt/publisher</b>';
-    $org = '<a href="' . $this->srcuri . '">' . $org . '</a>';
     
     echo "
 <tr>
@@ -430,6 +436,7 @@ textarea.xml { width: 100%; border: none; }
       $byline,
       $date,
       $date2,
+      $publisher,
       $issued,
       $oai,
       $html,
@@ -561,8 +568,8 @@ textarea.xml { width: 100%; border: none; }
     // reconnecter, pour préparer les requêtes
     self::connect();
     self::$stmt['ins_record']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, issued, oai, html, teiheader)
-                             VALUES (?,             ?,              ?,     ?,     ?,          ?,      ?,    ?,      ?,   ?,    ?)
+      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, publisher, issued, oai, html, teiheader)
+                             VALUES (?,             ?,              ?,     ?,     ?,          ?,      ?,    ?,         ?,      ?,   ?,    ?)
       ;
     ");
     self::$stmt['ins_ft']=self::$pdo->prepare("
@@ -681,7 +688,7 @@ textarea.xml { width: 100%; border: none; }
   /**
    * Connect to database
    */
-  function connect() {
+  public static function connect() {
     if (self::$pdo) return; // no way found to prevent lock, do not reopen connection
     // create database
     if (!file_exists(Conf::$sqlite)) {
