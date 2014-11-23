@@ -38,6 +38,7 @@ if (!$basehref) $basehref = "./";
 <html>
   <head>
     <meta charset="UTF-8" />
+    <title>Admin Weboai</title>
     <link rel="stylesheet" type="text/css" href="<?php echo $basehref ?>local/cahier.css" />
     <style type="text/css">
     * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }

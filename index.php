@@ -10,6 +10,7 @@ $pub=new Pub(Conf::$sqlite);
   <head>
     <meta charset="UTF-8" />
     <?php include(dirname(__FILE__).'/local/head.php'); ?>
+    <title>Weboai</title>
     <link rel="stylesheet" type="text/css" href="<?php echo $pub->homehref ?>local/cahier.css" />
   </head>
   <body>

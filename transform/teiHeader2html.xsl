@@ -58,12 +58,6 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       <xsl:apply-templates/>
     </span>
   </xsl:template>
-  <xsl:template match="tei:titleStmt/tei:*">
-    <div>
-      <xsl:call-template name="headatts"/>
-      <xsl:apply-templates/>
-    </div>
-  </xsl:template>
   <!-- Réordonner le bloc de description du fichier -->
   <xsl:template match="tei:fileDesc">
     <xsl:param name="el">div</xsl:param>
@@ -85,6 +79,22 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:notesStmt"/>
+  <xsl:template match="tei:teiHeader // tei:note">
+    <xsl:choose>
+      <xsl:when test="ancestor::tei:bibl | ancestor::tei:biblStruct">
+        <span>
+          <xsl:call-template name="headatts"/>
+          <xsl:apply-templates/>
+        </span>
+      </xsl:when>
+      <xsl:otherwise>
+        <div>
+          <xsl:call-template name="headatts"/>
+          <xsl:apply-templates/>
+        </div>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
   <xsl:template match="tei:titleStmt/tei:title">
     <h1>
       <xsl:choose>
@@ -119,7 +129,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
             </div>
           </xsl:if>
           <div class="imprint">
-            <xsl:for-each select="tei:publisher">
+            <xsl:for-each select="tei:publisher | tei:authority">
               <xsl:if test="position() != 1">, </xsl:if>
               <xsl:apply-templates select="."/>
             </xsl:for-each>
@@ -160,7 +170,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
   <!-- éléments teiHeader retenus -->
   <xsl:template match="tei:charDecl | tei:langUsage | tei:catRef"/>
   <!-- Ligne avec intitulé -->
-  <xsl:template match="tei:sourceDesc">    
+  <xsl:template match="tei:sourceDesc">
     <xsl:if test="normalize-space(.) != '' or tei:bibl/tei:ref">
       <div>
         <xsl:call-template name="headatts"/>
@@ -175,12 +185,57 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
             </span>
             <xsl:apply-templates select="tei:bibl[1]/node()"/>
           </xsl:when>
+          <xsl:when test="tei:msDesc">
+            <span class="label">
+              <xsl:value-of select="$message"/>
+              <xsl:text> : </xsl:text>
+            </span>
+            <xsl:apply-templates select="tei:msDesc[1]"/>
+          </xsl:when>
           <xsl:otherwise>
             <xsl:apply-templates/>
           </xsl:otherwise>
         </xsl:choose>
       </div>
     </xsl:if>
+  </xsl:template>
+  <xsl:template match="tei:msDesc">
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:apply-templates select="tei:msContents"/>
+      <xsl:apply-templates select="tei:msIdentifier"/>
+    </span>
+  </xsl:template>
+  <xsl:template match="tei:msContents">
+    <xsl:choose>
+      <xsl:when test="tei:p/tei:biblStruct">
+        <xsl:apply-templates select="tei:p/tei:biblStruct"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  <xsl:template match="tei:biblStruct">
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:apply-templates/>
+    </span>
+  </xsl:template>
+  <xsl:template match="tei:monogr | tei:analytic">
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:for-each select="*[not(@type = 'titre_court')]">
+        <xsl:apply-templates select="."/>
+        <xsl:variable name="last" select="substring(normalize-space(.), string-length(normalize-space(.)) ) "/>
+        <xsl:choose>
+          <xsl:when test="translate($last, '.,;?!', '') = ''">
+            <xsl:text> </xsl:text>
+          </xsl:when>
+          <xsl:otherwise>. </xsl:otherwise>
+        </xsl:choose>
+      </xsl:for-each>
+    </span>
   </xsl:template>
   <xsl:template match="tei:licence">
     <div>
@@ -274,7 +329,8 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       <xsl:apply-templates/>
     </a>
   </xsl:template>
-    <xsl:template match="tei:hi">
+  <!-- Typo simple -->
+  <xsl:template match="tei:hi">
     <xsl:variable name="rend" select="translate(@rend, $iso, $min)"></xsl:variable>
     <xsl:choose>
       <xsl:when test=". =''"/>
@@ -330,7 +386,9 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <xsl:apply-templates select="/tei:TEI/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
           <xsl:apply-templates select="tei:title"/>
           <xsl:apply-templates select="tei:editor | tei:funder | tei:meeting | tei:principal | tei:sponsor"/>
+          <!-- ?
           <xsl:apply-templates select="tei:respStmt"/>
+          -->
         </div>
       </xsl:otherwise>
     </xsl:choose>
@@ -338,30 +396,112 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
   <!--  -->
   <xsl:template match="tei:fileDesc/tei:editionStmt">
     <xsl:choose>
-      <xsl:when test="not(tei:respStmt/tei:name[normalize-space(.) != ''])"/>
+      <xsl:when test="not(tei:respStmt/tei:name[normalize-space(.) != '']|../tei:titleStmt/tei:respStmt)"/>
       <xsl:otherwise>
         <div>
           <xsl:call-template name="headatts"/>
           <xsl:call-template name="message"/>
-          <xsl:for-each select="tei:respStmt">
+          <xsl:for-each select="../tei:titleStmt/tei:respStmt | tei:respStmt">
             <xsl:choose>
               <xsl:when test="position() = 1"/>
               <xsl:when test="position() = last()"> et </xsl:when>
               <xsl:otherwise>, </xsl:otherwise>
             </xsl:choose>
-              <span class="resp">
-                <xsl:apply-templates select="tei:name" mode="txt"/>
-                <xsl:if test="tei:resp">
-                  <xsl:text> (</xsl:text>
-                  <xsl:apply-templates select="tei:resp" mode="txt"/>
-                  <xsl:text>)</xsl:text>
-                </xsl:if>
-              </span>
+            <xsl:apply-templates select="."/>
           </xsl:for-each>
           <xsl:text>.</xsl:text>
         </div>
       </xsl:otherwise>
     </xsl:choose>
+    <!-- special CESR -->
+    <xsl:if test="tei:edition/@xml:base">
+      <div class="idno">
+        <a href="{tei:edition/@xml:base}">
+          <xsl:value-of select="tei:edition/@xml:base"/>
+        </a>
+      </div>
+    </xsl:if>
+  </xsl:template>
+  <xsl:template match="tei:author | tei:biblScope | tei:collation | tei:collection | tei:country | tei:dim | tei:editor | tei:edition | tei:extent | tei:institution | tei:funder | tei:persName | tei:publisher | tei:pubPlace | tei:repository | tei:settlement | tei:stamp | tei:biblFull/tei:titleStmt/tei:title">
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:apply-templates/>
+    </span>
+  </xsl:template>
+  <xsl:template match="tei:msIdentifier">
+    <xsl:text> </xsl:text>
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:text>(</xsl:text>
+      <xsl:for-each select="*">
+        <xsl:apply-templates select="."/>
+        <xsl:choose>
+          <xsl:when test="position() = last()"/>
+          <xsl:otherwise> ; </xsl:otherwise>
+        </xsl:choose>
+      </xsl:for-each>
+      <xsl:text>)</xsl:text>
+    </span>
+  </xsl:template>
+  <xsl:template match="*[tei:surname]" mode="txt">
+    <xsl:variable name="txt">
+      <xsl:apply-templates select="."/>
+    </xsl:variable>
+    <xsl:value-of select="normalize-space($txt)"/>
+  </xsl:template>
+  <xsl:template match="*[tei:surname]">
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:for-each select="*">
+        <xsl:text> </xsl:text>
+        <xsl:apply-templates/>
+      </xsl:for-each>
+    </span>
+  </xsl:template>
+  <xsl:template match="tei:imprint">
+    <span>
+      <xsl:call-template name="headatts"/>
+      <xsl:choose>
+        <xsl:when test="text()[normalize-space(.) != '']">
+          <xsl:apply-templates/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:for-each select="*">
+            <xsl:apply-templates select="."/>
+            <xsl:choose>
+              <xsl:when test="self::tei:pubPlace"> : </xsl:when>
+              <xsl:when test="position() != last()">, </xsl:when>
+            </xsl:choose>
+          </xsl:for-each>
+        </xsl:otherwise>
+      </xsl:choose>
+    </span>
+  </xsl:template>
+  <!-- Personne avec role -->
+  <xsl:template match="tei:respStmt">
+    <span class="resp">
+      <xsl:choose>
+        <xsl:when test="tei:name[@ref]">
+          <xsl:variable name="string">
+            <xsl:value-of select="substring-before(tei:name/@ref, '@')"/>
+            <xsl:text>'+'\x40'+'</xsl:text>
+            <xsl:value-of select="substring-after(tei:name/@ref, '@')"/>
+          </xsl:variable>
+          <a href="#">
+            <xsl:attribute name="onmouseover">if(this.ok) return; this.href='mailto:<xsl:value-of select="$string"/>'; this.ok=true; </xsl:attribute>
+            <xsl:apply-templates select="tei:name" mode="txt"/>
+          </a>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="tei:name | tei:persName" mode="txt"/>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:if test="tei:resp">
+        <xsl:text> (</xsl:text>
+        <xsl:apply-templates select="tei:resp" mode="txt"/>
+        <xsl:text>)</xsl:text>
+      </xsl:if>
+    </span>
   </xsl:template>
   <xsl:template match="tei:creation">
     <xsl:if test="tei:date">
@@ -424,6 +564,12 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     <xsl:text> }</xsl:text>
   </xsl:template>
   <!-- dates -->
+  <xsl:template match="tei:date" mode="txt">
+    <xsl:variable name="txt">
+      <xsl:apply-templates select="."/>
+    </xsl:variable>
+    <xsl:value-of select="$txt"/>
+  </xsl:template>
   <xsl:template match="tei:date | tei:docDate | tei:origDate">
     <xsl:variable name="el">
       <xsl:choose>
@@ -489,6 +635,10 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         </xsl:element>
       </xsl:otherwise>
     </xsl:choose>
+    <!-- hack cesr -->
+    <xsl:if test="parent::tei:resp">
+      <xsl:text> </xsl:text>
+    </xsl:if>
   </xsl:template>
   <!-- identifiant bibliographique -->
   <xsl:template match="tei:idno | tei:altIdentifier">
