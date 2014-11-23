@@ -1,6 +1,6 @@
 <?php
-include(dirname(__FILE__).'/php/Conf.php'); // importer la configuration
-include(dirname(__FILE__).'/php/Pub.php');
+include(dirname(__FILE__).'/lib/Conf.php'); // importer la configuration
+include(dirname(__FILE__).'/lib/Pub.php');
 $pub=new Pub(Conf::$sqlite);
 
 
@@ -9,13 +9,14 @@ $pub=new Pub(Conf::$sqlite);
 <html>
   <head>
     <meta charset="UTF-8" />
-    <?php include(dirname(__FILE__).'/local/head.php'); ?>
+    <?php include(dirname(__FILE__).'/cahier/head.php'); ?>
     <title>Weboai</title>
-    <link rel="stylesheet" type="text/css" href="<?php echo $pub->homehref ?>local/cahier.css" />
+    <link rel="stylesheet" type="text/css" href="<?php echo $pub->homehref ?>lib/weboai.css" />
+    <link rel="stylesheet" type="text/css" href="<?php echo $pub->homehref ?>cahier/cahier.css" />
   </head>
   <body>
     <div id="body-pattern">
-      <?php include(dirname(__FILE__).'/local/header.php'); ?>
+      <?php include(dirname(__FILE__).'/cahier/header.php'); ?>
       <div id="content" class="the-page content">
         <div id="content-containers" class="rightside">
           <div id="narrow-container" class="make-shadow global-radius">
@@ -47,8 +48,8 @@ else {
           </div>
         </div>
       </div>
-      <?php include(dirname(__FILE__).'/local/footer.php'); ?>
+      <?php include(dirname(__FILE__).'/cahier/footer.php'); ?>
     </div>
-    <script type="text/javascript" src="<?php echo $pub->homehref ?>php/Sortable.js">//</script>
+    <script type="text/javascript" src="<?php echo $pub->homehref ?>lib/Sortable.js">//</script>
   </body>
 </html>

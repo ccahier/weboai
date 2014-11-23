@@ -1,0 +1,61 @@
+body, html { height: 100%; padding: 0; margin: 0; }
+* { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
+body { font-family:  "Lucida Sans Unicode", "Lucida Grande", sans-serif; color: 	#161616; font-size: 15px; }
+a { text-decoration: none; }
+table { font-size: inherit; }
+/** titlePage */
+p.sourceDesc { margin-top: 1em; margin-bottom: 1em; }
+.titleStmt { text-align: center; }
+.titleStmt h1 { margin-left: auto; margin-right: auto; text-align: center; margin-top: 1em; margin-bottom: 1em; font-family: "Droid Serif Pro", "Palatino", "Bitstream Vera Serif", "Century", "Georgia", serif; }
+div.author { font-variant: small-caps; font-size: 200%; }
+/** chronology */
+table.chrono {margin-top:1em;margin-bottom:1em;}
+.chrono, .chrono a {color:#888888;}
+.chrono a {text-decoration:none;padding:0;}
+.chrono {line-height:100%;}
+.chrono td {vertical-align:bottom; text-align:center;}
+.chrono td.end {width:4ex;}
+.chrono .year {text-align:left; border-left:1px solid #CCCCCC; font-weight:normal; padding-left:0.5ex;}
+.chrono .bar {border-top:2px ridge #6C3A55; border-left:1px solid #CCCCCC; background-color:#6C3A55; background-image: -webkit-gradient(linear, left bottom, right top,from(#FFFFFF),to(#6C3A55)); background-image: -webkit-linear-gradient(bottom,#FFFFFF, #6C3A55); background-image: -moz-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: -ms-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: -o-linear-gradient(bottom, #FFFFFF, #6C3A55); background-image: linear-gradient(bottom, #FFFFFF, #6C3A55); }
+/** sortable for biblio */
+table.sortable { border:1px #6C3A55 solid; }
+table.sortable caption { text-align: center; background-color: #FFFFFF; padding: 1ex 1em; color: #000; font-weight: bold; font-size: 150%; }
+.oai table.sortable { border:1px #d8e2db solid; }
+table.sortable td{ vertical-align:top; border-left:#CCCCCC 1px solid; padding:2px 1ex; }
+table.sortable tr:hover { background-color:#E9E2E6; color: #000; }
+table.sortable tr:hover a { color: #000; }
+table.sortable tr:hover a:hover { color: #000; background-color: #FFF; display: block; }
+table.sortable th { vertical-align:top; padding: 1px 0; text-align: center; background-color: #6c3a55; color:#FFFFFF; border-left: 1px #FFF solid; }
+table.sortable th a { color: #FFFFFF; }
+table.sortable tr.mod5 td { border-top:dashed 1px #6C3A55; }
+table.sortable tr.mod10 td { border-top:solid 1px #6C3A55; }
+td.n { text-align:right; color:#999A9A; font-size:80%;}
+/** Sets */
+table.set { width: 12em; height: 12em; margin: 1em 1ex 0 1ex; float:left; background: #6C3A55; color: #CCCCCC; text-align: center; border: 2px solid; box-shadow: 0px 0px 5px rgba(108, 58, 85, 0.7); border-radius: 6px; line-height: normal; border-spacing : 0; border-collapse : collapse; }
+table.set td { padding-left: 0.5ex; padding-right: 0.5ex; }
+td.publisher { vertical-align: top; height: 1em; padding-top: 1ex; }
+td.title { vertical-align: middle; color: #FFFFFF; }
+td.count { vertical-align: bottom; height: 1em; padding-bottom: 1ex;  }
+a:hover table.set { background: #A78799; }
+a:hover table.set  td.title { color: #000000; }
+
+div.sets {margin-top:1em; margin-bottom:1em; color:#999A9A; clear: both; border-bottom: 1px solid #FFFFFF; overflow: auto; width: 100%}
+div.sets .level0 {color:#000000}
+div.sets .level1 {margin-left:2em;}
+div.sets .level2 {margin-left:4em;}
+/** OAI transformation */
+body.oai main { margin-left: auto; margin-right: auto; width: 100ex; padding: 3em 0 5em 0; }
+a.identifier { text-decoration: none; }
+.content a {color:#6C3A55;}
+body.oai article.record { background: #FFFFFF; color: #6b6768; padding: 1em; margin: 1em 0 1em 0; border: 2px solid; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); border-radius: 6px; }
+body.oai article.record a { color: #3F1F2C; }
+body.oai article.record header { background:  #72405B; color: #FFFFFF; padding: 0.3ex 1em 0.5ex 1em; margin-bottom: 1em; border-radius: 6px; border: 1px solid #FFFFFF; }
+body.oai article.record header a { color: #d8e2db; text-decoration: none; }
+body.oai a:hover { background: rgba(255, 255, 255, 0.5); color: #000 !important; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); }
+div.dc a:hover, div.set a:hover { background: rgba(114, 64, 91, 0.5); box-shadow: 0px 0px 10px rgba(114, 64, 91, 0.7); }
+article.record div.creator { text-align: center; font-variant: small-caps; font-size: 1.5em; }
+article.record div.title { text-align: center; font-size: 2em; margin-top: 1ex; margin-bottom: 1em;}
+article.record div.date { text-align: center; margin-top: 0; margin-bottom: 1em; font-size: 1.5em; }
+div.creator label, div.title label, div.date label { display: none; }
+div.title a { text-decoration: none; }
+

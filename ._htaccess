@@ -6,7 +6,7 @@ Options -MultiViews +FollowSymLinks +Indexes
 RewriteEngine on
 # edit rewrite base according to your server
 # RewriteBase /weboai/
-RewriteRule ^pmh$ php/pmh.php [QSA,L]
+RewriteRule ^pmh$ lib/pmh.php [QSA,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule   ^(.*)$ index.php/$1 [QSA,L]
