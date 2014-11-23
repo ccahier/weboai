@@ -191,7 +191,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
   <!-- Ligne avec intitulé -->
   <xsl:template match="tei:sourceDesc">
     <xsl:if test="normalize-space(.) != '' or tei:bibl/tei:ref">
-      <div>
+      <p>
         <xsl:call-template name="headatts"/>
         <xsl:variable name="message">
           <xsl:call-template name="message"/>
@@ -215,7 +215,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
             <xsl:apply-templates/>
           </xsl:otherwise>
         </xsl:choose>
-      </div>
+      </p>
     </xsl:if>
   </xsl:template>
   <xsl:template match="tei:msDesc">
@@ -402,7 +402,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <xsl:call-template name="headatts"/>
           <!-- Reorder -->
           <xsl:apply-templates select="tei:author"/>
-          <xsl:apply-templates select="/tei:TEI/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
+          <xsl:apply-templates select="../../tei:profileDesc[1]/tei:creation[1]"/>
           <xsl:apply-templates select="tei:title"/>
           <xsl:apply-templates select="tei:editor | tei:funder | tei:meeting | tei:principal | tei:sponsor"/>
           <!-- ?

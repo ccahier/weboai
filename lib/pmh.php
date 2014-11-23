@@ -1,5 +1,5 @@
 <?php
-include (dirname(__FILE__).'/php/Conf.php'); // importer la configuration
+include (dirname(__FILE__).'/Conf.php'); // importer la configuration
 new Pmh(Conf::$sqlite);
 
 class Pmh {
@@ -141,7 +141,7 @@ class Pmh {
     // header ("Content-Type:text/plain");
     header ("Content-Type:text/xml");
     if (!ini_get("zlib.output_compression")) ob_start('ob_gzhandler');
-    $date = date(Conf::$date_format);
+    $date = date('Y-m-d\TH:i:s\Z');
     $xml = array();
     $xml[] = '<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="transform/oai2html.xsl"?>

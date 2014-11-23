@@ -410,7 +410,7 @@ textarea.xml { width: 100%; border: none; }
     $html = $this->proc->transformToXML($this->doc);
     $html = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $html);
 
-    $oai_datestamp  = date(Conf::$date_format);
+    $oai_datestamp  = date('Y-m-d\TH:i:s\Z');
     
     $date = NULL;
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');

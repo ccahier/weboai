@@ -1,5 +1,5 @@
 <?php
-include('php/Weboai.php');
+include('lib/Weboai.php');
 $message = array();
 session_start();
 
@@ -31,15 +31,15 @@ else if ( isset($_SESSION['user']) && isset($_SESSION['pass']) ) {
 
 $path="";
 if (isset($_SERVER['PATH_INFO'])) $path=ltrim($_SERVER['PATH_INFO'], '/');
-$basehref = str_repeat("../", substr_count($path, '/'));
-if (!$basehref) $basehref = "./";
+$homehref = str_repeat("../", substr_count($path, '/'));
+if (!$homehref) $homehref = "./";
 
 ?><!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <title>Admin Weboai</title>
-    <link rel="stylesheet" type="text/css" href="<?php echo $basehref ?>local/cahier.css" />
+    <link rel="stylesheet" type="text/css" href="<?php echo $homehref ?>lib/weboai.css" />
     <style type="text/css">
     * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
     ::-webkit-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
@@ -53,7 +53,7 @@ if (!$basehref) $basehref = "./";
     </style>
   </head>
   <body class="oai">
-    <h1><a href="<?php echo $basehref; ?>admin.php">Consortium CAHIER, gestion du catalogue</a></h1>
+    <h1><a href="<?php echo $homehref; ?>admin.php">Consortium CAHIER, gestion du catalogue</a></h1>
     <?php
 if (isset($_SESSION['user'])) {
   echo '<form style="float: right" method="POST"><button name="logout">Déconnexion</button></form>';
@@ -66,7 +66,6 @@ else {
 </form>';
 } 
     ?>
-    <main>
   <?php
 echo implode("\n", $message);
 // privé
@@ -93,6 +92,5 @@ else {
 
 }
   ?>
-    </main>
   </body>
 </html>

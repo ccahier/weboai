@@ -14,7 +14,7 @@
   exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei"
   >
   <xsl:import href="common.xsl"/>
-  <xsl:param name="css">local/cahier.css</xsl:param>
+  <xsl:param name="css">lib/weboai.css</xsl:param>
   <xsl:param name="js">lib/Sortable.js</xsl:param>
   <xsl:template match="/">
     <html>
