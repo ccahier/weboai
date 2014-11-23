@@ -107,7 +107,26 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <xsl:attribute name="class">notmain</xsl:attribute>
         </xsl:when>
       </xsl:choose>
-      <xsl:apply-templates/>
+      <xsl:variable name="uri">
+        <xsl:choose>
+          <xsl:when test="../../tei:publicationStmt/tei:idno">
+            <xsl:value-of select="../../tei:publicationStmt/tei:idno"/>
+          </xsl:when>
+          <xsl:when test="../../tei:editionStmt/tei:edition/@xml:base">
+            <xsl:value-of select="../../tei:editionStmt/tei:edition/@xml:base"/>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:choose>
+        <xsl:when test="$uri != ''">
+          <a href="{$uri}">
+            <xsl:apply-templates/>
+          </a>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates/>
+        </xsl:otherwise>
+      </xsl:choose>
     </h1>
   </xsl:template>
   <!-- Bloc de publication, réordonné -->
@@ -498,7 +517,10 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       </xsl:choose>
       <xsl:if test="tei:resp">
         <xsl:text> (</xsl:text>
-        <xsl:apply-templates select="tei:resp" mode="txt"/>
+        <xsl:variable name="txt">
+          <xsl:apply-templates select="tei:resp" mode="txt"/>
+        </xsl:variable>
+        <xsl:value-of select="normalize-space($txt)"/>
         <xsl:text>)</xsl:text>
       </xsl:if>
     </span>
@@ -568,7 +590,9 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     <xsl:variable name="txt">
       <xsl:apply-templates select="."/>
     </xsl:variable>
+    <xsl:text> </xsl:text>
     <xsl:value-of select="$txt"/>
+    <xsl:text> </xsl:text>
   </xsl:template>
   <xsl:template match="tei:date | tei:docDate | tei:origDate">
     <xsl:variable name="el">

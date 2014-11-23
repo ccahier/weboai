@@ -336,7 +336,7 @@ textarea.xml { width: 100%; border: none; }
     $duplicate= '';
     if (isset(self::$duplicate[$oai_identifier])) $duplicate = ' <div class="error">DOUBLON</div>';
     self::$duplicate[$oai_identifier] = 1;
-    $th = '<a href="#" title="Voir la source OAI" onclick="div=document.getElementById(\'' . $oai_identifier . '\'); if (div.style.display == \'none\') {div.style.display = \'\';} else {div.style.display = \'none\'}; return false;">' . $oai_identifier  . '</a>' . $duplicate;
+    $th = '<a href="#" title="Voir la source OAI" onclick="div=document.getElementById(\'' . $oai_identifier . '\'); if (div.style.display == \'none\') {div.style.display = \'\';} else {div.style.display = \'none\'}; return false; ">' . $oai_identifier  . '</a>' . $duplicate;
     // mal chargé
     if (!$this->doc) {
       echo "
