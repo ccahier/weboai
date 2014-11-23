@@ -103,6 +103,7 @@
       <xsl:apply-templates select="tei:fileDesc/tei:titleStmt/tei:principal"/>
       <!-- n? publisher -->
       <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:publisher"/>
+      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:authority"/>
       <!-- 1! identifier -->
       <xsl:choose>
         <xsl:when test="tei:fileDesc/tei:publicationStmt/tei:idno">
@@ -194,7 +195,7 @@
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_editor -->
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_publisher -->
   <!-- optionnel, répétable -->
-  <xsl:template match="tei:author | tei:principal | tei:titleStmt/tei:editor | tei:publicationStmt/tei:publisher" name="pers">
+  <xsl:template match="tei:author | tei:principal | tei:titleStmt/tei:editor | tei:publicationStmt/tei:publisher | tei:publicationStmt/tei:authority" name="pers">
     <xsl:variable name="text">
       <xsl:choose>
         <xsl:when test="@key">
@@ -236,7 +237,7 @@
           <xsl:text>)</xsl:text>
         </dc:contributor>
       </xsl:when>
-      <xsl:when test="self::tei:publisher">
+      <xsl:when test="self::tei:publisher | self::tei:authority">
         <dc:publisher>
           <xsl:value-of select="normalize-space($text)"/>
         </dc:publisher>
