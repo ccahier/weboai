@@ -40,17 +40,6 @@ if (!$homehref) $homehref = "./";
     <meta charset="UTF-8" />
     <title>Admin Weboai</title>
     <link rel="stylesheet" type="text/css" href="<?php echo $homehref ?>lib/weboai.css" />
-    <style type="text/css">
-    * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
-    ::-webkit-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-    :-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-    ::-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-    :-ms-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important;  } 
-    form.oai { background: #E8E0D0; border: #FFFFFF solid 1px; padding: 1em 1em 1em 1em; width: 80ex; margin: 0 auto 0 auto;}
-    input.text, textarea { font-family: Arial, sans-serif; font-size: inherit; border: none; margin: 1px 0 1px 0; outline: none; padding: 0 1ex 0 1ex; }
-    button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; border-radius: 1.5ex; border-style: ridge; background-color: #E0D0B0}
-    .error { color:red; font-weight: bold;}
-    </style>
   </head>
   <body class="oai">
     <h1><a href="<?php echo $homehref; ?>admin.php">Consortium CAHIER, gestion du catalogue</a></h1>

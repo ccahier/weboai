@@ -1,6 +1,4 @@
 <?php
-include (dirname(__FILE__).'/Conf.php'); // importer la configuration
-new Pmh(Conf::$sqlite);
 
 class Pmh {
   public $pdo;
@@ -144,7 +142,9 @@ class Pmh {
     $date = date('Y-m-d\TH:i:s\Z');
     $xml = array();
     $xml[] = '<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="transform/oai2html.xsl"?>
+<?xml-stylesheet type="text/xsl" href="' . Conf::$weboaihref . 'transform/oai2html.xsl"?>
+<?css ' . Conf::$weboaihref . 'lib/weboai.css ?>
+<?js ' . Conf::$weboaihref . 'lib/Sortable.js ?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/

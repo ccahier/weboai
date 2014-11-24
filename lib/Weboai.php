@@ -6,7 +6,6 @@ http://www.bnf.fr/documents/Guide_oaipmh.pdf
  */
 ini_set( 'default_charset', 'UTF-8' );
 set_time_limit(-1);
-include (dirname(__FILE__).'/Conf.php'); // importer la configuration
 Weboai::$re['fr_sort_tr'] = Weboai::json(dirname(__FILE__).'/fr_sort.json'); // clé de tri pour noms propres
 date_default_timezone_set(ini_get('date.timezone'));
 if (php_sapi_name() == "cli") Weboai::docli();
