@@ -14,8 +14,22 @@
   exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei"
   >
   <xsl:import href="common.xsl"/>
-  <xsl:param name="css">lib/weboai.css</xsl:param>
-  <xsl:param name="js">lib/Sortable.js</xsl:param>
+  <xsl:param name="css">
+    <xsl:choose>
+      <xsl:when test="processing-instruction('css')">
+        <xsl:value-of select="processing-instruction('css')"/>
+      </xsl:when>
+      <xsl:otherwise>lib/weboai.css</xsl:otherwise>
+    </xsl:choose>
+  </xsl:param>
+  <xsl:param name="js">
+    <xsl:choose>
+      <xsl:when test="processing-instruction('js')">
+        <xsl:value-of select="processing-instruction('js')"/>
+      </xsl:when>
+      <xsl:otherwise>lib/Sortable.js</xsl:otherwise>
+    </xsl:choose>
+  </xsl:param>
   <xsl:template match="/">
     <html>
       <head>

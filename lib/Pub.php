@@ -61,8 +61,8 @@ class Pub {
     ),
     "n" => array("en" => "№", "fr" => "n°"),
     "recnotfound" => array(
-      "en" => "<p>The record “%s” is not found.</p>",
-      "fr" => "<p>La notice “%s” n’a pas été trouvée.</p>"
+      "en" => "<h1>The record “%s” is not found.</h1>",
+      "fr" => "<h1>La notice “%s” n’a pas été trouvée.</h1>"
     ),
     "see" => array("en" => "See", "fr" => "Voir"),
     "setnotfound" => array(
@@ -267,7 +267,7 @@ class Pub {
     $list->execute(array());
     echo '
 <div class="sets">
-  <h1><a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a></h1>
+  <nav class="path"><a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a></nav>
 ';
     while($set=$list->fetch(PDO::FETCH_ASSOC)) {
       echo '
@@ -333,12 +333,12 @@ class Pub {
     $selset->execute(array($setspec));
     $set = $selset->fetch();
     if (!$set) {
-      echo "\n" . '<h1><a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a></h1>';
+      echo "\n" . '<nav class="path"><a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a></nav>';
       echo $this->msg('setnotfound', array($setspec));
       return;
     }
     $count = current($this->pdo->query("SELECT count(*) AS count FROM member WHERE member.oaiset=".$set['rowid'])->fetch());
-    echo "\n" . '<h1><a href="' . $this->homehref . '">' . $this->msg('sets') . '</a> (' . $this->docscount . ') / <a href="' .$this->homehref . 'set/' . $setspec . '">' . $set['setname'] . '</a> (' . $count . ')</h1>';
+    echo "\n" . '<nav class="path"><a href="' . $this->homehref . '">' . $this->msg('sets') . '</a> (' . $this->docscount . ') / <a href="' .$this->homehref . 'set/' . $setspec . '">' . $set['setname'] . '</a> (' . $count . ')</nav>';
     if (!$set['title']) $set['title'] = $set['setname'];
     $caption = '<a href="' . $set['identifier'] . '" class="title">' . $set['title'] . '</a> (' . $set['publisher'] . ')';
     if ($set['description']) echo "\n" . '<p>' . $set['description'] . '</p>';
@@ -407,7 +407,7 @@ class Pub {
    */
   public function record($oai_identifier) {
     $members = explode(':', $oai_identifier);
-    $caption = '<a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a>';
+    $caption = '<a href="' . $this->homehref . '">' . $this->msg('sets') . '</a> (' . $this->msg("docsAll", array($this->docscount)) . ')';
     while (isset($members[2])) {
       $setspec = $members[2];
       $selset = $this->pdo->prepare("SELECT rowid, * FROM oaiset WHERE setspec = ?");
@@ -422,11 +422,11 @@ class Pub {
     $selrecord->execute(array($oai_identifier));
     $record = $selrecord->fetch(PDO::FETCH_ASSOC);
     if (!$record) {
-      echo "\n" . '<h1>' . $caption . '</h1>';
+      echo "\n" . '<nav class="path">' . $caption . '</nav>';
       echo $this->msg('recnotfound', array($oai_identifier));
       return;
     }
-    echo "\n" . '<h1>' . $caption . '</h1>';
+    echo "\n" . '<nav cclass="path">' . $caption . '</nav>';
     if ($record['teiheader']) {
       $xsl = new DOMDocument("1.0", "UTF-8");
       $xsl->load(dirname(dirname(__FILE__)) . '/transform/teiHeader2html.xsl');

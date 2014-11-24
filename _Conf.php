@@ -5,8 +5,6 @@
  *
  * Chaque paramètre est accessible dans l’application avec l’écriture Conf::$param
  */
-// rendre absolu un chemin relatif à ce fichier
-Conf::$sqlite = dirname(dirname(__FILE__)) . '/' . Conf::$sqlite;
 /**
  * ? = facultatif
  * ! = obligatoire
@@ -25,7 +23,7 @@ class Conf {
     )
   );
   /** Fichier de base SQLITE, doit être autorisé en écriture par Apache si chargement en ligne */
-  static $sqlite =  'data/weboai.sqlite';
+  static $sqlite =  'weboai.sqlite';
   /** ? URI absolue du serveur OAI, ou vaaleur automatique obtenue selon l’installation */
   static $baseURL;
 }
