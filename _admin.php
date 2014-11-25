@@ -1,5 +1,6 @@
 <?php
-include('lib/Weboai.php');
+include (dirname(__FILE__).'/Conf.php'); // importer la configuration
+include (dirname(dirname(__FILE__)).'/weboai/lib/Weboai.php'); // importer la logique d’importation OAI
 $message = array();
 session_start();
 
@@ -29,20 +30,17 @@ else if ( isset($_SESSION['user']) && isset($_SESSION['pass']) ) {
 }
 */
 
-$path="";
-if (isset($_SERVER['PATH_INFO'])) $path=ltrim($_SERVER['PATH_INFO'], '/');
-$homehref = str_repeat("../", substr_count($path, '/'));
-if (!$homehref) $homehref = "./";
+
 
 ?><!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <title>Admin Weboai</title>
-    <link rel="stylesheet" type="text/css" href="<?php echo $homehref ?>lib/weboai.css" />
+    <link rel="stylesheet" type="text/css" href="<?php echo Conf::$weboaihref ?>lib/weboai.css" />
   </head>
   <body class="oai">
-    <h1><a href="<?php echo $homehref; ?>admin.php">Consortium CAHIER, gestion du catalogue</a></h1>
+    <h1><a href="admin.php">Consortium CAHIER, gestion du catalogue</a></h1>
     <?php
 if (isset($_SESSION['user'])) {
   echo '<form style="float: right" method="POST"><button name="logout">Déconnexion</button></form>';

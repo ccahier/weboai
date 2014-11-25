@@ -33,6 +33,7 @@ class Weboai {
   function __construct($srcuri = false) {
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
+    if (!isset(Conf::$domain)) Conf::$domain = $_SERVER['HTTP_HOST'];
     if($srcuri) {
       $this->srcuri = $srcuri;
       $this->srcfilename = pathinfo($srcuri, PATHINFO_FILENAME);
@@ -390,7 +391,7 @@ textarea.xml { width: 100%; border: none; }
     
     echo "
 <tr>
-  <th>$th</th>
+  <td>$th</td>
   <td>$head</td>
   <td>$byline</td>
   <td>$dateline</td>

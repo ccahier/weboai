@@ -1,6 +1,6 @@
 body, html { height: 100%; padding: 0; margin: 0; }
 * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
-body { font-family:  "Lucida Sans Unicode", "Lucida Grande", sans-serif; color: 	#161616; font-size: 15px; background-color: #EDEDED; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #373737; font-size: 15px; background-color: #EDEDED; }
 main { max-width: 1000px; margin-left: auto; margin-right: auto; background-color: #FFFFFF; padding: 76px; clear: both; overflow: hidden; }
 a { text-decoration: none; color: #1982d1; }
 a:hover { text-decoration: underline; color: #1982d1; }

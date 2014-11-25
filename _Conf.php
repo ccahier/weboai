@@ -11,9 +11,7 @@
  */
 class Conf {
   /** ! Nom public de l’entrepôt OAI */
-  static $repositoryName = "Catalogue OAI du consortium CAHIER";
-  /** ! Nom de domaine identifiant l’entrepôt OAI, sert notamment à forger les identifiants OAI */
-  static $domain = "cahier.sf.net";
+  static $repositoryName = "Catalogue Weboai";
   /** ! Adresse email de l’administrateur du serveur OAI-PMH */
   static $adminEmail = "frederic.glorieux@fictif.org";
   /** ! authentification admin */
@@ -23,9 +21,16 @@ class Conf {
     )
   );
   /** Fichier de base SQLITE, doit être autorisé en écriture par Apache si chargement en ligne */
-  static $sqlite =  'weboai.sqlite';
-  /** ? URI absolue du serveur OAI, ou vaaleur automatique obtenue selon l’installation */
+  static $sqlite = 'weboai.sqlite';
+  /** ? URI absolue du serveur OAI, ou valeur automatique obtenue selon l’installation */
   static $baseURL;
+  /** 
+   * ? Nom de domaine identifiant l’entrepôt OAI, sert notamment à forger les identifiants OAI, 
+   * ou valeur automatique obtenue selon l’installation (attention à localhost)
+   */
+  static $domain;
+  /** Lien relatif de la librairie weboai, permet de déporter l’installation et la librairie */
+  static $weboaihref;
 }
 
 
