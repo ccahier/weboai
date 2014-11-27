@@ -96,38 +96,43 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:titleStmt/tei:title">
-    <h1>
-      <xsl:choose>
-        <xsl:when test="@type">
-          <xsl:attribute name="class">
-            <xsl:value-of select="@type"/>
-          </xsl:attribute>
-        </xsl:when>
-        <xsl:when test="../tei:title[@type='main']">
-          <xsl:attribute name="class">notmain</xsl:attribute>
-        </xsl:when>
-      </xsl:choose>
-      <xsl:variable name="uri">
-        <xsl:choose>
-          <xsl:when test="../../tei:publicationStmt/tei:idno">
-            <xsl:value-of select="../../tei:publicationStmt/tei:idno"/>
-          </xsl:when>
-          <xsl:when test="../../tei:editionStmt/tei:edition/@xml:base">
-            <xsl:value-of select="../../tei:editionStmt/tei:edition/@xml:base"/>
-          </xsl:when>
-        </xsl:choose>
-      </xsl:variable>
-      <xsl:choose>
-        <xsl:when test="$uri != ''">
-          <a href="{$uri}">
-            <xsl:apply-templates/>
-          </a>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:apply-templates/>
-        </xsl:otherwise>
-      </xsl:choose>
-    </h1>
+    <xsl:choose>
+      <xsl:when test="@type= 'formal' or @type='reference' or @type='DEAF' or @type='gmd'"/>
+      <xsl:otherwise>
+        <h1>
+          <xsl:choose>
+            <xsl:when test="@type">
+              <xsl:attribute name="class">
+                <xsl:value-of select="@type"/>
+              </xsl:attribute>
+            </xsl:when>
+            <xsl:when test="../tei:title[@type='main']">
+              <xsl:attribute name="class">notmain</xsl:attribute>
+            </xsl:when>
+          </xsl:choose>
+          <xsl:variable name="uri">
+            <xsl:choose>
+              <xsl:when test="../../tei:publicationStmt/tei:idno">
+                <xsl:value-of select="../../tei:publicationStmt/tei:idno"/>
+              </xsl:when>
+              <xsl:when test="../../tei:editionStmt/tei:edition/@xml:base">
+                <xsl:value-of select="../../tei:editionStmt/tei:edition/@xml:base"/>
+              </xsl:when>
+            </xsl:choose>
+          </xsl:variable>
+          <xsl:choose>
+            <xsl:when test="$uri != ''">
+              <a href="{$uri}">
+                <xsl:apply-templates/>
+              </a>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:apply-templates/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </h1>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <!-- Bloc de publication, réordonné -->
   <xsl:template match="tei:fileDesc / tei:publicationStmt">
@@ -441,7 +446,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       </div>
     </xsl:if>
   </xsl:template>
-  <xsl:template match="tei:author | tei:biblScope | tei:collation | tei:collection | tei:country | tei:dim | tei:editor | tei:edition | tei:extent | tei:institution | tei:funder | tei:persName | tei:publisher | tei:pubPlace | tei:repository | tei:settlement | tei:stamp | tei:biblFull/tei:titleStmt/tei:title">
+  <xsl:template match="tei:author | tei:biblFull | tei:biblScope | tei:collation | tei:collection | tei:country | tei:dim | tei:editor | tei:edition | tei:extent | tei:funder | tei:institution | tei:name | tei:persName | tei:biblFull/tei:publicationStmt | tei:publisher | tei:pubPlace | tei:repository | tei:settlement | tei:stamp  | tei:biblFull/tei:seriesStmt | tei:biblFull/tei:titleStmt | tei:biblFull/tei:titleStmt/tei:title">
     <span>
       <xsl:call-template name="headatts"/>
       <xsl:apply-templates/>

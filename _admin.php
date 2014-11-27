@@ -65,18 +65,18 @@ else {
   if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
   echo '
 <p>Tester un Sitemap TEI</p>
-<form name="test" class="oai" method="POST" action="#">
+<form name="test" class="oai" method="GET" action="#">
   <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Tester une source de données TEI" onclick="select()" class="text" size="55" value="' . htmlspecialchars($sitemaptei) . '"/>
   <button name="test" title="Tester une source de données" value="1">Test</button>
 </form>
 ';
-  if (isset($_POST['test']) && $_POST['test']) {
+  if (isset($_REQUEST['sitemaptei']) && $_REQUEST['sitemaptei']) {
     echo '<h1>Test d’un Sitemap TEI</h1>';
-    if (!isset($_POST['sitemaptei'])) echo '<div class="error">Aucun Sitemap TEI à tester</div>';
-    else Weboai::sitemaptei($_POST['sitemaptei']);
+    Weboai::sitemaptei($_REQUEST['sitemaptei']);
   }
-
-
+  else if (isset($_REQUEST['test'])) {
+    echo '<div class="error">Aucun Sitemap TEI à tester</div>';
+  }
 }
   ?>
   </body>
