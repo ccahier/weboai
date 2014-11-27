@@ -1,7 +1,7 @@
 body, html { height: 100%; padding: 0; margin: 0; }
 * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
-body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #373737; font-size: 15px; background-color: #EDEDED; }
-main { max-width: 1000px; margin-left: auto; margin-right: auto; background-color: #FFFFFF; padding: 76px; clear: both; overflow: hidden; }
+body { padding: 1em; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #373737; font-size: 15px; background-color: #EDEDED; }
+main { display: block; max-width: 1000px; margin-left: auto; margin-right: auto; background-color: #FFFFFF; padding: 76px; clear: both; overflow: hidden; }
 a { text-decoration: none; color: #1982d1; }
 a:hover { text-decoration: underline; color: #1982d1; }
 table { font-size: inherit; }
@@ -12,7 +12,7 @@ nav.path { margin-bottom: 1em; }
 
 /** titlePage */
 p.sourceDesc { margin-top: 1em; margin-bottom: 1em; }
-.titleStmt { text-align: center; }
+.titleStmt { text-align: center; margin-top: 2em; margin-bottom: 2em; }
 .titleStmt h1 { margin-left: auto; margin-right: auto; text-align: center; margin-top: 1em; margin-bottom: 1em; font-family: "Droid Serif Pro", "Palatino", "Bitstream Vera Serif", "Century", "Georgia", serif; }
 div.author { font-variant: small-caps; font-size: 200%; }
 
