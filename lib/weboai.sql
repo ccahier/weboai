@@ -80,10 +80,18 @@ CREATE INDEX member_record   ON member(record);
 
 -- TRIGGERS
 
-CREATE TRIGGER set_del
-  -- when a set with a source is deleted, delete record from this source
+CREATE TRIGGER oaiset_del
+  -- when a set is deleted, delete record from this source
   BEFORE DELETE ON oaiset
-  FOR EACH ROW WHEN OLD.sitemaptei IS NOT NULL
+  FOR EACH ROW
+  BEGIN
+    DELETE FROM record WHERE rowid IN (SELECT record FROM member WHERE oaiset = OLD.rowid);
+END;
+
+CREATE TRIGGER oaiset_update
+  -- when the source of a set is modified, delete old records
+  BEFORE UPDATE OF sitemaptei ON oaiset
+  FOR EACH ROW WHEN OLD.sitemaptei != NEW.sitemaptei
   BEGIN
     DELETE FROM record WHERE rowid IN (SELECT record FROM member WHERE oaiset = OLD.rowid);
 END;

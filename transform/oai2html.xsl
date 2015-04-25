@@ -238,9 +238,10 @@
       <xsl:attribute name="class">
         <xsl:value-of select="local-name()"/>
       </xsl:attribute>
-      <xsl:if test="$message">
+      <xsl:if test="normalize-space($message) != ''">
         <label>
           <xsl:copy-of select="$message"/>
+          <xsl:text> : </xsl:text>
         </label>
       </xsl:if>
       <xsl:apply-templates/>

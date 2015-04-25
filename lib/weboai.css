@@ -1,20 +1,24 @@
-body, html { height: 100%; padding: 0; margin: 0; }
 * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
+body, html { height: 100%; padding: 0; margin: 0; }
 body { padding: 1em; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #373737; font-size: 15px; background-color: #EDEDED; }
-main { display: block; max-width: 1000px; margin-left: auto; margin-right: auto; background-color: #FFFFFF; padding: 76px; clear: both; overflow: hidden; }
+
 a { text-decoration: none; color: #1982d1; }
 a:hover { text-decoration: underline; color: #1982d1; }
-table { font-size: inherit; }
 h1 { font-size: 26px; color: #222; } 
 h1 a { color: #222; }
 h2 { font-size: 15px; }
+main { display: block; max-width: 1000px; margin-left: auto; margin-right: auto; background-color: #FFFFFF; padding: 76px; clear: both; overflow: hidden; }
 nav.path { margin-bottom: 1em; }
+table { font-size: inherit; }
 
 /** titlePage */
+.fileDesc { padding: 2ex; border: 2px solid #C50025; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); border-radius: 6px; }
 p.sourceDesc { margin-top: 1em; margin-bottom: 1em; }
 .titleStmt { text-align: center; margin-top: 2em; margin-bottom: 2em; }
+.titleStmt p { text-align: center; }
+.titleStmt label { font-weight: bold; }
 .titleStmt h1 { margin-left: auto; margin-right: auto; text-align: center; margin-top: 1em; margin-bottom: 1em; font-family: "Droid Serif Pro", "Palatino", "Bitstream Vera Serif", "Century", "Georgia", serif; }
-div.author { font-variant: small-caps; font-size: 200%; }
+div.author, p.author { font-variant: small-caps; font-size: 200%; }
 
 /** Admin form */
 ::-webkit-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 

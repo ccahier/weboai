@@ -9,11 +9,12 @@ $pub=new Pub(Conf::$sqlite);
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Weboai</title>
+    <title><?php echo Conf::$repositoryName ?></title>
     <link rel="stylesheet" type="text/css" href="<?php echo $pub->homehref . Conf::$weboaihref ?>lib/weboai.css" />
   </head>
   <body>
     <main>
+      <h1><?php echo Conf::$repositoryName ?></h1>
       <?php 
 if ($pub->path == '') {
   $pub->sets();

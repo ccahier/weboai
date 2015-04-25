@@ -301,6 +301,18 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
       echo "<p class=\"error\">Impossible d’ouvrir $uri</p>\n";
       return;
     }
+    // supprimer les enregistrements du setSpec
+    if ($setspec) {
+      $selset = self::$pdo->prepare("SELECT rowid FROM oaiset WHERE setspec = ? ");
+      $selset->execute(array($setspec));
+      $setrowid = $selset->fetchColumn();
+      $selmember = self::$pdo->prepare("SELECT record FROM member WHERE oaiset = ?");
+      $selmember->execute(array($setrowid));
+      $delrecord = self::$pdo->prepare("DELETE FROM record WHERE rowid = ?");
+      while ($member = $selmember->fetch()) {
+        $delrecord->execute(array($member['record']));
+      }
+    }
     self::$duplicate = array();
     echo '
 <style type="text/css">
