@@ -3,50 +3,39 @@
   
 <h1>TEI » HTML (tei_html.xsl)</h1>
 
-© 2012, <a href="http://www.algone.net/">Algone</a>, licence  <a href="http://www.cecill.info/licences/Licence_CeCILL-C_V1-fr.html">CeCILL-C</a>/<a href="http://www.gnu.org/licenses/lgpl.html">LGPL</a>
-<ul>
-  <li>[VJ] <a href="#" onmouseover="this.href='mailto'+'\x3A'+'jolivet'+'\x40'+'algone.net'">Vincent Jolivet</a></li>
-  <li>[FG] <a href="#" onmouseover="this.href='mailto'+'\x3A'+'glorieux'+'\x40'+'algone.net'">Frédéric Glorieux</a></li>
-</ul>
+© 2012, 2015 Frédéric Glorieux
 
-<p>
 Cette transformation XSLT 1.0 (compatible navigateurs, PHP, Python, Java…) 
 transforme du TEI en HTML5.
-Les auteurs ne s'engagent pas à supporter les 600 éléments TEI.
-Cette feuille prend en charge <a href="http://www.tei-c.org/Guidelines/Customization/Lite/">TEI lite</a>
-et les éléments TEI documentés dans les <a href="./../schema/">schémas</a> de cette installation.
-</p>
-<p>
+
 Alternative : les transformations de Sebastian Rahtz <a href="http://www.tei-c.org/Tools/Stylesheets/">tei-c.org/Tools/Stylesheets/</a>
 sont officiellement ditribuées par le consortium TEI, cependant ce développement est en XSLT 2.0 (java requis).
-</p>
 -->
 <xsl:transform version="1.1"   xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
 
   xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:epub="http://www.idpf.org/2007/ops"
+  xmlns:tei="http://www.tei-c.org/ns/1.0" 
   xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns:epub="http://www.idpf.org/2007/ops"
   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-  xmlns:tei="http://www.tei-c.org/ns/1.0" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  exclude-result-prefixes="tei html epub rdf rdfs xsi"
+  exclude-result-prefixes="tei html epub rdf rdfs"
 >
   <xsl:import href="common.xsl"/>
   <xsl:output encoding="UTF-8" indent="yes" method="xml" omit-xml-declaration="yes"/>
   <!-- 
 <h3>teiHeader</h3>
   -->
-  <xsl:template match="tei:TEI">
+  <xsl:template match="tei:TEI|tei:TEI.2" priority="-1">
     <xsl:apply-templates select="tei:teiHeader/tei:fileDesc"/>
   </xsl:template>
-  <xsl:template match="tei:teiHeader">
+  <xsl:template match="tei:teiHeader" priority="-1">
     <xsl:apply-templates select="tei:fileDesc"/>
   </xsl:template>
   <xsl:template match="*" priority="-5">
     <xsl:call-template name="tag"/>
   </xsl:template>
-  <xsl:template match="tei:title">
+  <xsl:template match="tei:teiHeader//tei:title" priority="-1">
     <i>
       <xsl:call-template name="headatts"/>
       <xsl:apply-templates/>
@@ -57,6 +46,12 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       <xsl:call-template name="headatts"/>
       <xsl:apply-templates/>
     </span>
+  </xsl:template>
+  <xsl:template match="tei:fileDesc/tei:titleStmt/tei:*" priority="-1">
+    <div>
+      <xsl:call-template name="headatts"/>
+      <xsl:apply-templates/>
+    </div>
   </xsl:template>
   <!-- Réordonner le bloc de description du fichier -->
   <xsl:template match="tei:fileDesc">
@@ -74,6 +69,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <!-- En faire quelque chose ?
           <xsl:apply-templates select="tei:notesStmt"/>
           -->
+          
         </xsl:element>
       </xsl:otherwise>
     </xsl:choose>
@@ -95,7 +91,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <xsl:template match="tei:titleStmt/tei:title">
+  <xsl:template match="tei:fileDesc/tei:titleStmt/tei:title">
     <xsl:choose>
       <xsl:when test="@type= 'formal' or @type='reference' or @type='DEAF' or @type='gmd'"/>
       <xsl:otherwise>
@@ -153,7 +149,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
             </div>
           </xsl:if>
           <div class="imprint">
-            <xsl:for-each select="tei:publisher | tei:authority">
+            <xsl:for-each select="tei:publisher">
               <xsl:if test="position() != 1">, </xsl:if>
               <xsl:apply-templates select="."/>
             </xsl:for-each>
@@ -184,9 +180,9 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         <xsl:call-template name="message"/>
       </xsl:variable>
       <xsl:if test="string($message) != '' and string($message) != local-name()">
-        <span class="label">
+        <label>
           <xsl:value-of select="$message"/>
-        </span>
+        </label>
       </xsl:if>
       <xsl:apply-templates/>
     </xsl:element>
@@ -194,33 +190,36 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
   <!-- éléments teiHeader retenus -->
   <xsl:template match="tei:charDecl | tei:langUsage | tei:catRef"/>
   <!-- Ligne avec intitulé -->
-  <xsl:template match="tei:sourceDesc">
+  <xsl:template match="tei:sourceDesc">    
     <xsl:if test="normalize-space(.) != '' or tei:bibl/tei:ref">
-      <p>
+      <div>
         <xsl:call-template name="headatts"/>
         <xsl:variable name="message">
           <xsl:call-template name="message"/>
         </xsl:variable>
         <xsl:choose>
           <xsl:when test="tei:bibl">
-            <span class="label">
-              <xsl:value-of select="$message"/>
-              <xsl:text> : </xsl:text>
-            </span>
-            <xsl:apply-templates select="tei:bibl[1]/node()"/>
+            <xsl:for-each select="tei:bibl">
+              <label>
+                <xsl:value-of select="$message"/>
+                <xsl:text> : </xsl:text>
+              </label>
+              <xsl:apply-templates select="./node()"/>
+              <xsl:if test="position()!=last()"><br/></xsl:if>
+            </xsl:for-each>
           </xsl:when>
           <xsl:when test="tei:msDesc">
-            <span class="label">
+            <label>
               <xsl:value-of select="$message"/>
               <xsl:text> : </xsl:text>
-            </span>
+            </label>
             <xsl:apply-templates select="tei:msDesc[1]"/>
           </xsl:when>
           <xsl:otherwise>
             <xsl:apply-templates/>
           </xsl:otherwise>
         </xsl:choose>
-      </p>
+      </div>
     </xsl:if>
   </xsl:template>
   <xsl:template match="tei:msDesc">
@@ -301,10 +300,10 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
     </div>
   </xsl:template>
   <xsl:template match="tei:fileDesc/tei:titleStmt/tei:author">
-    <div>
+    <p>
       <xsl:call-template name="headatts"/>
       <xsl:apply-templates/>
-    </div>
+    </p>
   </xsl:template>
   <!-- Différents titres de responsabilité intellectuelle -->
   <xsl:template match="
@@ -340,12 +339,14 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
         </xsl:choose>
         <xsl:apply-templates/>
       </xsl:for-each>
+      <!--
       <xsl:text>.</xsl:text>
+      -->
     </div>
   </xsl:template>
 
   <!-- Les liens dans un <teiHeader> pour une page de titre sont généralement absolus -->
-  <xsl:template match="tei:ref">
+  <xsl:template match="tei:teiHeader//tei:ref">
     <a>
       <xsl:attribute name="href">
         <xsl:value-of select="@target"/>
@@ -353,8 +354,7 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
       <xsl:apply-templates/>
     </a>
   </xsl:template>
-  <!-- Typo simple -->
-  <xsl:template match="tei:hi">
+  <xsl:template match="tei:teiHeader//tei:hi">
     <xsl:variable name="rend" select="translate(@rend, $iso, $min)"></xsl:variable>
     <xsl:choose>
       <xsl:when test=". =''"/>
@@ -407,20 +407,25 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
           <xsl:call-template name="headatts"/>
           <!-- Reorder -->
           <xsl:apply-templates select="tei:author"/>
-          <xsl:apply-templates select="../../tei:profileDesc[1]/tei:creation[1]"/>
+          <!-- Garder ?
+          <xsl:apply-templates select="/*/tei:teiHeader[1]/tei:profileDesc[1]/tei:creation[1]"/>
+          -->
           <xsl:apply-templates select="tei:title"/>
           <xsl:apply-templates select="tei:editor | tei:funder | tei:meeting | tei:principal | tei:sponsor"/>
-          <!-- ?
           <xsl:apply-templates select="tei:respStmt"/>
-          -->
+          <xsl:if test="../tei:publicationStmt/tei:date">
+            <div class="date">
+              <xsl:apply-templates select="../tei:publicationStmt/tei:date"/>
+            </div>
+          </xsl:if>
         </div>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <!--  -->
   <xsl:template match="tei:fileDesc/tei:editionStmt">
+    <!-- ../tei:titleStmt/tei:respStmt ??? CESR -->
     <xsl:choose>
-      <xsl:when test="not(tei:respStmt/tei:name[normalize-space(.) != '']|../tei:titleStmt/tei:respStmt)"/>
+      <xsl:when test="not(tei:respStmt/tei:name[normalize-space(.) != ''] | ../tei:titleStmt/tei:respStmt)"/>
       <xsl:otherwise>
         <div>
           <xsl:call-template name="headatts"/>
@@ -431,7 +436,14 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
               <xsl:when test="position() = last()"> et </xsl:when>
               <xsl:otherwise>, </xsl:otherwise>
             </xsl:choose>
-            <xsl:apply-templates select="."/>
+              <span class="resp">
+                <xsl:apply-templates select="tei:name" mode="txt"/>
+                <xsl:if test="tei:resp">
+                  <xsl:text> (</xsl:text>
+                  <xsl:apply-templates select="tei:resp" mode="txt"/>
+                  <xsl:text>)</xsl:text>
+                </xsl:if>
+              </span>
           </xsl:for-each>
           <xsl:text>.</xsl:text>
         </div>
@@ -567,6 +579,12 @@ sont officiellement ditribuées par le consortium TEI, cependant ce développeme
   <!-- Titres obtenus depuis tei.rdfs -->
   <xsl:template match="tei:publicationStmt | tei:titleStmt" mode="title">
     <xsl:call-template name="message"/>
+  </xsl:template>
+  <xsl:template match="tei:teiHeader//tei:p">
+    <p>
+      <xsl:call-template name="headatts"/>
+      <xsl:apply-templates/>
+    </p>
   </xsl:template>
   <!-- CSS declaration, should be called from <head> -->
   <xsl:template match="tei:tagsDecl">

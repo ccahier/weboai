@@ -109,6 +109,7 @@ class Pub {
       }
     }
     if (isset($_SERVER['PATH_INFO'])) $this->path=ltrim($_SERVER['PATH_INFO'], '/');
+    else if (isset($_REQUEST['path'])) $this->path=ltrim($_REQUEST['path'], '/');
     $this->homehref = str_repeat("../", substr_count($this->path, '/'));
     if (!$this->homehref) $this->homehref = "./";
     $this->docscount = current($this->pdo->query("SELECT COUNT(*) FROM record")->fetch());

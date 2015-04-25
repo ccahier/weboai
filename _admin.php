@@ -1,6 +1,6 @@
 <?php
 include (dirname(__FILE__).'/Conf.php'); // importer la configuration
-include (dirname(dirname(__FILE__)).'/weboai/lib/Weboai.php'); // importer la logique d’importation OAI
+include (dirname(__FILE__).'/lib/Weboai.php'); // importer la logique d’importation OAI
 $message = array();
 session_start();
 
@@ -36,11 +36,11 @@ else if ( isset($_SESSION['user']) && isset($_SESSION['pass']) ) {
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Admin Weboai</title>
+    <title>Admin “<?php echo Conf::$repositoryName ?>”</title>
     <link rel="stylesheet" type="text/css" href="<?php echo Conf::$weboaihref ?>lib/weboai.css" />
   </head>
   <body class="oai">
-    <h1><a href="admin.php">Consortium CAHIER, gestion du catalogue</a></h1>
+    <h1><a href="admin.php"><?php echo Conf::$repositoryName ?>, administration</a></h1>
     <?php
 if (isset($_SESSION['user'])) {
   echo '<form style="float: right" method="POST"><button name="logout">Déconnexion</button></form>';
