@@ -30,22 +30,35 @@
       <xsl:otherwise>lib/Sortable.js</xsl:otherwise>
     </xsl:choose>
   </xsl:param>
+  <xsl:param name="repositoryName">
+    <xsl:choose>
+      <xsl:when test="//oai:repositoryName">
+        <xsl:value-of select="//oai:repositoryName"/>
+      </xsl:when>
+      <xsl:when test="processing-instruction('repositoryName')">
+        <xsl:value-of select="processing-instruction('repositoryName')"/>
+      </xsl:when>
+      <xsl:otherwise>Weboai</xsl:otherwise>
+    </xsl:choose>
+  </xsl:param>
   <xsl:template match="/">
     <html>
       <head>
         <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
         <title>
-          <xsl:choose>
-            <xsl:when test="/*/oai:repositoryName">
-              <xsl:apply-templates select="/*/oai:repositoryName/node()"/>
-            </xsl:when>
-            <xsl:otherwise>Weboai</xsl:otherwise>
-          </xsl:choose>
+          <xsl:value-of select="$repositoryName"/>
         </title>
         <link rel="stylesheet" type="text/css" href="{$css}"/>
       </head>
       <body class="oai">
         <main>
+          <xsl:if test="not(//oai:repositoryName)">
+            <h1>
+              <a href="?verb=ListSets">
+                <xsl:value-of select="$repositoryName"/>
+              </a>
+            </h1>
+          </xsl:if>
           <xsl:apply-templates/>
         </main>
         <script type="text/javascript" src="{$js}">//</script>
@@ -270,7 +283,7 @@
     </div>
   </xsl:template>
   <xsl:template match="oai:datestamp | dc:format | dc:language | oai:request | oai:responseDate | dc:type"/>
-  <xsl:template match="oai:repositoryName | processing-instruction('repositoryName')">
+  <xsl:template match="oai:repositoryName">
     <h1>
       <a>
         <xsl:attribute name="href">
