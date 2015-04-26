@@ -96,7 +96,8 @@ class Pmh {
   public function ListSets() {
     echo '  <ListSets>' . "\n";
     foreach ($this->pdo->query('SELECT * FROM oaiset') as $row) {
-      echo $row['oai'];
+      // simplifier les attributs xmlns
+      echo preg_replace('@<set( [^>]+)>@', '<set>', $row['oai']) . "\n";
     }
     echo '  </ListSets>' . "\n";
   }
@@ -125,7 +126,7 @@ class Pmh {
       $xml[] = "        <datestamp>" . $row['oai_datestamp'] . "</datestamp>";
       $xml[] = "      </header>";
       $xml[] = "      <metadata>";
-      $xml[] = $row['oai'];
+      $xml[] = preg_replace('@<oai_dc:dc( [^>]+)>@', '<oai_dc:dc>', $row['oai']);
       $xml[] = "      </metadata>";
       $xml[] = "    </record>\n";
       echo implode($xml, "\n");
@@ -141,16 +142,26 @@ class Pmh {
     if (!ini_get("zlib.output_compression")) ob_start('ob_gzhandler');
     $date = date('Y-m-d\TH:i:s\Z');
     $xml = array();
+    //   <repositoryName>' . htmlspecialchars(Conf::$repositoryName) . '</repositoryName>
     $xml[] = '<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="' . Conf::$weboaihref . 'transform/oai2html.xsl"?>
 <?css ' . Conf::$weboaihref . 'lib/weboai.css ?>
 <?js ' . Conf::$weboaihref . 'lib/Sortable.js ?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
-         http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+<?repositoryName ' . htmlspecialchars(Conf::$repositoryName) . '?>
+<OAI-PMH 
+  xmlns="http://www.openarchives.org/OAI/2.0/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:dcterms="http://purl.org/dc/terms/" 
+  xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  
+  xsi:schemaLocation="
+  http://www.openarchives.org/OAI/2.0/
+         http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd
+  http://www.openarchives.org/OAI/2.0/oai_dc/
+        http://www.openarchives.org/OAI/2.0/oai_dc.xsd
+">
   <responseDate>' . $date . '</responseDate>
-  <repositoryName>' . htmlspecialchars(Conf::$repositoryName) . '</repositoryName>
   ';
     $xml[] = "<request";
     if ($this->verb) $xml[] = ' verb="' . $this->verb . '"';

@@ -16,7 +16,7 @@ table { font-size: inherit; }
 p.sourceDesc { margin-top: 1em; margin-bottom: 1em; }
 .titleStmt { text-align: center; margin-top: 2em; margin-bottom: 2em; }
 .titleStmt p { text-align: center; }
-.titleStmt label { font-weight: bold; }
+.fileDesc label { font-weight: bold; }
 .titleStmt h1 { margin-left: auto; margin-right: auto; text-align: center; margin-top: 1em; margin-bottom: 1em; font-family: "Droid Serif Pro", "Palatino", "Bitstream Vera Serif", "Century", "Georgia", serif; }
 div.author, p.author { font-variant: small-caps; font-size: 200%; }
 
@@ -29,6 +29,7 @@ form.oai { background: #E8E0D0; border: #FFFFFF solid 1px; padding: 1em 1em 1em 
 input.text, textarea { font-family: Arial, sans-serif; font-size: inherit; border: none; margin: 1px 0 1px 0; outline: none; padding: 0 1ex 0 1ex; }
 button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; border-radius: 1.5ex; border-style: ridge; background-color: #E0D0B0}
 .error { color:red; font-weight: bold;}
+ul.setspec { float: left; }
 
 /** chronology */
 table.chrono {margin-top:1em;margin-bottom:1em;}

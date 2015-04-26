@@ -190,7 +190,7 @@
       <xsl:value-of select="normalize-space($text)"/>
     </dc:title>
   </xsl:template>
-  
+  <xsl:template match="tei:title/tei:note"/>
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_author -->
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_editor -->
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_publisher -->

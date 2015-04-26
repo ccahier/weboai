@@ -119,8 +119,8 @@ class Weboai {
     self::$stmt['selset']=self::$pdo->prepare('SELECT rowid, setspec, setname, publisher, identifier, title, description, sitemaptei, oai  FROM oaiset WHERE setspec = ?');
     // pas de set demandé, donner la liste
     if (!$setspec) {
-      $html[] = '<ul>';
-      foreach (self::$pdo->query('SELECT * FROM oaiset') as $row) {
+      $html[] = '<ul class="setspec">';
+      foreach (self::$pdo->query('SELECT * FROM oaiset ORDER BY setspec') as $row) {
         $html[] = '<li><a href="?setspec=' . htmlspecialchars($row['setspec']) . '">[' . htmlspecialchars($row['setspec'], ENT_NOQUOTES) . '] ' . htmlspecialchars($row['setname'], ENT_NOQUOTES) . '</a></li>';
       }
       $html[] = '</ul>';
