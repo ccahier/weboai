@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-© 2013, 2014 <a href="http://www.algone.net/">Algone</a>, licence  <a href="http://www.cecill.info/licences/Licence_CeCILL-C_V1-fr.html">CeCILL-C</a>/<a href="http://www.gnu.org/licenses/lgpl.html">LGPL</a>
-<ul>
-  <li>[FG] <a href="#" onmouseover="this.href='mailto'+'\x3A'+'glorieux'+'\x40'+'algone.net'">Frédéric Glorieux</a></li>
-</ul>
+© 2013, 2014, 2015 Frédéric Glorieux, licence  <a href="http://www.cecill.info/licences/Licence_CeCILL-C_V1-fr.html">CeCILL-C</a>/<a href="http://www.gnu.org/licenses/lgpl.html">LGPL</a>
 -->
 <xsl:transform version="1.1"
   xmlns="http://www.openarchives.org/OAI/2.0/"
@@ -20,7 +17,7 @@
   <xsl:param name="filename"/>
   <xsl:variable name="ABC">ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÉÈÊÏÎÔÖÛÜÇàâäéèêëïîöôüû</xsl:variable>
   <xsl:variable name="abc">abcdefghijklmnopqrstuvwxyzaaaeeeiioouucaaaeeeeiioouu</xsl:variable>
-  
+  <xsl:variable name="lf" select="'&#10;'"/>
   <xsl:template match="tei:TEI">
     <xsl:apply-templates select="tei:teiHeader"/>
   </xsl:template>
@@ -117,7 +114,49 @@
         </xsl:when>
       </xsl:choose>
       <!-- n? description -->
-      <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
+      <xsl:choose>
+        <xsl:when test="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']">
+          <xsl:apply-templates select="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']"/>
+        </xsl:when>
+        <xsl:when test="/*/tei:text/tei:front/tei:argument">
+          <xsl:apply-templates select="/*/tei:text/tei:front/tei:argument"/>
+        </xsl:when>
+        <xsl:when test="/*/tei:text/tei:body/tei:argument">
+          <xsl:apply-templates select="/*/tei:text/tei:body/tei:argument"/>
+        </xsl:when>
+        <xsl:when test="/*/tei:text/tei:body/*[tei:head]">
+          <dc:description>
+            <xsl:for-each select="/*/tei:text/tei:body/*[tei:head]">
+              <xsl:if test="position() != 1">
+                <xsl:text> — </xsl:text>
+              </xsl:if>
+              <xsl:variable name="chapter">
+                <xsl:for-each select="tei:head">
+                  <xsl:variable name="headraw">
+                    <xsl:apply-templates select="." mode="txt"/>
+                  </xsl:variable>
+                  <xsl:variable name="head" select="normalize-space($headraw)"/>
+                  <xsl:value-of select="$head"/>
+                  <xsl:variable name="last" select="substring($head, string-length($head))"/>
+                  <xsl:if test="position() != last() and not(contains('!,?.;:', $last))">
+                    <xsl:text>.</xsl:text>
+                  </xsl:if>
+                  <xsl:text> </xsl:text>
+                </xsl:for-each>
+                <xsl:choose>
+                  <xsl:when test="tei:argument and count(tei:head) = 1 and string-length(tei:head) &lt; 10">
+                    <xsl:text> </xsl:text>
+                    <xsl:apply-templates select="tei:argument[1]" mode="txt"/>
+                  </xsl:when>
+                </xsl:choose>
+              </xsl:variable>
+              
+              <xsl:value-of select="normalize-space($chapter)"/>
+              <xsl:value-of select="$lf"/>
+            </xsl:for-each>
+          </dc:description>
+        </xsl:when>
+      </xsl:choose>
       <!-- n? language -->
       <xsl:choose>
         <xsl:when test="tei:profileDesc/tei:langUsage/tei:language">
@@ -247,8 +286,16 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+  <xsl:template match="*" mode="txt">
+    <xsl:apply-templates mode="txt"/>
+  </xsl:template>
+  <xsl:template match="tei:lb" mode="txt">
+    <xsl:value-of select="$lf"/>
+  </xsl:template>
   <xsl:template match="tei:note" mode="txt"/>
-  
+  <xsl:template match="tei:p" mode="txt">
+    <xsl:apply-templates mode="txt"/>
+  </xsl:template>
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_licence -->
   <!-- obligatoire, unique -->
   <xsl:template match="tei:availability">
@@ -277,10 +324,10 @@
   
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_note -->
   <!-- optionnel, répétable par langue -->
-  <xsl:template match="tei:notesStmt/tei:note[@type='abstract']">
+  <xsl:template match="tei:notesStmt/tei:note[@type='abstract'] | tei:argument">
     <dc:description>
       <xsl:copy-of select="@xml:lang"/>
-      <xsl:apply-templates/>
+      <xsl:apply-templates mode="txt"/>
     </dc:description>
   </xsl:template>
   

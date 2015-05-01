@@ -77,6 +77,16 @@
   <xsl:template match="oai:error[@code='badVerb']">
     <p>Pour explorer cet entrepôt, commencez par <a href="?verb=ListSets">choisir une collection</a></p>
   </xsl:template>
+  <xsl:template match="oai:ListIdentifiers">
+    <ul class="ListIdentifiers">
+      <xsl:apply-templates/>
+    </ul>
+  </xsl:template>
+  <xsl:template match="oai:ListIdentifiers/oai:header">
+    <li class="header">
+      <xsl:apply-templates/>
+    </li>
+  </xsl:template>
   <xsl:template match="oai:ListRecords">
     <table width="100%" class="sortable" cellpadding="0" cellspacing="0">
       <caption>

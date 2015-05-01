@@ -10,7 +10,7 @@ if (isset($_POST['logout'])) {
 }
 // essai de login, par défaut, logout
 else if (isset($_POST['user']) && isset($_POST['pass'])) {
-  // Weboai::logout(); // NO, will send cookie destruction order
+  // Weboai::logout(); // NO, will destroy cookie
   $_SESSION = array();
   $allowed =  Weboai::allowed($_POST['user'], $_POST['pass']);
   if ($allowed === '') {
@@ -57,26 +57,11 @@ else {
 echo implode("\n", $message);
 // privé
 if (isset($_SESSION['user'])) {
-  Weboai::setform();
+  Weboai::formset();
 }
 // public
 else {
-  $sitemaptei = false;
-  if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
-  echo '
-<p>Tester un Sitemap TEI</p>
-<form name="test" class="oai" method="GET" action="#">
-  <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Tester une source de données TEI" onclick="select()" class="text" size="55" value="' . htmlspecialchars($sitemaptei) . '"/>
-  <button name="test" title="Tester une source de données" value="1">Test</button>
-</form>
-';
-  if (isset($_REQUEST['sitemaptei']) && $_REQUEST['sitemaptei']) {
-    echo '<h1>Test d’un Sitemap TEI</h1>';
-    Weboai::sitemaptei($_REQUEST['sitemaptei']);
-  }
-  else if (isset($_REQUEST['test'])) {
-    echo '<div class="error">Aucun Sitemap TEI à tester</div>';
-  }
+  Weboai::formpublic();
 }
   ?>
   </body>
