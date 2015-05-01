@@ -100,11 +100,46 @@ class Weboai {
     if (!self::$log) self::$log = STDERR;
     fwrite (self::$log, $line . "\n");
   }
+  public static function formpublic() {
+   
+    $sitemaptei = '';
+    if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
+    $html[] = '
+<form name="sitemaptei" class="oai" method="POST">
+  <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Source de données TEI" onclick="select()" class="text" size="55" value="' . $sitemaptei . '"/>
+  <button name="test" title="Tester une source de données" value="1">Test</button>
+</form>
+<form name="tei2oai" class="oai" method="POST" enctype="multipart/form-data">
+  <input type="file" accept=".xml,.tei,.txt" name="tei" placeholder="Fichier TEI" title="Fichier TEI" onclick="select()" class="text" size="55"/>
+  <button name="tei2oai" title="Tester un fichier TEI" value="1">Test</button>
+</form>
+      ';
+    print(implode("\n", $html));
+    if (isset($_POST['sitemaptei']) ) {
+      echo '<h1>Test d’un Sitemap TEI</h1>';
+      if (!$_POST['sitemaptei']) echo '<div class="error">Aucun Sitemap TEI à tester</div>';
+      else self::sitemaptei($_POST['sitemaptei']);
+      return true;
+    }
+    else if (isset($_POST['tei2oai']) ) {
+      echo '<h1>Notice OAI pour un fichier TEI</h1>';
+      $a = self::upload();
+      if (!$a || !count($a) || !isset($a['file'])) echo '<div class="error">Pas de fichier reçu</div>';
+      else {
+        $weboai = new Weboai($a['file']);
+         echo '<div>' . $a['name'] . '</div>' . "\n";
+         echo '<textarea style="width: 100%" rows="25">' . "\n";
+         $doc = $weboai->tei2oai();
+         echo $doc->saveXML();
+         echo '</textarea>' . "\n";
+      }
+      return true;
+    }
+  }
   /**
    * Création ou modification d’un set depuis un formulaire html
-   * 
    */
-  public static function setform() {
+  public static function formset() {
     self::connect();
     $html = array();
     $set = $setspec = $setname = $publisher = $identifier = $title = $description = $sitemaptei = $oai = null;
@@ -129,17 +164,9 @@ class Weboai {
   <input name="setspec" required="required" pattern="[a-z\:_\-]{3,20}" placeholder="&lt;setSpec&gt; code" title="&lt;setSpec&gt; Code de la collection, lettres minuscules sans accent, possibilité de séparateur ‘-’ ‘_’" class="text" size="10"/>
   <button name="new" value="1">Créer</button>
 </form>
-<form name="test" class="oai" method="POST">
-  <input name="sitemaptei" placeholder="Sitemap TEI (URI)" title="[sitemaptei] Source de données TEI" onclick="select()" class="text" size="55" value="' . $sitemaptei . '"/>
-  <button name="test" title="Tester une source de données" value="1">Test</button>
-</form>
       ';
       print(implode("\n", $html));
-      if (isset($_POST['test']) && $_POST['test']) {
-        echo '<h1>Test d’un Sitemap TEI</h1>';
-        if (!isset($_POST['sitemaptei'])) echo '<div class="error">Aucun Sitemap TEI à tester</div>';
-        else self::sitemaptei($_POST['sitemaptei'], $setspec);
-      }
+      self::formpublic();
       return;
     }
     
@@ -236,6 +263,25 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
     }
 
   }
+  /**
+   * obtenir le nom d’un fichier téléchargé
+   */
+  public static function upload() {
+
+    if (!count($_FILES)) return;
+    $ret = array();
+    reset($_FILES);
+    $tmp=current($_FILES);
+    if($tmp['tmp_name']) {
+      $ret['file'] = $tmp['tmp_name'];
+      if ($tmp['name']) $ret['name'] = substr($tmp['name'], 0, strrpos($tmp['name'], '.'));
+      return $ret;
+    }
+    else if($tmp['name']){
+      echo $tmp['name'],' seems bigger than allowed size for upload in your php.ini : upload_max_filesize=',ini_get('upload_max_filesize'),', post_max_size=',ini_get('post_max_size');
+      return false;
+    }
+  }
   
   /**
    * Chargement d’un set avec lien sur un sitemap.xml
@@ -331,8 +377,9 @@ textarea.xml { width: 100%; border: none; }
     while($reader->read()) {
       if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'loc') {
         $teiuri = $reader->expand()->textContent;
-        $weboai = new Weboai();
-        $weboai->teiheader($teiuri);
+        $weboai = new Weboai($teiuri);
+        // juste le teiHeader ne permet pas d’attraper du contenu pour dc:description
+        // $weboai->teiheader($teiuri);
         $weboai->tei2tr($setspec);
       }
     }

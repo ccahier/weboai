@@ -74,6 +74,7 @@ a.identifier { text-decoration: none; }
 body.oai article.record { background: #FFFFFF; color: #6b6768; padding: 1em; margin: 1em 0 1em 0; border: 2px solid; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); border-radius: 6px; }
 body.oai article.record a { color: #3F1F2C; }
 body.oai article.record header { background: #C50025; color: #FFFFFF; padding: 0.3ex 1em 0.5ex 1em; margin-bottom: 1em; border-radius: 6px; border: 1px solid #FFFFFF; }
+ul.ListIdentifiers li { margin-bottom: 1ex; }
 body.oai article.record header a { color: #d8e2db; text-decoration: none; }
 body.oai a:hover { background: rgba(255, 255, 255, 0.5); color: #000 !important; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7); }
 div.dc a:hover, div.set a:hover { background: rgba(114, 64, 91, 0.5); box-shadow: 0px 0px 10px rgba(114, 64, 91, 0.7); }

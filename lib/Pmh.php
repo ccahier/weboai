@@ -17,9 +17,10 @@ class Pmh {
     $verbs = array(
       'GetRecord' => '', 
       'Identify' => '', 
-      'ListSets' => '', 
-      'ListRecords' => '',
+      'ListIdentifiers' => '',
       'ListMetadataFormats' => '',
+      'ListRecords' => '',
+      'ListSets' => '', 
     );
     if (!isset($verbs[$this->verb])) {
       $this->verb = null;
@@ -31,6 +32,15 @@ class Pmh {
     $this->pdo=new PDO("sqlite:".$sqlitefile);
     $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     $this->prolog();
+    if (isset($_REQUEST['from']) || isset($_REQUEST['until'])) {
+      echo '  <error code="badArgument">Because we can’t ensure dates from our partners, accept the whole list instead, “from” and “until” parameters are not considered.</error>'."\n";
+    }
+    if (isset($_REQUEST['resumptionToken'])) {
+      echo '  <error code="badResumptionToken">This OAI repository do not support resumptionToken, accept the whole list instead.</error>'."\n";
+    }
+    if (isset($_REQUEST['metadataPrefix']) && $_REQUEST['metadataPrefix'] != 'oai_dc') {
+      echo '  <error code="cannotDisseminateFormat">This OAI repository support oai_dc only as a metadata format.</error>'."\n";
+    }
     call_user_func(array($this, $this->verb));
     $this->epilog();
     exit();
@@ -101,16 +111,32 @@ class Pmh {
     }
     echo '  </ListSets>' . "\n";
   }
+  public function ListIdentifiers() {
+    if (!isset($_REQUEST['set'])) {
+      echo '  <error code="badArgument">A set is required for this OAI repository. Because we are an agregator of collections, full list of records has no sense.</error>'."\n";
+      return;
+    }
+    // test if set exist ?
+    echo '  <ListIdentifiers>' . "\n";
+    $list = $this->pdo->prepare("SELECT oai_identifier, oai_datestamp, record.rowid AS rowid FROM record, member, oaiset WHERE member.record = record.rowid AND member.oaiset = oaiset.rowid AND oaiset.setspec=?");
+    $setspec = $this->pdo->prepare("SELECT setspec FROM oaiset, member WHERE member.oaiset=oaiset.rowid AND member.record=?");
+    $list->execute(array($_REQUEST['set']));
+    while ($record = $list->fetch(PDO::FETCH_ASSOC)) {
+      $xml = array();
+      $xml[] = "    <header>";
+      $xml[] = "      <identifier>" . $record['oai_identifier'] . "</identifier>";
+      $xml[] = "      <datestamp>" . $record['oai_datestamp'] . "</datestamp>";
+      $setspec->execute(array($record['rowid']));
+      while ($set = $setspec->fetch(PDO::FETCH_ASSOC)) {
+        $xml[] = "      <setSpec>" . $set['setspec'] . "</setSpec>";
+      }
+      $xml[] = "    </header>";
+      $xml[] = "";
+      echo implode($xml, "\n");
+    }
+    echo '  </ListIdentifiers>' . "\n";
+  }
   public function ListRecords() {
-    if (isset($_REQUEST['from']) || isset($_REQUEST['until'])) {
-      echo '  <error code="badArgument">Because we can’t ensure dates from our partners, accept the whole list instead, “from” and “until” parameters are not considered.</error>'."\n";
-    }
-    if (isset($_REQUEST['resumptionToken'])) {
-      echo '  <error code="badResumptionToken">This OAI repository do not support resumptionToken, accept the whole list instead.</error>'."\n";
-    }
-    if (isset($_REQUEST['metadataPrefix']) && $_REQUEST['metadataPrefix'] != 'oai_dc') {
-      echo '  <error code="cannotDisseminateFormat">This OAI repository support oai_dc only as a metadata format.</error>'."\n";
-    }
     if (!isset($_REQUEST['set'])) {
       echo '  <error code="badArgument">A set is required for this OAI repository. Because we are an agregator of collections, full list of records has no sense.</error>'."\n";
       return;
