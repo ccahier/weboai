@@ -113,6 +113,17 @@
           </dc:identifier>
         </xsl:when>
       </xsl:choose>
+      <!-- n? language -->
+      <xsl:choose>
+        <xsl:when test="tei:profileDesc/tei:langUsage/tei:language">
+          <xsl:apply-templates select="tei:profileDesc/tei:langUsage/tei:language"/>
+        </xsl:when>
+        <xsl:when test="/*/@xml:lang">
+          <xsl:apply-templates select="/*/@xml:lang"/>
+        </xsl:when>
+      </xsl:choose>
+      <!-- 1! rights -->
+      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:availability"/>
       <!-- n? description -->
       <xsl:choose>
         <xsl:when test="tei:fileDesc/tei:notesStmt/tei:note[@type='abstract']">
@@ -124,6 +135,8 @@
         <xsl:when test="/*/tei:text/tei:body/tei:argument">
           <xsl:apply-templates select="/*/tei:text/tei:body/tei:argument"/>
         </xsl:when>
+        <!-- pas Acte I, Acte II… -->
+        <xsl:when test="/*/tei:text/tei:body/*[@type='act' or @type='acte']"/>
         <xsl:when test="/*/tei:text/tei:body/*[tei:head]">
           <dc:description>
             <xsl:for-each select="/*/tei:text/tei:body/*[tei:head]">
@@ -157,22 +170,11 @@
           </dc:description>
         </xsl:when>
       </xsl:choose>
-      <!-- n? language -->
-      <xsl:choose>
-        <xsl:when test="tei:profileDesc/tei:langUsage/tei:language">
-          <xsl:apply-templates select="tei:profileDesc/tei:langUsage/tei:language"/>
-        </xsl:when>
-        <xsl:when test="/*/@xml:lang">
-          <xsl:apply-templates select="/*/@xml:lang"/>
-        </xsl:when>
-      </xsl:choose>
-      <!-- 1! rights -->
-      <xsl:apply-templates select="tei:fileDesc/tei:publicationStmt/tei:availability"/>
       <!-- 1? source -->
       <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]"/>
       <!-- n? subject -->
       <xsl:apply-templates select="tei:profileDesc/tei:textClass//tei:term"/>
-      <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
+      <dc:type scheme="dcterms:DCMIType">Text</dc:type>
     </oai_dc:dc>
   </xsl:template>
   
@@ -213,7 +215,7 @@
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:idno/@type">
-    <xsl:attribute name="xsi:type">
+    <xsl:attribute name="scheme">
       <xsl:value-of select="translate(., '-', '/')"/>
     </xsl:attribute>
   </xsl:template>
@@ -294,7 +296,9 @@
   </xsl:template>
   <xsl:template match="tei:note" mode="txt"/>
   <xsl:template match="tei:p" mode="txt">
+    <xsl:value-of select="$lf"/>
     <xsl:apply-templates mode="txt"/>
+    <xsl:value-of select="$lf"/>
   </xsl:template>
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_licence -->
   <!-- obligatoire, unique -->

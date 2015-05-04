@@ -6,7 +6,7 @@ CREATE TABLE record (
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
   oai             BLOB NOT NULL,          -- ! the oai xml record
   html            BLOB,                   -- ! a displayable title page for web navigation
-  teiheader       BLOB,                   -- ! store xml <teiHeader> maybe useful for later transformations
+  teiheader       BLOB,                   -- ? store xml <teiHeader> maybe useful for later transformations
   identifier      TEXT,                   -- ! a link for the full-text, should be unique 
   title           TEXT NOT NULL,          -- ! dc:title, just for display 
   byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
@@ -16,6 +16,8 @@ CREATE TABLE record (
   issued          INTEGER,                -- ? publication date of electronic resource
   deleted BOOLEAN NOT NULL DEFAULT FALSE  -- ! required by OAI protocol to inform harvester but not supported
 );
+CREATE INDEX record_oai_datestamp ON record(oai_datestamp);
+
 
 CREATE VIRTUAL TABLE ft USING FTS3 (
   -- fulltext fields to find records for a public interface

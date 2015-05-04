@@ -11,9 +11,10 @@
   xmlns:dcterms="http://purl.org/dc/terms/"
   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-  exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei"
+  exclude-result-prefixes="date dc dcterms oai oai_dc rdf rdfs tei xsi"
   >
   <xsl:import href="common.xsl"/>
+  <xsl:output encoding="UTF-8" indent="yes" method="xml" omit-xml-declaration="yes"/>
   <xsl:param name="css">
     <xsl:choose>
       <xsl:when test="processing-instruction('css')">
@@ -41,7 +42,7 @@
       <xsl:otherwise>Weboai</xsl:otherwise>
     </xsl:choose>
   </xsl:param>
-  <xsl:template match="/">
+  <xsl:template match="/OAI-PMH">
     <html>
       <head>
         <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
@@ -240,12 +241,10 @@
       </a>
     </div>
   </xsl:template>
-  <xsl:template match="oai:debug">
-    <pre>
-      <xsl:copy-of select="node()"/>
-      <xsl:text>
-</xsl:text>
-    </pre>
+  <xsl:template match="dc:description">
+    <p class="description">
+      <xsl:apply-templates/>
+    </p>
   </xsl:template>
   <xsl:template match="dc:*">
     <xsl:variable name="message">
@@ -253,6 +252,7 @@
     </xsl:variable>
     <xsl:variable name="el">
     <xsl:choose>
+      <xsl:when test="self::dc:description">p</xsl:when>
       <xsl:when test="self::dc:source">p</xsl:when>
       <xsl:otherwise>div</xsl:otherwise>
     </xsl:choose>
@@ -264,14 +264,13 @@
       <xsl:if test="normalize-space($message) != ''">
         <label>
           <xsl:copy-of select="$message"/>
-          <xsl:text> : </xsl:text>
         </label>
       </xsl:if>
       <xsl:apply-templates/>
     </xsl:element>
   </xsl:template>
   <xsl:template match="dc:title">
-    <div class="title">
+    <h1 class="title">
       <xsl:choose>
         <xsl:when test="ancestor::oai:setDescription">
           <xsl:apply-templates/>
@@ -285,7 +284,7 @@
           <xsl:apply-templates/>
         </xsl:otherwise>
       </xsl:choose>
-    </div>
+    </h1>
   </xsl:template>
   <xsl:template match="oai_dc:dc">
     <div class="dc">
@@ -312,11 +311,20 @@
   </xsl:template>
   <xsl:template match="dc:identifier | dc:rights">
     <div class="{local-name()}">
-      <xsl:if test="self::dc:rights">
-        <label>
-          <xsl:call-template name="message"/>
-        </label>
-      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="self::dc:rights">
+          <label>
+            <xsl:call-template name="message"/>
+          </label>
+        </xsl:when>
+        <xsl:when test="@scheme and not(contains(@scheme, 'URI'))">
+          <label>
+            <xsl:text>[</xsl:text>
+            <xsl:value-of select="@scheme"/>
+            <xsl:text>]</xsl:text>
+          </label>
+        </xsl:when>
+      </xsl:choose>
       <xsl:choose>
         <xsl:when test="starts-with(., 'http')">
           <a>
