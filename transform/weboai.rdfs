@@ -39,8 +39,8 @@ Diple, fichier des messages générés en XSLT
     <rdfs:label xml:lang="en">Date</rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="description">
-    <rdfs:label xml:lang="fr">Présentation</rdfs:label>
-    <rdfs:label xml:lang="en">Description</rdfs:label>
+    <rdfs:label xml:lang="fr">Présentation : </rdfs:label>
+    <rdfs:label xml:lang="en">Description: </rdfs:label>
   </rdf:Property>
   <rdf:Property xml:id="edition">
     <rdfs:label xml:lang="fr">Édition</rdfs:label>

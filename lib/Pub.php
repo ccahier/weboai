@@ -356,7 +356,7 @@ class Pub {
     if (!$this->search) $this->search();
     if (!$this->docsFound) return;
 
-    $list=$this->pdo->prepare("SELECT record.* FROM record, found WHERE found.rowid=record.rowid ORDER BY found.date LIMIT ".$limit);
+    $list=$this->pdo->prepare("SELECT record.* FROM record, found WHERE found.rowid=record.rowid ORDER BY record.oai_identifier LIMIT ".$limit);
     
     // buffer to output line after line
     $html=array();
@@ -427,7 +427,7 @@ class Pub {
       echo $this->msg('recnotfound', array($oai_identifier));
       return;
     }
-    echo "\n" . '<nav cclass="path">' . $caption . '</nav>';
+    echo "\n" . '<nav class="path">' . $caption . '</nav>';
     if ($record['teiheader']) {
       $xsl = new DOMDocument("1.0", "UTF-8");
       $xsl->load(dirname(dirname(__FILE__)) . '/transform/teiHeader2html.xsl');

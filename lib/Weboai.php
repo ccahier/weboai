@@ -20,9 +20,10 @@ class Weboai {
   private static $log; // flux de log
   private static $duplicate;
 
-  private static $pdo; // sqlite connection
+  public static $pdo; // sqlite connection
   private static $stmt=array(); // store PDOStatement in array
   private static $pars=array(); // parameters (as record_rowid) for SQL
+  private static $vacuum; // nettoyer ?
   public static $setlang = array( // liste des langue utilisée pour les sets
     'fr' => 'lang:fre',
     'fre' => 'lang:fre',
@@ -149,6 +150,7 @@ class Weboai {
     if (isset($_REQUEST['identifier'])) $identifier = $_REQUEST['identifier'];
     if (isset($_REQUEST['title'])) $title = $_REQUEST['title'];
     if (isset($_REQUEST['description'])) $description = $_REQUEST['description'];
+    if (isset($_REQUEST['subject'])) $subject = $_REQUEST['subject'];
     if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
     
     self::$stmt['selset']=self::$pdo->prepare('SELECT rowid, setspec, setname, publisher, identifier, title, description, sitemaptei, oai  FROM oaiset WHERE setspec = ?');
@@ -185,6 +187,7 @@ class Weboai {
       else {
         $stmt = self::$pdo->prepare("DELETE FROM oaiset WHERE setspec = ?");
         $stmt->execute(array($setspec));
+        self::$vacuum = true;
         $html[] = '<div class="message">La collection “' . $setspec . '” a été supprimée, avec toutes les notices qui en dépendent. Il est encore possible de recréer la notice, le formulaire a été pré-rempli (mais il faudra recharger les données).</div>';
       }
     }
@@ -206,10 +209,15 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
       $oai[] = '  <setDescription>';
       $oai[] = '    <oai_dc:dc>';
       $oai[] = '      <dc:publisher>' . htmlspecialchars($publisher, ENT_NOQUOTES) . '</dc:publisher>';
-      $oai[] = '      <dc:identifier xsi:type="dcterms:URI">' . htmlspecialchars($identifier, ENT_NOQUOTES) . '</dc:identifier>';
+      $oai[] = '      <dc:identifier>' . htmlspecialchars($identifier, ENT_NOQUOTES) . '</dc:identifier>';
       if (trim($title)) $oai[] = '      <dc:title>' . htmlspecialchars($title, ENT_NOQUOTES) . '</dc:title>';
       if (trim($description)) $oai[] = '      <dc:description>' . htmlspecialchars($description, ENT_NOQUOTES) . '</dc:description>';
-      if (trim($sitemaptei)) $oai[] = '      <dc:source xsi:type="sitemaptei">' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '</dc:source>';
+      /*
+      if (trim($subject)) {
+        for (
+      }
+      */
+      if (trim($sitemaptei)) $oai[] = '      <dc:relation scheme="sitemaptei">' . htmlspecialchars($sitemaptei, ENT_NOQUOTES) . '</dc:relation>';
       $oai[] = '    </oai_dc:dc>';
       $oai[] = '  </setDescription>';
       $oai[] = '</set>';
@@ -358,6 +366,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
       while ($member = $selmember->fetch()) {
         $delrecord->execute(array($member['record']));
       }
+      self::$vacuum = true;
     }
     self::$duplicate = array();
     echo '
@@ -383,8 +392,9 @@ textarea.xml { width: 100%; border: none; }
         $weboai->tei2tr($setspec);
       }
     }
-    echo '</table>';
+    echo "\n</table>";
     $reader->close();
+    echo "\n<p>Traitement terminé du set “" . $setspec . '” ' . $uri . '</p>';
   }
   /**
    * Traitement d’un fichier TEI
@@ -464,11 +474,17 @@ textarea.xml { width: 100%; border: none; }
     // à partir d’ici, insertion sqlite ou pas ?
     if (!isset(self::$stmt['ins_record'])) return;
 
+    /* 
+    notice issue du TEI, ne montre pas exactement le contenu de l’OAI (dont les des)
     $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/teiHeader2html.xsl');
     $this->proc->importStylesheet($this->xsl);
     $html = $this->proc->transformToXML($this->doc);
     $html = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $html);
-
+    */
+    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/oai2html.xsl');
+    $this->proc->importStylesheet($this->xsl);
+    $html = $this->proc->transformToXML($oaidoc);
+    
     $oai_datestamp  = date('Y-m-d\TH:i:s\Z');
     
     $date = NULL;
@@ -484,7 +500,8 @@ textarea.xml { width: 100%; border: none; }
     $oai = $oaidoc->saveXML();
     
     $oai = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $oai);
-    $teiheader = $this->doc->saveXML();
+    // Attention, le tei contient plus que le <teiHeader>
+    // $teiheader = $this->doc->saveXML();
 
     // (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, issued, oai, html, tei)
     self::$stmt['ins_record']->execute(array(
@@ -499,7 +516,7 @@ textarea.xml { width: 100%; border: none; }
       $issued,
       $oai,
       $html,
-      $teiheader,
+      // $teiheader,
     ));
     // garder en mémoire l’identifiant du record OAI (pour insertion en table de relation)
     self::$pars['record_rowid']=self::$pdo->lastInsertId();
@@ -626,9 +643,25 @@ textarea.xml { width: 100%; border: none; }
   private static function sqlitepre() {
     // reconnecter, pour préparer les requêtes
     self::connect();
+// send some pragmas before work
+    self::$pdo->exec("
+-- triggers ON CONFLICT
+PRAGMA recursive_triggers = TRUE;
+-- Optimize conf for import
+PRAGMA locking_mode=EXCLUSIVE;
+PRAGMA synchronous=OFF;
+PRAGMA default_cache_size=10000;
+PRAGMA page_size=8192;
+PRAGMA journal_mode=MEMORY;
+PRAGMA count_changes=OFF;
+-- PRAGMA foreign_keys=ON; -- perfs ? pbs relationnels !
+PRAGMA temp_store=MEMORY;
+PRAGMA temp_store = 2; -- memory temp table
+    ");
+    self::$vacuum = false;
     self::$stmt['ins_record']=self::$pdo->prepare("
-      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, publisher, issued, oai, html, teiheader)
-                             VALUES (?,             ?,              ?,     ?,     ?,          ?,      ?,    ?,         ?,      ?,   ?,    ?)
+      INSERT OR REPLACE INTO record (oai_datestamp, oai_identifier, title, identifier, byline, date, date2, publisher, issued, oai, html)
+                             VALUES (?,             ?,              ?,     ?,     ?,          ?,      ?,    ?,         ?,      ?,   ?)
       ;
     ");
     self::$stmt['ins_ft']=self::$pdo->prepare("
@@ -663,6 +696,8 @@ textarea.xml { width: 100%; border: none; }
    */
   public static function sqlitepost() {
     self::$pdo->commit();
+    // pas de VACUUM possible maintenant, transaction pas finie, ou lock si on veut reconnecter
+    // imaginer un compteur ?
   }
   
   /**
@@ -762,8 +797,7 @@ textarea.xml { width: 100%; border: none; }
       self::$pdo=new PDO("sqlite:" . Conf::$sqlite);
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     }
-    // send some pragmas before work
-    self::$pdo->exec("PRAGMA recursive_triggers = TRUE;"); // triggers ON CONFLICT
+    
   }
 
   /**
@@ -922,10 +956,12 @@ textarea.xml { width: 100%; border: none; }
     libxml_use_internal_errors(true);
     // LIBXML_NOWARNING to not output warning on @xml:id
     $this->doc->load($src, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_NOWARNING);
-
     // si grosse erreur, supprimer le document
     foreach (libxml_get_errors() as $err) {
-      if ($err['level'] == LIBXML_ERR_WARNING) continue;
+      if (is_object($err) && isset($err->level)) $level = $err->level;
+      else if (is_array($err) && isset($err['level'])) $level = $err['level'];
+      else continue;
+      if ($level == LIBXML_ERR_WARNING) continue;
       $this->doc = false; // doc mal chargé
       break;
     }
