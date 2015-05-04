@@ -42,7 +42,7 @@
       <xsl:otherwise>Weboai</xsl:otherwise>
     </xsl:choose>
   </xsl:param>
-  <xsl:template match="/OAI-PMH">
+  <xsl:template match="/oai:OAI-PMH">
     <html>
       <head>
         <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
@@ -178,6 +178,7 @@
       <label>
         <xsl:call-template name="message"/>
       </label>
+      <xsl:text> </xsl:text>
       <a href="?verb=ListRecords&amp;set={.}">
         <xsl:value-of select="."/>
       </a>
@@ -201,7 +202,7 @@
           <td class="title">
             <xsl:choose>
               <xsl:when test="oai:setDescription/oai_dc:dc/dc:title != ''">
-                <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:title"/>
+                <xsl:apply-templates select="oai:setDescription/oai_dc:dc/dc:title/node()"/>
               </xsl:when>
               <xsl:otherwise>
                 <xsl:apply-templates select="oai:setName"/>
@@ -236,6 +237,7 @@
           <xsl:with-param name="id">oai_identifier</xsl:with-param>
         </xsl:call-template>
       </label>
+      <xsl:text> </xsl:text>
       <a href="?verb=GetRecord&amp;identifier={.}">
         <xsl:value-of select="."/>
       </a>
@@ -261,11 +263,16 @@
       <xsl:attribute name="class">
         <xsl:value-of select="local-name()"/>
       </xsl:attribute>
-      <xsl:if test="normalize-space($message) != ''">
-        <label>
-          <xsl:copy-of select="$message"/>
-        </label>
-      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="normalize-space($message) = ''"/>
+        <xsl:when test="self::dc:creator or self::dc:title or self::dc:date"/>
+        <xsl:otherwise>
+          <label>
+            <xsl:copy-of select="$message"/>
+          </label>
+          <xsl:text> </xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
       <xsl:apply-templates/>
     </xsl:element>
   </xsl:template>
@@ -316,6 +323,7 @@
           <label>
             <xsl:call-template name="message"/>
           </label>
+          <xsl:text> </xsl:text>
         </xsl:when>
         <xsl:when test="@scheme and not(contains(@scheme, 'URI'))">
           <label>
@@ -323,6 +331,7 @@
             <xsl:value-of select="@scheme"/>
             <xsl:text>]</xsl:text>
           </label>
+          <xsl:text> </xsl:text>
         </xsl:when>
       </xsl:choose>
       <xsl:choose>
