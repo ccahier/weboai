@@ -1,12 +1,12 @@
 <?php
 /**
-Classe de chargement des notices pour exposition OAI
-
-http://www.bnf.fr/documents/Guide_oaipmh.pdf
+ * Classe de chargement des notices pour exposition OAI
+ *
+ * http://www.bnf.fr/documents/Guide_oaipmh.pdf
  */
 ini_set( 'default_charset', 'UTF-8' );
 set_time_limit(-1);
-Weboai::$re['fr_sort_tr'] = Weboai::json(dirname(__FILE__).'/fr_sort.json'); // clé de tri pour noms propres
+Weboai::$re['fr_sort_tr'] = Weboai::dic( dirname(__FILE__).'/fr_sort.json' ); // clé de tri pour noms propres
 $tz = ini_get('date.timezone');
 if ( !$tz ) $tz = "Europe/Paris";
 date_default_timezone_set( $tz );
@@ -812,35 +812,18 @@ PRAGMA temp_store = 2; -- memory temp table
   }
 
   /**
-   * load a json resource as an array()
+   * load a csv key=>val table
    */
-  static function json($file) {
-    $content=file_get_contents($file);
-    $content=substr($content, strpos($content, '{'));
-    $content= json_decode($content, true);
-    switch (json_last_error()) {
-      case JSON_ERROR_NONE:
-      break;
-      case JSON_ERROR_DEPTH:
-        echo "$file — Maximum stack depth exceeded\n";
-      break;
-      case JSON_ERROR_STATE_MISMATCH:
-        echo "$file — Underflow or the modes mismatch\n";
-      break;
-      case JSON_ERROR_CTRL_CHAR:
-        echo "$file — Unexpected control character found\n";
-      break;
-      case JSON_ERROR_SYNTAX:
-        echo "$file — Syntax error, malformed JSON\n";
-      break;
-      case JSON_ERROR_UTF8:
-        echo "$file — Malformed UTF-8 characters, possibly incorrectly encoded\n";
-      break;
-      default:
-        echo "$file — Unknown error\n";
-      break;
+  static function dic( $file ) {
+    $dic = array();
+    $handle = fopen( $file, "r" );
+    fgetcsv( $handle, 0, ";" ); // passer la première ligne
+    while ( ($row = fgetcsv($handle, 0, ";") ) !== FALSE) { // lire toutes les autres lignes
+      if ( count( $row ) < 2 ) continue; // ligne vide, incomplète ou non reconnue
+      $dic[$row[0]] = $row[1]; // remplir le tableau de graphies, avec pour clé la première cellule, et pour valeur la deuxième
     }
-    return $content;
+    fclose($handle);
+    return $dic;
   }
 
   public static function doPost() {
