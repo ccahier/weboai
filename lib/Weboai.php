@@ -1,13 +1,15 @@
 <?php
 /**
 Classe de chargement des notices pour exposition OAI
- 
+
 http://www.bnf.fr/documents/Guide_oaipmh.pdf
  */
 ini_set( 'default_charset', 'UTF-8' );
 set_time_limit(-1);
 Weboai::$re['fr_sort_tr'] = Weboai::json(dirname(__FILE__).'/fr_sort.json'); // clé de tri pour noms propres
-date_default_timezone_set(ini_get('date.timezone'));
+$tz = ini_get('date.timezone');
+if ( !$tz ) $tz = "Europe/Paris";
+date_default_timezone_set( $tz );
 if (php_sapi_name() == "cli") Weboai::docli();
 
 class Weboai {
@@ -28,9 +30,9 @@ class Weboai {
     'fr' => 'lang:fre',
     'fre' => 'lang:fre',
     'fra' => 'lang:fre',
-  ); // lang sets 
+  ); // lang sets
   public static $re=array();
-  
+
   function __construct($srcuri = false) {
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
@@ -93,7 +95,7 @@ class Weboai {
     $reader->close();
     return $this->doc;
   }
-  
+
   /**
    * Signaler une erreur
    */
@@ -102,7 +104,7 @@ class Weboai {
     fwrite (self::$log, $line . "\n");
   }
   public static function formpublic() {
-   
+
     $sitemaptei = '';
     if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
     $html[] = '
@@ -152,7 +154,7 @@ class Weboai {
     if (isset($_REQUEST['description'])) $description = $_REQUEST['description'];
     if (isset($_REQUEST['subject'])) $subject = $_REQUEST['subject'];
     if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
-    
+
     self::$stmt['selset']=self::$pdo->prepare('SELECT rowid, setspec, setname, publisher, identifier, title, description, sitemaptei, oai  FROM oaiset WHERE setspec = ?');
     // pas de set demandé, donner la liste
     if (!$setspec) {
@@ -171,11 +173,11 @@ class Weboai {
       self::formpublic();
       return;
     }
-    
-    // à partir d’ici un set est demandé 
+
+    // à partir d’ici un set est demandé
     self::$stmt['selset']->execute(array($setspec));
     $set = self::$stmt['selset']->fetch( PDO::FETCH_NUM);
-    
+
     if (preg_match('@[^a-z:_\-]@', $setspec)) { // setspec invalide
       $html[] = '<div class="error">“' . $setspec . '” contient des caractères invalides, un code de collection &lt;setSpec&gt; ne contient que des lettres minuscules non accentuées (et éventuellement le caractère deux points ‘:’)</div>';
       $setspec = false;
@@ -198,7 +200,7 @@ class Weboai {
       if (!$identifier && ($err = true)) $html[] = '<div class="error">&lt;identifier&gt; où (URI, adresse) trouver la collection sur Internet ?</div>';
       if (!$title) $html[] = '<div class="error">&lt;dc:title&gt; quel est le titre de la collection ?</div>';
       $oai = array();
-      $oai[] = '<set 
+      $oai[] = '<set
 xmlns="http://www.openarchives.org/OAI/2.0/"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
@@ -239,9 +241,10 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
         $html[] = '<div class="message">La collection “' . $setspec . '” a été ajoutée.</div>';
         if (!$sitemaptei) $html[] = '<div class="error">[sitemaptei] Aucune source de données n’a été indiquée pour charger des notices.</div>';
         else $html[] = '<div class="message">Pour charger des notices dans cette collection, cliquer le bouton Charger</div>';
+        $set =true; // permettre d’afficher le bouton de chargement
       }
     }
-    else if($set) { // affichier un set chargé depuis la base
+    else if($set) { // afficher un set chargé depuis la base
       list($rowid, $setspec, $setname, $publisher, $identifier, $title, $description, $sitemaptei) = $set;
     }
     $html[] = '
@@ -256,18 +259,26 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
   <br/><textarea style="width: 100%" name="description" placeholder="&lt;dc:description&gt; Description" title="&lt;dc:description&gt; Description de la collection (quelques lignes)" cols="60" rows="4">' . htmlspecialchars($description) . '</textarea>
   <br/><input style="width: 100%" name="sitemaptei" placeholder=" Sitemap TEI (URI)" title="[sitemaptei] Lien vers une liste de fichiers TEI en ligne pour la collection (liste au format sitemaps.org)" class="text" size="60" value="' . htmlspecialchars($sitemaptei) . '"/>
   <div style="clear:both; text-align: center; margin: 1em 0 0 0;">
-    <button style="float: left;" name="delete" value="1" type="submit" title="Supprimer la collection, avec toutes les notices OAI qui en dépendent">Supprimer</button>
+    <button style="float: left;" name="delete" value="1" type="submit" title="Supprimer la collection, avec toutes les notices OAI qui en dépendent">Supprimer</button>';
+  if ( $set ) $html[] = '
     <button name="load" value="1" title="Charger les notices OAI depuis la source de données" type="submit">Charger</button>
-    <button style="float: right;" name="modify" value="1" title="Modifier la fiche de la collection (sans affecter les notices OAI)" type="submit">Modifier</button>
-  </div>
+    <button style="float: right;" name="modify" value="1" title="Modifier la fiche de la collection (sans affecter les notices OAI)" type="submit">Modifier</button>';
+  else $html[] = '
+<button style="float: right;" name="modify" value="1" title="Créer la fiche de la collection" type="submit">Créer</button>';
+  $html[] = '</div>
 </form>
     ';
     print(implode("\n", $html));
-    if(isset($_POST['load']) && $_POST['load']) { // chargement de notices
-      self::sqlitepre(); // nécessaire
-      self::sitemaptei($sitemaptei, $setspec);
-      self::sqlitepost(); // pareil
-      
+    if( isset($_POST['load']) && $_POST['load'] ) { // chargement de notices
+      // créer d
+      if ( !$set ) {
+        echo "<p>La fiche de la collection n'a pas encore été créée, les notices ne seront pas chargées.</p>";
+      }
+      else {
+        self::sqlitepre(); // nécessaire
+        self::sitemaptei($sitemaptei, $setspec);
+        self::sqlitepost(); // pareil
+      }
     }
 
   }
@@ -290,7 +301,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
       return false;
     }
   }
-  
+
   /**
    * Chargement d’un set avec lien sur un sitemap.xml
    *  — charger la notice de set oai en base sqlite
@@ -301,7 +312,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
    */
   public static function set2sqlite($sqlitefile, $sets) {
     self::connect($sqlitefile);
-    
+
     self::$stmt['setins']=self::$pdo->prepare(
     'INSERT INTO oaiset (setspec, setname, identifier, description, sitemap, oai, image)
                  VALUES (?,       ?,       ?,          ?,           ?,       ?,   ?);'
@@ -314,7 +325,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
       else Weboai::setload($setpath);
     }
   }
-  
+
   /**
    * Charger une seule déclaration de set, appeler par sets ci-dessus
    */
@@ -342,7 +353,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
     if (!$source) return;
     $reader = new XMLReader();
     $reader->open($source);
-    
+
   }
   /**
    * Traitement d’un sitemap TEI
@@ -423,7 +434,7 @@ textarea.xml { width: 100%; border: none; }
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'title');
     if($nl->length) $title = $head = $nl->item(0)->nodeValue;
     else $head = '<b class="error">TITRE NON TROUVÉ &lt;dc:title&gt; /TEI/teiHeader/fileDesc/titleStmt/title</b>';
-    
+
     $identifier = null;
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier');
     if ($nl->length) $identifier = $nl->item(0)->nodeValue;
@@ -441,11 +452,11 @@ textarea.xml { width: 100%; border: none; }
         $sep=' ; ';
       }
     }
-    
+
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if($nl->length) $date = $dateline = $nl->item(0)->nodeValue;
     else $dateline = '<b class="error">DATE NON TROUVÉE &lt;dc:date&gt; /TEI/teiHeader/profileDesc/creation/date</b>';
-    
+
     $publisher = '';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher');
     if($nl->length)  {
@@ -457,7 +468,7 @@ textarea.xml { width: 100%; border: none; }
       }
     }
     else $org = '<b class="error">ÉDITEUR NON TROUVÉ &lt;dc:publisher&gt; /TEI/teiHeader/fileDesc/publicationStmt/publisher</b>';
-    
+
     echo "
 <tr>
   <td>$th</td>
@@ -470,11 +481,11 @@ textarea.xml { width: 100%; border: none; }
 
     echo '<tr id="' . $oai_identifier . '" class="xml" style="display: none"><td colspan="5"><textarea class="xml" cols="80" rows="10">' . $oaidoc->saveXML() . '</textarea></td></tr>';
 
-  
+
     // à partir d’ici, insertion sqlite ou pas ?
     if (!isset(self::$stmt['ins_record'])) return;
 
-    /* 
+    /*
     notice issue du TEI, ne montre pas exactement le contenu de l’OAI (dont les des)
     $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/teiHeader2html.xsl');
     $this->proc->importStylesheet($this->xsl);
@@ -484,9 +495,9 @@ textarea.xml { width: 100%; border: none; }
     $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/oai2html.xsl');
     $this->proc->importStylesheet($this->xsl);
     $html = $this->proc->transformToXML($oaidoc);
-    
+
     $oai_datestamp  = date('Y-m-d\TH:i:s\Z');
-    
+
     $date = NULL;
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'date');
     if ($nl->length) $date= $nl->item(0)->nodeValue;
@@ -498,7 +509,7 @@ textarea.xml { width: 100%; border: none; }
     if ($nl->length) $issued = $nl->item(0)->nodeValue;
     $oaidoc->formatOutput = true;
     $oai = $oaidoc->saveXML();
-    
+
     $oai = preg_replace('@\s*<\?[^\n]*\?>\s*@', '', $oai);
     // Attention, le tei contient plus que le <teiHeader>
     // $teiheader = $this->doc->saveXML();
@@ -532,7 +543,7 @@ textarea.xml { width: 100%; border: none; }
       $heading,
       $heading.(($description)?"\n".$description:''),
     ));
-    
+
     self::$stmt['ins_member']->execute(array(self::$pars['record_rowid'], $setspec));
     /* ajouter un set de langue ?
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'language');
@@ -548,7 +559,7 @@ textarea.xml { width: 100%; border: none; }
     }
     */
 
-    
+
     // insertions
     foreach($oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator') as $creator) {
       self::ins_author($creator->nodeValue, 1);// arg2, 1=creator
@@ -590,7 +601,7 @@ textarea.xml { width: 100%; border: none; }
     echo $validator;
     //echo $this->xml2html($validator); //HTML display of XSLT schematron file
   }
-  
+
   /**
    * Shematron (XSL) validation of $this->doc
    */
@@ -610,7 +621,7 @@ textarea.xml { width: 100%; border: none; }
       echo $report;
     }
     return $validation;
-  } 
+  }
 
   /**
    * OAI conversion
@@ -624,16 +635,16 @@ textarea.xml { width: 100%; border: none; }
     $doc->formatOutput = true;
     return $doc;
   }
-  
+
   /**
    * HTML conversion of XML string for navigator display -- doPost() context.
    */
   public function xml2html($xml) {
     $xmlDOM = new DOMDocument();
     $xmlDOM->loadXML($xml);// oai as DOM
-    // [FG] hey! we get it in our projects http://svn.code.sf.net/p/algone/code/teipub/xml2html.xsl 
+    // [FG] hey! we get it in our projects http://svn.code.sf.net/p/algone/code/teipub/xml2html.xsl
     // What should be added to make it works well for you?
-    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/verbid.xsl'); 
+    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/verbid.xsl');
     $this->proc->importStylesheet($this->xsl);
     return $this->proc->transformToXML($xmlDOM);
   }
@@ -678,10 +689,10 @@ PRAGMA temp_store = 2; -- memory temp table
                   VALUES (?,      ?,        ?);
     ");
     self::$stmt['sel_author_rowid']=self::$pdo->prepare("
-      SELECT rowid FROM author WHERE sort1 = ? AND sort2 = ? AND birth = ? AND death = ?; 
+      SELECT rowid FROM author WHERE sort1 = ? AND sort2 = ? AND birth = ? AND death = ?;
     ");
     self::$stmt['sel_author_rowid2']=self::$pdo->prepare("
-      SELECT rowid FROM author WHERE sort1 = ? AND sort2 = ?; 
+      SELECT rowid FROM author WHERE sort1 = ? AND sort2 = ?;
     ");
     self::$stmt['ins_member']=self::$pdo->prepare("
       INSERT INTO member (record, oaiset) SELECT ?, oaiset.rowid FROM oaiset WHERE setspec=?
@@ -699,7 +710,7 @@ PRAGMA temp_store = 2; -- memory temp table
     // pas de VACUUM possible maintenant, transaction pas finie, ou lock si on veut reconnecter
     // imaginer un compteur ?
   }
-  
+
   /**
    * called on dc:creator and dc:contributor
    *
@@ -725,7 +736,7 @@ PRAGMA temp_store = 2; -- memory temp table
     if (($pos=strpos($names, ',')) !== false) {
       $family=trim(substr($names, 0, $pos));
       $given=trim(substr($names, $pos+1));
-    } 
+    }
     else $family=$names;
     // if a wild value, try to separate $names an convert case ?
     /*
@@ -735,7 +746,7 @@ PRAGMA temp_store = 2; -- memory temp table
     }
      // a wild value, try to convert case
     if ($text) {
-      // if uppercase, convert case, 
+      // if uppercase, convert case,
       if ($family==mb_convert_case($family, MB_CASE_UPPER, "UTF-8")) $family=mb_convert_case($family, MB_CASE_TITLE, "UTF-8");
       // keep things like "Henri de", or "T.H.L", "J.-C."
       if ($given==mb_convert_case($given, MB_CASE_UPPER, "UTF-8") && preg_match('/\p{Lu}\p{Lu}/', $given)) $given=mb_convert_case($given, MB_CASE_TITLE, "UTF-8");
@@ -750,7 +761,7 @@ PRAGMA temp_store = 2; -- memory temp table
     // no rebuild of an heading from fields, some info can be lost like (saint ; 1090?-1153)
     // $heading=$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'');
     if(!$uri) $uri=NULL;
-    // dates should be int in sql field to be used 
+    // dates should be int in sql field to be used
     if ($death=='....') $death=null;
     $birth=strtr($birth, '.', '0');
     $death=strtr($death, '.', '9');
@@ -797,7 +808,7 @@ PRAGMA temp_store = 2; -- memory temp table
       self::$pdo=new PDO("sqlite:" . Conf::$sqlite);
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     }
-    
+
   }
 
   /**
@@ -831,7 +842,7 @@ PRAGMA temp_store = 2; -- memory temp table
     }
     return $content;
   }
-  
+
   public static function doPost() {
     // a file seems uploaded
     $filename="";
@@ -865,15 +876,15 @@ PRAGMA temp_store = 2; -- memory temp table
       // aiguillage : sch compilation, validation, sqlite load
       if(isset($_POST['validation'])) echo $weboai->xmlValidation();
       if(isset($_POST['sqlite'])) $weboai->sqlite($src,'weboai.sqlite');
-      exit;  
+      exit;
     }
     elseif(pathinfo($tmp['name'], PATHINFO_EXTENSION) == 'zip') {
       $weboai=new Weboai($file);
       echo $weboai->zipParse();
       exit;
-    } 
+    }
   }
-  
+
   /**
    * Command line interface for Weboai
    * php -f Weboai.php sch2xsl file.sch [dir/file.xsl]
@@ -967,7 +978,7 @@ PRAGMA temp_store = 2; -- memory temp table
     }
     // TODO? append error report as comment to the doc ?
   }
-  
+
 }
 
 

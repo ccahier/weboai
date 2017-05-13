@@ -2,15 +2,15 @@
 -- Format of an SQLite base feed with OAI
 CREATE TABLE record (
   -- OAI record of a resource, should be enough for an OAI engine, and to display a short result for the resource
-  oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission 
+  oai_datestamp   TEXT NOT NULL,          -- ! OAI record's submission
   oai_identifier  TEXT UNIQUE NOT NULL,   -- ! local OAI identifier used by harvester to get, update, delete records
   oai             BLOB NOT NULL,          -- ! the oai xml record
   html            BLOB,                   -- ! a displayable title page for web navigation
   teiheader       BLOB,                   -- ? store xml <teiHeader> maybe useful for later transformations
-  identifier      TEXT,                   -- ! a link for the full-text, should be unique 
-  title           TEXT NOT NULL,          -- ! dc:title, just for display 
-  byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display 
-  date            INTEGER NOT NULL,       -- ! dc:date, creation date of the text, should be not null
+  identifier      TEXT,                   -- ! a link for the full-text, should be unique
+  title           TEXT NOT NULL,          -- ! dc:title, just for display
+  byline          TEXT,                   -- ? optional, texts may not have authors, dc:author x n, just for display
+  date            INTEGER,                -- ! dc:date, creation date of the text, should be not null
   date2           INTEGER,                -- ? second important date in life of resoource (ex: edition date of a medieval text)
   publisher       TEXT,                   -- ! required, publisher of electronic resource
   issued          INTEGER,                -- ? publication date of electronic resource
@@ -101,7 +101,7 @@ END;
 CREATE TRIGGER record_del
   -- on resource's record deletion, delete search index, relations to author (dc:creator | dc:contributor), relation to sets
   BEFORE DELETE ON record
-  FOR EACH ROW 
+  FOR EACH ROW
   BEGIN
     DELETE FROM ft WHERE ft.rowid = OLD.rowid;
     DELETE FROM writes WHERE writes.record = OLD.rowid;

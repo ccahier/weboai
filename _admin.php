@@ -30,8 +30,6 @@ else if ( isset($_SESSION['user']) && isset($_SESSION['pass']) ) {
 }
 */
 
-
-
 ?><!DOCTYPE html>
 <html>
   <head>
@@ -40,18 +38,18 @@ else if ( isset($_SESSION['user']) && isset($_SESSION['pass']) ) {
     <link rel="stylesheet" type="text/css" href="<?php echo Conf::$weboaihref ?>lib/weboai.css" />
   </head>
   <body class="oai">
-    <h1><a href="admin.php"><?php echo Conf::$repositoryName ?>, administration</a></h1>
+    <h1><a href=".">◀ <?php echo Conf::$repositoryName ?></a>, <a href="admin.php">administration</a></h1>
     <?php
 if (isset($_SESSION['user'])) {
   echo '<form style="float: right" method="POST"><button name="logout">Déconnexion</button></form>';
-} 
+}
 else {
   echo '<form method="POST" style="float: right">
   <input placeholder="Utilisateur" class="text" type="text" name="user"/>
   <br/><input placeholder="Mot de passe" type="password" class="text" name="pass"/>
   <div style="text-align: center; "><button name="login">Connexion</button></div>
 </form>';
-} 
+}
     ?>
   <?php
 echo implode("\n", $message);

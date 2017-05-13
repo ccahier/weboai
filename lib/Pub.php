@@ -1,7 +1,7 @@
 <?php
 /**
  * Methods to search and display records produced with Weboai
- */  
+ */
 class Pub {
   /** Sqlite connexion, is not dynamic, parameters by constructor, public, maybe useful externally */
   public $pdo;
@@ -81,8 +81,9 @@ class Pub {
   /**
    * Constructor, class is build around a connexion to an sqlite file
    */
-  function __construct($sqlitefile, $lang='fr') {
+  function __construct( $sqlitefile, $lang='fr' ) {
     $this->lang=$lang;
+    if ( !file_exists( $sqlitefile ) ) return false;
     $this->pdo=new PDO("sqlite:".$sqlitefile);
     $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     $this->pdo->exec("PRAGMA temp_store = 2;");
@@ -125,7 +126,7 @@ class Pub {
     foreach($include as $key) {
       if (!isset($this->$key)) continue;
       else if (!$this->$key) continue;
-      else if (is_array($this->$key)) foreach ($this->$key as $value) $qsa.='&'.$key.'='.$value; 
+      else if (is_array($this->$key)) foreach ($this->$key as $value) $qsa.='&'.$key.'='.$value;
       else $qsa.='&'.$key.'='.$this->$key;
     }
     return $qsa;
@@ -143,9 +144,9 @@ class Pub {
     $list=array_flip($list);
     return $list;
   }
-  /** 
-   * build a temp table of found documents, especially usefull to have index 
-   * on some calculated values, more efficient before any results view 
+  /**
+   * build a temp table of found documents, especially usefull to have index
+   * on some calculated values, more efficient before any results view
    */
   public function search() {
     $timeStart = microtime(true);
@@ -161,7 +162,7 @@ class Pub {
       $from .= ", member";
       $where.=" AND (member.oaiset IN (".implode(',',$this->set).")  AND member.record = record.rowid)";
     }
-    
+
     if ($this->start && $this->end) $where.=" AND (record.date >= $this->start AND record.date <= $this->end)";
     // occurrences not useful in this biliographic context
     if ($this->q) {
@@ -171,7 +172,7 @@ class Pub {
     $this->pdo->exec($sql);
     $this->pdo->exec("CREATE INDEX foundDate ON found(date);");
     $this->docsFound = current($this->pdo->query("select count(*) from found")->fetch());
-    
+
     echo "<!-- $sql \n",$this->docsFound," found out ".$this->docscount." in ",number_format( microtime(true) - $timeStart, 3)," s. -->";
     $this->pdo->commit(); // temp tables only available now
     $this->search=TRUE;
@@ -188,7 +189,7 @@ class Pub {
     // nothing found
     else echo $this->msg("docs0", array($this->docscount));
   }
-  /** 
+  /**
    * display search results as a chrono
    * height: max height of a bar in em
    * colPref: number of cols to approach, respecting span and steps
@@ -301,7 +302,7 @@ class Pub {
         else if ($count==1) $texts=' (' . $this->msg('text1') . ')';
         else $texts=' ('.$count.' '.mb_strtolower ( $this->msg('texts') , "UTF-8" ).')';
         if(!$count) echo '<div class="level' . (0 + $indent) . '">'. $set['setname'] .'</a></div>';
-        else echo '<div class="level' . (0+$indent) . '">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['setspec'] . '">' . $set['setname'] . $texts .'</a></div>'; 
+        else echo '<div class="level' . (0+$indent) . '">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['setspec'] . '">' . $set['setname'] . $texts .'</a></div>';
       }
       echo "\n".'</div>';
     }
@@ -318,14 +319,14 @@ class Pub {
         if (!$set['count']) $texts='';
         else if ($set['count']==1) $texts=' ('.$this->msg('text1').')';
         else $texts=' ('.$set['count'].' '.mb_strtolower ( $this->msg('texts') , "UTF-8" ).')';
-        
-        echo '<div class="level'. (0 + $indent) . '">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['spec'] . '">' . $set['name'] . $texts .'</a></div>'; 
+
+        echo '<div class="level'. (0 + $indent) . '">'.'<a href="?' . $this->qsa(array('set')) . '&set=' . $set['spec'] . '">' . $set['name'] . $texts .'</a></div>';
       }
       echo "\n".'</div>';
     }
-    
+
   }
-  
+
   /**
    * One set
    */
@@ -346,7 +347,7 @@ class Pub {
     $this->set = array($set['rowid']);
     $this->biblio(array('n', 'title', 'byline', 'date', 'date2', 'publisher'), $caption);
   }
-  
+
   /**
    * display search results as a bibliography
    * do not display books by author (pb multiple authors)
@@ -357,7 +358,7 @@ class Pub {
     if (!$this->docsFound) return;
 
     $list=$this->pdo->prepare("SELECT record.* FROM record, found WHERE found.rowid=record.rowid ORDER BY record.oai_identifier LIMIT ".$limit);
-    
+
     // buffer to output line after line
     $html=array();
     $html[]='<table class="sortable">';
@@ -564,7 +565,7 @@ class Web {
    * query: ?A=1&A=2&A=&B=3
    * return: ?A=1&A=2&B=3
    * $keep=true : keep empty params -> ?A=1&A=2&A=&B=3
-   * $exclude=array() : exclude some parameters 
+   * $exclude=array() : exclude some parameters
    */
   public static function query($keep=false, $exclude=array(), $query=null) {
     // query given as param
@@ -609,7 +610,7 @@ class Web {
     // tests for 304
     if($force);
     else if (self::noCache());
-    // ($if_none_match && $if_none_match == $etag) || 
+    // ($if_none_match && $if_none_match == $etag) ||
     else if ( $if_modified_since == $modification) {
       header('HTTP/1.x 304 Not Modified');
       exit;
@@ -617,14 +618,14 @@ class Web {
     // header("X-Date: ". substr(gmdate('r'), 0, -5).'GMT');
     /*
     // According to google, https://developers.google.com/speed/docs/best-practices/caching
-    // exclude etag if last-Modified, and last-Modified is better 
+    // exclude etag if last-Modified, and last-Modified is better
     $etag = '"'.md5($modification).'"';
     header("ETag: $etag");
     */
     // it seems there is something to send
     header("Cache control: public"); // for FireFox over https
     header("Last-Modified: $modification");
-    // it's good to 
+    // it's good to
     if ($expires) header('Expires: ' . gmdate('D, d M Y H:i:s', time()+$expires) . ' GMT');
   }
 

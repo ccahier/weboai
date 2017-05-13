@@ -1,18 +1,18 @@
 <?php
 /**
  * Modifier la configuration selon les besoins de votre installation locale
- * Renommer le fichier en “Conf.php” sans le préfixe '_'
+ * Renommer le fichier en Conf.php (sans le prÃ©fixe '_')
  *
- * Chaque paramètre est accessible dans l’application avec l’écriture Conf::$param
+ * Chaque paramÃ¨tre est accessible dans lâ€™application avec lâ€™Ã©criture Conf::$param
  */
 /**
  * ? = facultatif
  * ! = obligatoire
  */
 class Conf {
-  /** ! Nom public de l’entrepôt OAI */
+  /** ! Nom public de lâ€™entrepÃ´t OAI */
   static $repositoryName = "Catalogue Weboai";
-  /** ! Adresse email de l’administrateur du serveur OAI-PMH */
+  /** ! Adresse email de lâ€™administrateur du serveur OAI-PMH */
   static $adminEmail = "frederic.glorieux@fictif.org";
   /** ! authentification admin */
   static $user = array(
@@ -20,16 +20,16 @@ class Conf {
       'pass' => 'nimdA',
     )
   );
-  /** Fichier de base SQLITE, doit être autorisé en écriture par Apache si chargement en ligne */
+  /** Fichier de base SQLITE, doit Ãªtre autorisÃ© en Ã©criture par Apache si chargement en ligne */
   static $sqlite = 'weboai.sqlite';
-  /** ? URI absolue du serveur OAI, ou valeur automatique obtenue selon l’installation */
+  /** ? URI absolue du serveur OAI, ou valeur automatique obtenue selon lâ€™installation */
   static $baseURL;
-  /** 
-   * ? Nom de domaine identifiant l’entrepôt OAI, sert notamment à forger les identifiants OAI, 
-   * ou valeur automatique obtenue selon l’installation (attention à localhost)
+  /**
+   * ? Nom de domaine identifiant lâ€™entrepÃ´t OAI, sert notamment Ã  forger les identifiants OAI,
+   * ou valeur automatique obtenue selon lâ€™installation (attention Ã  localhost)
    */
   static $domain;
-  /** Lien relatif de la librairie weboai, permet de déporter l’installation et la librairie */
+  /** Lien relatif de la librairie weboai, permet de dÃ©porter lâ€™installation et la librairie */
   static $weboaihref;
 }
 
