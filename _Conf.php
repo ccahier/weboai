@@ -21,7 +21,7 @@ class Conf {
     )
   );
   /** Fichier de base SQLITE, doit être autorisé en écriture par Apache si chargement en ligne */
-  static $sqlite = 'weboai.sqlite';
+  static $sqlite = 'test.sqlite';
   /** ? URI absolue du serveur OAI, ou valeur automatique obtenue selon l’installation */
   static $baseURL;
   /**
