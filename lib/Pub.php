@@ -5,6 +5,10 @@
 class Pub {
   /** Sqlite connexion, is not dynamic, parameters by constructor, public, maybe useful externally */
   public $pdo;
+  /** lang for generated messages */
+  public $lang;
+  /** Default navigation is by http params. If rewrite and pathinfo enable, set to true.  */
+  public $pathinfo;
   /** path for a requested resource */
   public $path = "";
   /** ../../ to come back to home  */
@@ -17,6 +21,8 @@ class Pub {
   public $docscount;
   /** number of doc results */
   public $docsFound;
+
+
   /** author filter, integers separated by commas */
   public $by=array();
   /** author filter, integers separated by commas */
@@ -27,10 +33,6 @@ class Pub {
   public $q;
   /** date query, start year */
   public $start;
-  /** set query, 0 or more */
-  public $set;
-  /** lang for generated messages */
-  public $lang;
   /** Generated messages */
   private static $msg=array(
     "author" => array("en" => "Author", "fr" => "Auteur"),
@@ -81,7 +83,9 @@ class Pub {
   /**
    * Constructor, class is build around a connexion to an sqlite file
    */
-  function __construct( $sqlitefile, $lang='fr' ) {
+  function __construct( $sqlitefile, $pathinfo=false, $lang='fr' )
+  {
+    $this->pathinfo = $pathinfo;
     $this->lang=$lang;
     if ( !file_exists( $sqlitefile ) ) return false;
     $this->pdo=new PDO("sqlite:".$sqlitefile);
@@ -90,7 +94,8 @@ class Pub {
     // load a json resource, no test for errors, bet it works
     $content=file_get_contents(dirname(__FILE__).'/fr_sort.json');
     self::$re['fr_sort_tr']=json_decode($content, true);
-    // set query params
+    // set query params ??
+    /* search in base ?
     if (isset($_REQUEST['q']) && $_REQUEST['q']) $this->q=trim($_REQUEST['q']);
     if (isset($_REQUEST['start']) && 0+$_REQUEST['start'] != 0) $this->start=0+$_REQUEST['start'];
     if (isset($_REQUEST['end']) && $this->start && $_REQUEST['end'] > $this->start) $this->end=$_REQUEST['end'];
@@ -98,38 +103,12 @@ class Pub {
     // by and notby may be repeated params or comma separated integer list
     if (isset($_REQUEST['by'])) $this->by=self::csi(implode(',',Web::pars('by')));
     if (isset($_REQUEST['notby'])) $this->notby=self::csi(implode(',',Web::pars('notby')));
-    // valid sets requested and take the integer for query
-    if (isset($_REQUEST['set'])) {
-      $setlist=Web::pars('set');
-      $this->set=array();
-      $selset=$this->pdo->prepare("SELECT rowid FROM oaiset WHERE setspec = ? ");
-      foreach ($setlist AS $setspec) {
-        $selset->execute(array($setspec));
-        list($rowid)=$selset->fetch();
-        if($rowid) $this->set[]=$rowid;
-      }
-    }
+    */
     if (isset($_SERVER['PATH_INFO'])) $this->path=ltrim($_SERVER['PATH_INFO'], '/');
     else if (isset($_REQUEST['path'])) $this->path=ltrim($_REQUEST['path'], '/');
     $this->homehref = str_repeat("../", substr_count($this->path, '/'));
     if (!$this->homehref) $this->homehref = "./";
     $this->docscount = current($this->pdo->query("SELECT COUNT(*) FROM record")->fetch());
-  }
-  /** What to append to a query string, to keep search params */
-  function qsa($exclude=array(), $include=array()) {
-    if(!$exclude)$exclude=array();
-    if (!count($include)) $include=array('by','end','notby','q','set','start');
-    $include=array_diff($include, $exclude);
-    // array_unique() will reorder array, unify by key
-    $include=array_flip(array_flip($include));
-    $qsa="";
-    foreach($include as $key) {
-      if (!isset($this->$key)) continue;
-      else if (!$this->$key) continue;
-      else if (is_array($this->$key)) foreach ($this->$key as $value) $qsa.='&'.$key.'='.$value;
-      else $qsa.='&'.$key.'='.$this->$key;
-    }
-    return $qsa;
   }
   /** validate comma separated integers and return array */
   static function csi($string) {
@@ -190,11 +169,13 @@ class Pub {
     else echo $this->msg("docs0", array($this->docscount));
   }
   /**
+   * BROKEN
    * display search results as a chrono
    * height: max height of a bar in em
    * colPref: number of cols to approach, respecting span and steps
    */
-  public function chrono($height=10,$colPref=10) {
+  public function chrono( $height=10, $colPref=10 )
+  {
     $html=array();
     if (!$this->search) $this->search();
     if (!$this->docsFound) return;
@@ -263,26 +244,31 @@ class Pub {
   /**
    * List sets
    */
-  public function sets($prefix="") {
+  public function sets( ) {
+    // Href prefix to set, with or without htaccess
+    $hrefset = $this->homehref;
+    if ( $this->pathinfo ) $hrefset .= 'set/';
+    else $hrefset = "?set=";
+
     // no search, list all sets
     $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member WHERE member.oaiset=oaiset.rowid GROUP BY oaiset.rowid ORDER BY oaiset.setspec ");
     $list->execute(array());
     echo '
 <div class="sets">
-  <nav class="path"><a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a></nav>
+  <nav class="path"><a href="'.$this->homehref.'">'.$this->msg('sets').' ('.$this->msg("docsAll", array($this->docscount)).')</a></nav>
 ';
     while($set=$list->fetch(PDO::FETCH_ASSOC)) {
       echo '
-<a class="set" href="set/' . $set['setspec'] . '/">
+<a class="set" href="'.$hrefset.$set['setspec'].'">
   <table class="set" title="">
     <tr>
-      <td class="publisher">' . $set['publisher'] . '</div>
+      <td class="publisher">'.$set['publisher'].'</div>
     </tr>
     <tr>
-      <td class="title">' . $set['setname'] . '</div>
+      <td class="title">'.$set['setname'].'</div>
     </tr>
     <tr>
-      <td class="count">' . (($set['count'])?' ('.$set['count'].')':'') . '</div>
+      <td class="count">'.(($set['count'])?' ('.$set['count'].')':'').'</div>
     </tr>
   </table>
 </a>';
@@ -328,19 +314,26 @@ class Pub {
   }
 
   /**
-   * One set
+   * Publish one set as a biblio
    */
-  public function set($setspec) {
-    $selset=$this->pdo->prepare("SELECT rowid, * FROM oaiset WHERE setspec = ? ");
+  public function set( $setspec )
+  {
+    // Href prefix to set, with or without htaccess
+    $hrefset = $this->homehref;
+    if ( $this->pathinfo ) $hrefset .= 'set/';
+    else $hrefset .= "?set=";
+
+    $selset = $this->pdo->prepare("SELECT rowid, * FROM oaiset WHERE setspec = ? ");
     $selset->execute(array($setspec));
     $set = $selset->fetch();
     if (!$set) {
-      echo "\n" . '<nav class="path"><a href="' . $this->homehref . '">' . $this->msg('sets') . ' (' . $this->msg("docsAll", array($this->docscount)) . ')</a></nav>';
+      echo "\n" . '<nav class="path"><a href="'.$this->homehref.'">'.$this->msg('sets').' ('.$this->msg("docsAll", array($this->docscount)).')</a></nav>';
       echo $this->msg('setnotfound', array($setspec));
       return;
     }
-    $count = current($this->pdo->query("SELECT count(*) AS count FROM member WHERE member.oaiset=".$set['rowid'])->fetch());
-    echo "\n" . '<nav class="path"><a href="' . $this->homehref . '">' . $this->msg('sets') . '</a> (' . $this->docscount . ') / <a href="' .$this->homehref . 'set/' . $setspec . '">' . $set['setname'] . '</a> (' . $count . ')</nav>';
+    // build a navbar
+    $count = current( $this->pdo->query("SELECT count(*) AS count FROM member WHERE member.oaiset=".$set['rowid'])->fetch() );
+    echo "\n" . '<nav class="path"><a href="'.$this->homehref.'">'.$this->msg('sets').'</a> ('. $this->docscount .') / <a href="'.$hrefset. $setspec . '">' . $set['setname'] . '</a> (' . $count . ')</nav>';
     if (!$set['title']) $set['title'] = $set['setname'];
     $caption = '<a href="' . $set['identifier'] . '" class="title">' . $set['title'] . '</a> (' . $set['publisher'] . ')';
     if ($set['description']) echo "\n" . '<p>' . $set['description'] . '</p>';
@@ -353,7 +346,13 @@ class Pub {
    * do not display books by author (pb multiple authors)
    * $limit : max books
    */
-  public function biblio($cols=array('n', 'title', 'byline', 'date', 'date2', 'publisher'), $caption='', $limit=300) {
+  public function biblio($cols=array('n', 'title', 'byline', 'date', 'date2', 'publisher'), $caption='', $limit=300)
+  {
+    // Href prefix to record, with or without htaccess
+    $hrefrec = $this->homehref;
+    if ( $this->pathinfo ) $hrefrec .= 'record/';
+    else $hrefrec .= "?record=";
+
     if (!$this->search) $this->search();
     if (!$this->docsFound) return;
 
@@ -396,7 +395,7 @@ class Pub {
           else $html[] = '<td/>';
         }
         if ($col == 'title') {
-          $html[] = '<td><a href="' . $this->homehref . 'record/' . $record['oai_identifier'] . '">' . $record['title'] . '</a></td>';
+          $html[] = '<td><a href="'.$hrefrec.$record['oai_identifier'].'">'.$record['title'].'</a></td>';
         }
       }
       $html[]='  </tr>';
@@ -407,9 +406,14 @@ class Pub {
   /**
    * Display one record as a title page
    */
-  public function record($oai_identifier) {
+  public function record( $oai_identifier )
+  {
+    $hrefset = $this->homehref;
+    if ( $this->pathinfo ) $hrefset .= 'set/';
+    else $hrefset .= "?set=";
+
     $members = explode(':', $oai_identifier);
-    $caption = '<a href="' . $this->homehref . '">' . $this->msg('sets') . '</a> (' . $this->msg("docsAll", array($this->docscount)) . ')';
+    $caption = '<a href="'.$this->homehref.'">'.$this->msg('sets').'</a> ('.$this->msg("docsAll", array($this->docscount)).')';
     while (isset($members[2])) {
       $setspec = $members[2];
       $selset = $this->pdo->prepare("SELECT rowid, * FROM oaiset WHERE setspec = ?");
@@ -417,7 +421,7 @@ class Pub {
       $set = $selset->fetch(PDO::FETCH_ASSOC);
       if (!$set) break;
       $count = current($this->pdo->query("SELECT count(*) AS count FROM member WHERE member.oaiset=".$set['rowid'])->fetch());
-      $caption .= ' / <a href="' .$this->homehref . 'set/' . $setspec . '">' . $set['setname'] . '</a> (' . $count . ')';
+      $caption .= ' / <a href="'.$hrefset.$setspec.'">'.$set['setname'].'</a> ('.$count.')';
       break;
     }
     $selrecord = $this->pdo->prepare("SELECT rowid, * FROM record WHERE oai_identifier = ? ");
@@ -444,7 +448,8 @@ class Pub {
 
   }
   /** Display a message */
-  public function msg($key, $arg=array(), $lang=false) {
+  public function msg($key, $arg=array(), $lang=false)
+  {
     $text=$key;
     if(!$lang) $lang=$this->lang;
     if (isset(self::$msg[$key]) && isset(self::$msg[$key][$lang])) $text=self::$msg[$key][$lang];
@@ -455,10 +460,31 @@ class Pub {
     else if (count($arg) > 0 ) return sprintf($text, $arg[0]);
   }
 
+  /**
+   * What to append to a query string, to keep search params
+   */
+  function qsa($exclude=array(), $include=array())
+  {
+    if(!$exclude)$exclude=array();
+    if (!count($include)) $include=array('by','end','notby','q','set','start');
+    $include=array_diff($include, $exclude);
+    // array_unique() will reorder array, unify by key
+    $include=array_flip(array_flip($include));
+    $qsa="";
+    foreach($include as $key) {
+      if (!isset($this->$key)) continue;
+      else if (!$this->$key) continue;
+      else if (is_array($this->$key)) foreach ($this->$key as $value) $qsa.='&'.$key.'='.$value;
+      else $qsa.='&'.$key.'='.$this->$key;
+    }
+    return $qsa;
+  }
+
+
 }
 
 /**
-Tools to deal with Http oddities
+ * Tools to deal with Http oddities
  */
 class Web {
   /** Content-Type header */
@@ -632,7 +658,8 @@ class Web {
   /**
    * If client ask a forced relaod.
    */
-  public static function noCache() {
+  public static function noCache()
+  {
     // pas de cache en POST
     if ($_SERVER['REQUEST_METHOD'] == 'POST') return 'POST';
     if (isset ($_SERVER['HTTP_PRAGMA']) && stripos($_SERVER['HTTP_PRAGMA'], "no-cache") !== false) return "Pragma: no-cache";
@@ -641,6 +668,7 @@ class Web {
     if (isset($_REQUEST['force'])) return '?force=';
     return false;
   }
+
 
 }
 
