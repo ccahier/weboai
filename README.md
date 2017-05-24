@@ -1,15 +1,20 @@
-# weboai
+WebOAI permet d’extraire des notices Dublin Core depuis des collections de fichers XML/TEI pour les exposer sous forme de site et d’entrepôt OAI.
 
+# Utilisation
 
-## Installer weboai
+Les fichiers XML TEI des textes dont on souhaite exposer les métadonnées en OAI  (ou a minima la partie teiHeader de ces fichiers) doivent être accessibles en ligne (on devra fournir leurs urls).
 
-### Prérequis
+* [Schéma teiHeader](//ccahier.github.io/weboai/schema/teiHeader.html)
+* [Schéma Dublin Core](//ccahier.github.io/weboai/schema/weboai.html)
+
+# Installation
+
+## Prérequis
 * Un serveur Apache
 * PHP5 ou supérieur + modules PDO, pdo_sqlite et xslt
-* les fichiers XML TEI des textes dont on souhaite exposer les métadonnées en OAI  (ou a minima la partie teiHeader de ces fichiers) doivent être accessibles en ligne (on devra fournir leurs urls)
 * les textes devront être organisés en une ou plusieurs collections (= sets). Voir infra la manière d'exprimer l'organisation des textes en collections
 
-### Install
+## Procédure
 * déziper ou cloner ccahier/weboai sur le serveur apache (empacement linux par défaut des fichiers de sites : /var/www/html)
 * vérifier les droits sur les fichiers : le fichier weboai.sqlite doit appartenir au groupe apache (www-data sur linux, _www sur OSX)
 * copier _Conf.php en Conf.php et _.htaccess en .htaccess
