@@ -1,5 +1,5 @@
 <?php
-$conf = include( dirname(__FILE__).'/Conf.php' ); // importer la configuration
+$conf = include( dirname(__FILE__).'/conf.php' ); // importer la configuration
 include( dirname(__FILE__).'/lib/Pub.php' );
 // si fichier .htaccess alors on suppose que les URI seront de type /set/setSpec /record/oai_identifier
 if ( file_exists('.htaccess') ) $pub=new Pub( $conf['sqlite'], "PATHINFO" );
