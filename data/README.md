@@ -1,7 +1,7 @@
 # Données
 
 Les données importées sont entièrement contenues dans une base sqlite.
-Le chemin de cette base est configuré dans le fichier Conf.php en racine
+Le chemin de cette base est configuré dans le fichier conf.php en racine
 de cette application.
 Afin que la base de données puisse être alimentée avec les formulaires PHP en ligne,
 il faut que l’utilisateur Apache (ex : www-data sur debian, _www sur macosx) soit autorisé à écrire
