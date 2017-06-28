@@ -112,6 +112,12 @@
             <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base"/>
           </dc:identifier>
         </xsl:when>
+        <!-- specific  -->
+        <xsl:when test="tei:fileDesc/tei:editionStmt/tei:edition/tei:ref/@target">
+          <dc:identifier>
+            <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/tei:ref/@target"/>
+          </dc:identifier>
+        </xsl:when>
       </xsl:choose>
       <!-- n? language -->
       <xsl:choose>

@@ -6,6 +6,7 @@
  */
 ini_set( 'default_charset', 'UTF-8' );
 set_time_limit(-1);
+Weboai::$conf = include( dirname(dirname(__FILE__)).'/conf.php' );
 Weboai::$re['fr_sort_tr'] = Weboai::dic( dirname(__FILE__).'/fr_sort.json' ); // clé de tri pour noms propres
 $tz = ini_get('date.timezone');
 if ( !$tz ) $tz = "Europe/Paris";
@@ -13,8 +14,9 @@ date_default_timezone_set( $tz );
 if (php_sapi_name() == "cli") Weboai::docli();
 
 class Weboai {
+  static $conf;
   static $debug; // debug mode
-  private $srcuri; //path du fichier chargé
+  private $srcurl; //path du fichier chargé
   private $srcfilename; // nom du fichier chargé
   private $doc; // DOM du XML en court de traitement
   private $xsl; // DOM d’xsl de transformation
@@ -33,20 +35,22 @@ class Weboai {
   ); // lang sets
   public static $re=array();
 
-  function __construct($srcuri = false) {
+  function __construct( $srcurl = false )
+  {
     $this->xsl = new DOMDocument("1.0", "UTF-8");
     $this->proc = new XSLTProcessor();
-    if (!isset(Conf::$domain)) Conf::$domain = $_SERVER['HTTP_HOST'];
-    if($srcuri) {
-      $this->srcuri = $srcuri;
-      $this->srcfilename = pathinfo($srcuri, PATHINFO_FILENAME);
-      $this->load($srcuri);
+    if ( !isset( self::$conf['domain'] ) ) self::$conf['domain'] = $_SERVER['HTTP_HOST'];
+    if( $srcurl ) {
+      $this->srcurl = $srcurl;
+      $this->srcfilename = pathinfo( $srcurl, PATHINFO_FILENAME );
+      $this->load( $srcurl );
     }
   }
   /**
    * Sortir de l’authentification
    */
-  public static function logout() {
+  public static function logout()
+  {
     // if(session_id() == '' || !isset($_SESSION)) return;
     if (isset($_SESSION)) $_SESSION = array();
     if (ini_get("session.use_cookies")) {
@@ -61,23 +65,25 @@ class Weboai {
   /**
    * Renvoit un message, ou true si c’est OK
    */
-  public static function allowed($user, $pass) {
+  public static function allowed( $user, $pass )
+  {
     $message = array();
-    if (!isset(Conf::$user)) return '<div class="message">Pas d’utilisateurs configurés.</div>';
-    else if (!isset(Conf::$user[$user])) return '<p class="error">Utilisateur ou mot de passe inconnu</p>';
-    else if (!isset(Conf::$user[$user]['pass'])) return '<div class="message">Utilisateur inutilisable (pour ce rôle).</div>';
-    else if (Conf::$user[$user]['pass'] != $pass) return '<p class="error">Utilisateur ou mot de passe inconnu</p>';
+    if (!isset( self::$conf['user'] )) return '<div class="message">Pas d’utilisateurs configurés.</div>';
+    else if ( !isset( self::$conf['user'][$user]) ) return '<p class="error">Utilisateur ou mot de passe inconnu</p>';
+    else if ( !isset( self::$conf['user'][$user]['pass']) ) return '<div class="message">Utilisateur inutilisable (pour ce rôle).</div>';
+    else if ( self::$conf['user'][$user]['pass'] != $pass) return '<p class="error">Utilisateur ou mot de passe inconnu</p>';
     else return '';
   }
   /**
    * Chargement optimisé d’un tei header (ne pas tout télécharger)
    */
-  function teiheader($uri) {
-    $this->srcuri = $uri;
-    $this->srcfilename = pathinfo($this->srcuri, PATHINFO_FILENAME);
+  function teiheader($url)
+  {
+    $this->srcurl = $url;
+    $this->srcfilename = pathinfo($this->srcurl, PATHINFO_FILENAME);
     $this->doc = false;
     $reader = new XMLReader();
-    if (!@$reader->open($this->srcuri, null, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_NOWARNING)) {
+    if (!@$reader->open($this->srcurl, null, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_NOWARNING)) {
       $reader->close();
       return false;
     }
@@ -99,11 +105,14 @@ class Weboai {
   /**
    * Signaler une erreur
    */
-  public static function log($line) {
+  public static function log($line)
+  {
     if (!self::$log) self::$log = STDERR;
     fwrite (self::$log, $line . "\n");
   }
-  public static function formpublic() {
+
+  public static function formpublic()
+  {
 
     $sitemaptei = '';
     if (isset($_REQUEST['sitemaptei'])) $sitemaptei = $_REQUEST['sitemaptei'];
@@ -142,7 +151,8 @@ class Weboai {
   /**
    * Création ou modification d’un set depuis un formulaire html
    */
-  public static function formset() {
+  public static function formset()
+  {
     self::connect();
     $html = array();
     $set = $setspec = $setname = $publisher = $identifier = $title = $description = $sitemaptei = $oai = null;
@@ -285,8 +295,8 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
   /**
    * obtenir le nom d’un fichier téléchargé
    */
-  public static function upload() {
-
+  public static function upload()
+  {
     if (!count($_FILES)) return;
     $ret = array();
     reset($_FILES);
@@ -310,8 +320,9 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
    *  — transformer un TEI en notice DC-OAI
    *  — charger la notice DC-OAI en base
    */
-  public static function set2sqlite($sqlitefile, $sets) {
-    self::connect($sqlitefile);
+  public static function set2sqlite( $sqlitefile, $sets )
+  {
+    self::connect( $sqlitefile );
 
     self::$stmt['setins']=self::$pdo->prepare(
     'INSERT INTO oaiset (setspec, setname, identifier, description, sitemap, oai, image)
@@ -329,7 +340,8 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
   /**
    * Charger une seule déclaration de set, appeler par sets ci-dessus
    */
-  private static function setload($setfile) {
+  private static function setload( $setfile )
+  {
     self::log("Load set file $setfile");
     $xml = file_get_contents($setfile);
     $doc = new DOMDocument();
@@ -358,16 +370,16 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
   /**
    * Traitement d’un sitemap TEI
    */
-  public static function sitemaptei($uri, $setspec=null) {
-    // juste pour tester le sitemap
+  public static function sitemaptei( $url, $setspec=null ) {
+    $baseurl = dirname( $url )."/";
     $reader = new XMLReader();
-    if (!@$reader->open($uri)) {
+    if (!@$reader->open($url)) {
       $reader->close();
-      echo "<p class=\"error\">Impossible d’ouvrir $uri</p>\n";
+      echo "<p class=\"error\">Impossible d’ouvrir $url</p>\n";
       return;
     }
-    // supprimer les enregistrements du setSpec
-    if ($setspec) {
+    // supprimer les enregistrements du setSpec avant d’en ajouter d’autres, conserver la notice
+    if ( $setspec ) {
       $selset = self::$pdo->prepare("SELECT rowid FROM oaiset WHERE setspec = ? ");
       $selset->execute(array($setspec));
       $setrowid = $selset->fetchColumn();
@@ -385,7 +397,7 @@ xmlns:dc="http://purl.org/dc/elements/1.1/"
 textarea.xml { width: 100%; border: none; }
 </style>
 <table class="sortable sets">
-  <caption>[' . $setspec . '] ' . $uri . '</caption>
+  <caption>[' . $setspec . '] ' . $url . '</caption>
   <thead>
     <th title="Pour voir la source OAI/XML, cliquer l’identifiant">Identifiant</th>
     <th title="&lt;dc:title&gt; /TEI/teiHeader/fileDesc/titleStmt/title">Titre</th>
@@ -396,33 +408,40 @@ textarea.xml { width: 100%; border: none; }
     ';
     while($reader->read()) {
       if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'loc') {
-        $teiuri = $reader->expand()->textContent;
-        $weboai = new Weboai($teiuri);
-        // juste le teiHeader ne permet pas d’attraper du contenu pour dc:description
-        // $weboai->teiheader($teiuri);
-        $weboai->tei2tr($setspec);
+        $teiurl = $reader->expand()->textContent;
+        // relative URI
+        if ( strpos( $teiurl, "http" ) !== 0 ) $teiurl = $baseurl.$teiurl;
+        $weboai = new Weboai( $teiurl );
+        // loading error
+        if ( !$weboai->doc->textContent ) {
+          echo '<tr><td colspan="5"><b class="error">'.$teiurl.' IMPOSSIBLE À CHARGER</b></td></tr>';
+        }
+        else {
+          $weboai->tei2tr( $setspec );
+        }
       }
     }
     echo "\n</table>";
     $reader->close();
-    echo "\n<p>Traitement terminé du set “" . $setspec . '” ' . $uri . '</p>';
+    echo "\n<p>Traitement terminé du set “" . $setspec . '” ' . $url . '</p>';
   }
   /**
    * Traitement d’un fichier TEI
    */
-  public function tei2tr($setspec=false) {
-    if (!$setspec) $setspec='&lt;setSpec&gt;';
-    $oai_identifier = 'oai:' . Conf::$domain . ':' . $setspec . ':' . $this->srcfilename;
+  public function tei2tr( $setspec=false )
+  {
+    if ( !$setspec ) $setspec='&lt;setSpec&gt;';
+    $oai_identifier = 'oai:' . self::$conf['domain'] . ':' . $setspec . ':' . $this->srcfilename;
     $duplicate= '';
-    if (isset(self::$duplicate[$oai_identifier])) $duplicate = ' <div class="error">DOUBLON</div>';
+    if ( isset(self::$duplicate[$oai_identifier]) ) $duplicate = ' <div class="error">DOUBLON</div>';
     self::$duplicate[$oai_identifier] = 1;
-    $th = '<a href="#" title="Voir la source OAI" onclick="div=document.getElementById(\'' . $oai_identifier . '\'); if (div.style.display == \'none\') {div.style.display = \'\';} else {div.style.display = \'none\'}; return false; ">' . $oai_identifier  . '</a>' . $duplicate;
+    $th = '<a href="#" title="Voir la source OAI" onclick="div=document.getElementById(\'' . $oai_identifier . '\'); if (div.style.display == \'none\') {div.style.display = \'\';} else {div.style.display = \'none\'}; return false; ">' . $oai_identifier  . ' ▶</a>' . $duplicate;
     // mal chargé
     if (!$this->doc) {
       echo "
 <tr>
   <th>$th</th>
-  <td colspan=\"5\"><p class=\"error\">FICHIER NON TROUVÉ {$this->srcuri}</p></td>
+  <td colspan=\"5\"><p class=\"error\">FICHIER NON TROUVÉ {$this->srcurl}</p></td>
 </tr>
 ";
       return false;
@@ -460,7 +479,7 @@ textarea.xml { width: 100%; border: none; }
     $publisher = '';
     $nl = $oaidoc->getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'publisher');
     if($nl->length)  {
-      $org = '<a href="' . $this->srcuri . '">' . $nl->item(0)->nodeValue. '</a>';
+      $org = '<a href="' . $this->srcurl . '">' . $nl->item(0)->nodeValue. '</a>';
       $sep = '';
       for ($i =0; $i < $nl->length; $i++ ) {
         $publisher .= $sep . $nl->item($i)->nodeValue;
@@ -575,7 +594,7 @@ textarea.xml { width: 100%; border: none; }
    * TODO : test des droits en doPost()
    */
   public function sch2xsl() {
-    //if (!$doc) $doc=$this->srcuri;
+    //if (!$doc) $doc=$this->srcurl;
     /* step1, 2, 3 : see : https://code.google.com/p/schematron/wiki/RunningSchematronWithGNOMExsltproc */
     //step1
     $this->xsl->load(dirname(dirname(__FILE__)) . '/iso-schematron-xslt1/iso_dsdl_include.xsl');
@@ -607,7 +626,7 @@ textarea.xml { width: 100%; border: none; }
    */
   public function xmlValidation($xmlValidator='/out/teiHeader_validator.xsl') {
     $validation=null;
-    $this->xsl->load(dirname(__FILE__) . $xmlValidator);
+    $this->xsl->load( dirname(__FILE__) . $xmlValidator );
     $this->proc->importStylesheet($this->xsl);
     $this->proc->setParameter('axsl', 'fileNameParameter', $this->srcfilename);
     $svrl_report = $this->proc->transformToDoc($this->doc);
@@ -626,8 +645,9 @@ textarea.xml { width: 100%; border: none; }
   /**
    * OAI conversion
    */
-  public function tei2oai() {
-    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/tei2oai.xsl');
+  public function tei2oai()
+  {
+    $this->xsl->load( dirname(dirname(__FILE__) ) . '/transform/tei2oai.xsl');
     $this->proc->importStylesheet($this->xsl);
     $this->proc->setParameter(null, 'filename', $this->srcfilename);
     $doc = $this->proc->transformToDoc($this->doc);
@@ -644,7 +664,7 @@ textarea.xml { width: 100%; border: none; }
     $xmlDOM->loadXML($xml);// oai as DOM
     // [FG] hey! we get it in our projects http://svn.code.sf.net/p/algone/code/teipub/xml2html.xsl
     // What should be added to make it works well for you?
-    $this->xsl->load(dirname(dirname(__FILE__)) . '/transform/verbid.xsl');
+    $this->xsl->load( dirname(dirname(__FILE__) ) . '/transform/verbid.xsl');
     $this->proc->importStylesheet($this->xsl);
     return $this->proc->transformToXML($xmlDOM);
   }
@@ -717,7 +737,7 @@ PRAGMA temp_store = 2; -- memory temp table
    * Montaigne, Françoise de (153.?-....)
    * Bernard de Clairvaux (saint ; 1090?-1153)
    */
-  public static function ins_author($text, $role=NULL, $uri=NULL) {
+  public static function ins_author($text, $role=NULL, $url=NULL) {
     // bug ?
     if (!$text) return;
     $heading=$text;
@@ -760,7 +780,7 @@ PRAGMA temp_store = 2; -- memory temp table
     if (!$text) $heading=$key; // give key as is
     // no rebuild of an heading from fields, some info can be lost like (saint ; 1090?-1153)
     // $heading=$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'');
-    if(!$uri) $uri=NULL;
+    if(!$url) $url=NULL;
     // dates should be int in sql field to be used
     if ($death=='....') $death=null;
     $birth=strtr($birth, '.', '0');
@@ -782,7 +802,7 @@ PRAGMA temp_store = 2; -- memory temp table
     if (!$authorId) {
       // (heading, family, given, sort, sort1, sort2, birth, death, uri)
       self::$stmt['ins_author']->execute(array(
-        $heading, $family, $given, $sort1.$sort2, $sort1, $sort2, $birth, $death, $uri
+        $heading, $family, $given, $sort1.$sort2, $sort1, $sort2, $birth, $death, $url
       ));
       // echo $text.' — '.$dates.' — '.$family.($given?(', '.$given):'').($birth?(' ('.$birth.'-'.$death.')'):'')."\n";
       $authorId=self::$pdo->lastInsertId();
@@ -796,16 +816,17 @@ PRAGMA temp_store = 2; -- memory temp table
   public static function connect() {
     if (self::$pdo) return; // no way found to prevent lock, do not reopen connection
     // create database
-    if (!file_exists(Conf::$sqlite)) {
-      if (!file_exists($dir = dirname(Conf::$sqlite))) {
-        mkdir($dir, 0775, true);
-        @chmod($dir, 0775);
+    if (!file_exists( self::$conf['sqlite'] )) {
+      if (!file_exists($dir = dirname( self::$conf['sqlite'] ))) {
+        mkdir( $dir, 0775, true );
+        @chmod( $dir, 0775 );
       }
-      self::$pdo=new PDO("sqlite:" . Conf::$sqlite);
+      self::$pdo=new PDO("sqlite:" . self::$conf['sqlite'] );
+      @chmod( self::$conf['sqlite'], 0775 );
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
       self::$pdo->exec(file_get_contents(dirname(__FILE__).'/weboai.sql'));
     } else {
-      self::$pdo=new PDO("sqlite:" . Conf::$sqlite);
+      self::$pdo=new PDO("sqlite:" . self::$conf['sqlite'] );
       self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     }
 
@@ -940,7 +961,8 @@ PRAGMA temp_store = 2; -- memory temp table
    * called by constructor
    * [FG] error handler is unplugged. Keep or strip?
    */
-  private function load($src) {
+  private function load( $src ) {
+    $src = trim( $src );
     libxml_clear_errors();
     //$oldError=set_error_handler(array($this,"err"), E_ALL);
     $this->doc = new DOMDocument("1.0", "UTF-8");
@@ -949,7 +971,7 @@ PRAGMA temp_store = 2; -- memory temp table
     $this->doc->substituteEntities=true;
     libxml_use_internal_errors(true);
     // LIBXML_NOWARNING to not output warning on @xml:id
-    $this->doc->load($src, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_NOWARNING);
+    $this->doc->load( $src, LIBXML_NOENT | LIBXML_NSCLEAN | LIBXML_NOCDATA | LIBXML_NOWARNING );
     // si grosse erreur, supprimer le document
     foreach (libxml_get_errors() as $err) {
       if (is_object($err) && isset($err->level)) $level = $err->level;

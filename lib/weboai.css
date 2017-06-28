@@ -4,8 +4,7 @@ body { padding: 1em; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
 
 a { text-decoration: none; color: #1982d1; }
 a:hover { text-decoration: underline; color: #1982d1; }
-h1 { font-size: 26px; color: #222; } 
-h1 a { color: #222; }
+h1 { font-size: 26px; color: #222; }
 h2 { font-size: 15px; }
 main { display: block; max-width: 1000px; margin-left: auto; margin-right: auto; background-color: #FFFFFF; padding: 76px; clear: both; overflow: hidden; }
 nav.path { margin-bottom: 1em; }
@@ -19,10 +18,10 @@ p.sourceDesc { margin-top: 1em; margin-bottom: 1em; }
 
 
 /** Admin form */
-::-webkit-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-:-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-::-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; } 
-:-ms-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important;  } 
+::-webkit-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; }
+:-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; }
+::-moz-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important; }
+:-ms-input-placeholder { color: #999 !important; font-style: italic !important; font-weight: normal !important;  }
 form.oai { background: #E8E0D0; border: #FFFFFF solid 1px; padding: 1em 1em 1em 1em; width: 80ex; margin: 0 auto 0 auto;}
 input.text, textarea { font-family: Arial, sans-serif; font-size: inherit; border: none; margin: 1px 0 1px 0; outline: none; padding: 0 1ex 0 1ex; }
 button { border-color: rgba(255, 255, 255, 0.5); cursor: pointer; border-radius: 1.5ex; border-style: ridge; background-color: #E0D0B0}
@@ -86,4 +85,3 @@ div.creator label, div.title label, div.date label { display: none; }
 p.description { text-align: justify; margin-left: 2em; }
 .title a { text-decoration: none; }
 .dc label { font-weight: bold; }
-

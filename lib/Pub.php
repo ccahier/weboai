@@ -87,7 +87,7 @@ class Pub {
   {
     $this->pathinfo = $pathinfo;
     $this->lang=$lang;
-    if ( !file_exists( $sqlitefile ) ) return false;
+    if ( !file_exists( $sqlitefile ) ) exit( 'Base '.$sqlitefile.' introuvable, commencez par créer une collection dans l’interface d’<a href="admin.php">administration</a>.' );
     $this->pdo=new PDO("sqlite:".$sqlitefile);
     $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     $this->pdo->exec("PRAGMA temp_store = 2;");
@@ -127,7 +127,8 @@ class Pub {
    * build a temp table of found documents, especially usefull to have index
    * on some calculated values, more efficient before any results view
    */
-  public function search() {
+  public function search()
+  {
     $timeStart = microtime(true);
     $this->pdo->beginTransaction();
     $this->pdo->exec("CREATE TEMP TABLE found (date INTEGER);");
@@ -244,14 +245,15 @@ class Pub {
   /**
    * List sets
    */
-  public function sets( ) {
+  public function sets( )
+  {
     // Href prefix to set, with or without htaccess
     $hrefset = $this->homehref;
     if ( $this->pathinfo ) $hrefset .= 'set/';
     else $hrefset = "?set=";
 
     // no search, list all sets
-    $list=$this->pdo->prepare("SELECT oaiset.*, count(*) AS count FROM oaiset, member WHERE member.oaiset=oaiset.rowid GROUP BY oaiset.rowid ORDER BY oaiset.setspec ");
+    $list=$this->pdo->prepare( "SELECT oaiset.*, count(*) AS count FROM oaiset, member WHERE member.oaiset=oaiset.rowid GROUP BY oaiset.rowid ORDER BY oaiset.setspec ");
     $list->execute(array());
     echo '
 <div class="sets">
@@ -346,7 +348,7 @@ class Pub {
    * do not display books by author (pb multiple authors)
    * $limit : max books
    */
-  public function biblio($cols=array('n', 'title', 'byline', 'date', 'date2', 'publisher'), $caption='', $limit=300)
+  public function biblio( $cols=array('n', 'title', 'byline', 'date', 'date2', 'publisher'), $caption='', $limit=300 )
   {
     // Href prefix to record, with or without htaccess
     $hrefrec = $this->homehref;
@@ -463,7 +465,7 @@ class Pub {
   /**
    * What to append to a query string, to keep search params
    */
-  function qsa($exclude=array(), $include=array())
+  function qsa($exclude=array(), $include=array() )
   {
     if(!$exclude)$exclude=array();
     if (!count($include)) $include=array('by','end','notby','q','set','start');

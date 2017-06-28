@@ -1,12 +1,16 @@
 <?php
 if( !ini_get('date.timezone') ) date_default_timezone_set('Europe/Paris');
+
+// configure Class
+Pmh::$conf = include( dirname(dirname(__FILE__)).'/conf.php' );
 class Pmh {
+  public static $conf;
   public $pdo;
   public $verb;
   public $set;
   function __construct($sqlitefile) {
     $uri = explode('?', $_SERVER['REQUEST_URI'], 2);
-    if (!isset(Conf::$baseURL)) Conf::$baseURL = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $uri[0];
+    if (!isset( self::$conf['$baseURL'] )) self::$conf['baseURL'] = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $uri[0];
     if (!file_exists($sqlitefile)) {
       $this->prolog();
       echo '  <error code="badArgument">Server configuration error, bad datalink</error>'."\n";
@@ -15,12 +19,12 @@ class Pmh {
     }
     if (isset($_REQUEST['verb'])) $this->verb = $_REQUEST['verb'];
     $verbs = array(
-      'GetRecord' => '', 
-      'Identify' => '', 
+      'GetRecord' => '',
+      'Identify' => '',
       'ListIdentifiers' => '',
       'ListMetadataFormats' => '',
       'ListRecords' => '',
-      'ListSets' => '', 
+      'ListSets' => '',
     );
     if (!isset($verbs[$this->verb])) {
       $this->verb = null;
@@ -45,21 +49,21 @@ class Pmh {
     $this->epilog();
     exit();
   }
-  
+
   public function Identify() {
     echo '
   <Identify>
-    <repositoryName>' . htmlspecialchars(Conf::$repositoryName) . '</repositoryName>
-    <baseURL>' . htmlspecialchars(Conf::$baseURL) . '</baseURL>
+    <repositoryName>' . htmlspecialchars( self::$conf['repositoryName'] ) . '</repositoryName>
+    <baseURL>' . htmlspecialchars( self::$conf['baseURL'] ) . '</baseURL>
     <protocolVersion>2.0</protocolVersion>
-    <adminEmail>' . htmlspecialchars(Conf::$adminEmail) . '</adminEmail>
+    <adminEmail>' . htmlspecialchars( self::$conf['adminEmail'] ) . '</adminEmail>
     <earliestDatestamp>1990-02-01T12:00:00Z</earliestDatestamp>
     <deletedRecord>no</deletedRecord>
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>
 ';
   }
-  
+
   public function GetRecord() {
     if (isset($_REQUEST['metadataPrefix']) && $_REQUEST['metadataPrefix'] != 'oai_dc') {
       echo '  <error code="cannotDisseminateFormat">This OAI repository support oai_dc only as a metadata format.</error>'."\n";
@@ -92,7 +96,7 @@ class Pmh {
     $xml[] = "  </GetRecord>\n";
     echo implode($xml, "\n");
   }
-  
+
   public function ListMetadataFormats() {
     echo '  <ListMetadataFormats>
     <metadataFormat>
@@ -168,19 +172,19 @@ class Pmh {
     if (!ini_get("zlib.output_compression")) ob_start('ob_gzhandler');
     $date = date('Y-m-d\TH:i:s\Z');
     $xml = array();
-    //   <repositoryName>' . htmlspecialchars(Conf::$repositoryName) . '</repositoryName>
+    //   <repositoryName>' . htmlspecialchars( self::$conf['repositoryName'] ) . '</repositoryName>
     $xml[] = '<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="' . Conf::$weboaihref . 'transform/oai2html.xsl"?>
-<?css ' . Conf::$weboaihref . 'lib/weboai.css ?>
-<?js ' . Conf::$weboaihref . 'lib/Sortable.js ?>
-<?repositoryName ' . htmlspecialchars(Conf::$repositoryName) . '?>
-<OAI-PMH 
+<?xml-stylesheet type="text/xsl" href="' . self::$conf['weboaihref'] . 'transform/oai2html.xsl"?>
+<?css ' . self::$conf['weboaihref'] . 'lib/weboai.css ?>
+<?js ' . self::$conf['weboaihref'] . 'lib/Sortable.js ?>
+<?repositoryName ' . htmlspecialchars( self::$conf['repositoryName'] ) . '?>
+<OAI-PMH
   xmlns="http://www.openarchives.org/OAI/2.0/"
   xmlns:dc="http://purl.org/dc/elements/1.1/"
-  xmlns:dcterms="http://purl.org/dc/terms/" 
+  xmlns:dcterms="http://purl.org/dc/terms/"
   xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  
+
   xsi:schemaLocation="
   http://www.openarchives.org/OAI/2.0/
          http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd
@@ -194,8 +198,8 @@ class Pmh {
     if ($this->verb == 'ListRecords') $xml[] = ' metadataPrefix="oai_dc"';
     if (isset($_REQUEST['set'])) $xml[] = ' set="' . $_REQUEST['set'] . '"';
     if (isset($_REQUEST['identifier'])) $xml[] = ' identifier="' . $_REQUEST['identifier'] . '"';
-    $xml[] = '>' . htmlspecialchars(Conf::$baseURL) . "</request>\n";
-    
+    $xml[] = '>' . htmlspecialchars( self::$conf['baseURL'] ) . "</request>\n";
+
     echo implode($xml, '');
   }
   /**

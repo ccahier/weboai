@@ -1,6 +1,6 @@
 <?php
-include (dirname(__FILE__).'/Conf.php'); // importer la configuration
-include (dirname(__FILE__).'/lib/Weboai.php'); // importer la logique d’importation OAI
+$conf = include( dirname(__FILE__).'/conf.php' ); // importer la configuration
+include ( dirname(__FILE__).'/lib/Weboai.php' ); // importer la logique d’importation OAI
 $message = array();
 session_start();
 
@@ -36,17 +36,21 @@ else if ( isset($_SESSION['user']) && isset($_SESSION['pass']) ) {
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Admin “<?php echo Conf::$repositoryName ?>”</title>
-    <link rel="stylesheet" type="text/css" href="<?php echo Conf::$weboaihref ?>lib/weboai.css" />
+    <title>Admin “<?php echo $conf['repositoryName'] ?>”</title>
+    <link rel="stylesheet" type="text/css" href="<?php echo $conf['weboaihref'] ?>lib/weboai.css" />
   </head>
   <body class="oai">
-    <h1><a href=".">◀ <?php echo Conf::$repositoryName ?></a>, <a href="admin.php">administration</a></h1>
+    <h1><?php echo $conf['repositoryName'] ?>, <a href="admin.php">administration</a></h1>
     <?php
 if (isset($_SESSION['user'])) {
-  echo '<form style="float: right" method="POST"><button name="logout">Déconnexion</button></form>';
+  echo '<form style="float: right" method="POST">
+  <a href=".">'.$conf['repositoryName'].' ▲</a><br/>
+  <button name="logout">Déconnexion</button>
+  </form>';
 }
 else {
   echo '<form method="POST" style="float: right">
+    <a href=".">'.$conf['repositoryName'].' ▲</a><br/>
   <input placeholder="Utilisateur" class="text" type="text" name="user"/>
   <br/><input placeholder="Mot de passe" type="password" class="text" name="pass"/>
   <div style="text-align: center; "><button name="login">Connexion</button></div>
