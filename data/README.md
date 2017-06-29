@@ -13,4 +13,4 @@ https://sqlite.org/tempfiles.html
 On conseillera donc de placer la base dans un sous-dossier de l’application,
 pour limiter l’espace ou le serveur peut écrire,
 par exemple ce dossier data/
-(mais ce chemin est modifiable dans Conf.php).
+(ce chemin est modifiable dans conf.php).
