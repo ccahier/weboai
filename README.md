@@ -9,19 +9,18 @@ Les fichiers XML TEI des textes dont on souhaite exposer les métadonnées en OA
 * [Schéma teiHeader](//ccahier.github.io/weboai/schema/teiHeader.html)
 * [Schéma Dublin Core](//ccahier.github.io/weboai/schema/weboai.html)
 
+Exemple d’installation
+ * http://weboai.cahier.huma-num.fr/ (interface publique)
+ * http://weboai.cahier.huma-num.fr/admin.php (administration des collections)
+ * http://weboai.cahier.huma-num.fr/pmh (entrepôt OAI, XML transformé à la volés dans le navigateur, regarder la source pour voir le XML)
+
 ## Installation
 
 ### Prérequis
-* Un serveur Apache
-* PHP5 ou supérieur + modules PDO, pdo_sqlite et xslt
-* les textes devront être organisés en une ou plusieurs collections (= sets). Voir infra la manière d'exprimer l'organisation des textes en collections
 
-### Procédure
-* déziper ou cloner ccahier/weboai sur le serveur apache (empacement linux par défaut des fichiers de sites : /var/www/html)
-* vérifier les droits sur les fichiers : le fichier weboai.sqlite doit appartenir au groupe apache (www-data sur linux, _www sur OSX)
-* copier _Conf.php en Conf.php et _.htaccess en .htaccess
-* adapter le chemin du rewriteRule dans .htaccess
-* passer AllowOverride à All dans la conf d'apache pour le répertoire ????????????
+* Un serveur Apache
+* PHP5.3 ou supérieur + modules PDO, pdo_sqlite et xslt
+* Pour des belles adresses ('''clean uri'''), autoriser les .htaccess et les '''rewrite rules'''
 ```
 <Directory ???????????? >
 	Options Indexes FollowSymLinks
@@ -29,4 +28,13 @@ Les fichiers XML TEI des textes dont on souhaite exposer les métadonnées en OA
 	Require all granted
 </Directory>
 ```
-* modifier les informations de conf dans Conf.php
+
+### Procédure
+
+* Installer l’application sur le serveur (empacement par défaut, linux : /var/www/html, OSX : /Library/WebServer/Documents/)
+  * Si accès en ligne de commmande, git clone https://github.com/ccahier/weboai.git, permet de mettre à jour la librairie avec la commande git pull.
+  * Sinon, télécharger le zip sur GitHub, https://github.com/ccahier/weboai
+* Droits, l’application a besoin de pouvoir écrire dans le dossier contenant la base sqlite, par défaut (dans conf.php) : /data/weboai.sqlite. Le dossier doit appartenir au groupe apache (linux : www-data,  sur linux, OSX :  _www).
+* Copier _conf.php en conf.php, modifier le mot de passe d’administration.
+* Si '''rewrite rules''', copier _.htaccess en .htaccess, modifier l’instruction RewriteBase
+* Copier _index.php en index.php (permet de personnaliser l’accueil)
