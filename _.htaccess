@@ -1,12 +1,15 @@
-php_flag zlib.output_compression on
-php_value zlib.output_compression_level 9
+# Peut ne pas marcher sur certains serveurs
+# php_flag zlib.output_compression on
+# php_value zlib.output_compression_level 9
 
-# maybe needed on some servers
+# Parfois nécessaire sur certains serveurs pour les réécritures fonctionnent
 Options -MultiViews +FollowSymLinks +Indexes
 RewriteEngine on
-# edit rewrite base according to your server
+# Modifier la base de réécriture selon votre installation
 RewriteBase /weboai/
 RewriteRule ^pmh$ pmh.php [QSA,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule   ^(.*)$ index.php/$1 [QSA,L]
+# Requière une configuration Apache avec PATHINFO
+# RewriteRule   ^(.*)$ index.php/$1 [QSA,L]
+RewriteRule   ^(.*)$ index.php?path=$1 [QSA,L]

@@ -3,12 +3,14 @@ if( !ini_get('date.timezone') ) date_default_timezone_set('Europe/Paris');
 
 // configure Class
 Pmh::$conf = include( dirname(dirname(__FILE__)).'/conf.php' );
-class Pmh {
+class Pmh
+{
   public static $conf;
   public $pdo;
   public $verb;
   public $set;
-  function __construct($sqlitefile) {
+  function __construct( $sqlitefile )
+  {
     $uri = explode('?', $_SERVER['REQUEST_URI'], 2);
     if (!isset( self::$conf['$baseURL'] )) self::$conf['baseURL'] = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $uri[0];
     if (!file_exists($sqlitefile)) {
@@ -50,7 +52,8 @@ class Pmh {
     exit();
   }
 
-  public function Identify() {
+  public function Identify()
+  {
     echo '
   <Identify>
     <repositoryName>' . htmlspecialchars( self::$conf['repositoryName'] ) . '</repositoryName>
@@ -64,7 +67,8 @@ class Pmh {
 ';
   }
 
-  public function GetRecord() {
+  public function GetRecord()
+  {
     if (isset($_REQUEST['metadataPrefix']) && $_REQUEST['metadataPrefix'] != 'oai_dc') {
       echo '  <error code="cannotDisseminateFormat">This OAI repository support oai_dc only as a metadata format.</error>'."\n";
     }
@@ -97,7 +101,8 @@ class Pmh {
     echo implode($xml, "\n");
   }
 
-  public function ListMetadataFormats() {
+  public function ListMetadataFormats()
+  {
     echo '  <ListMetadataFormats>
     <metadataFormat>
       <metadataPrefix>oai_dc</metadataPrefix>
@@ -107,7 +112,9 @@ class Pmh {
   </ListMetadataFormats>
 ';
   }
-  public function ListSets() {
+
+  public function ListSets()
+  {
     echo '  <ListSets>' . "\n";
     foreach ($this->pdo->query('SELECT * FROM oaiset') as $row) {
       // simplifier les attributs xmlns
@@ -115,7 +122,9 @@ class Pmh {
     }
     echo '  </ListSets>' . "\n";
   }
-  public function ListIdentifiers() {
+
+  public function ListIdentifiers()
+  {
     if (!isset($_REQUEST['set'])) {
       echo '  <error code="badArgument">A set is required for this OAI repository. Because we are an agregator of collections, full list of records has no sense.</error>'."\n";
       return;
@@ -140,7 +149,9 @@ class Pmh {
     }
     echo '  </ListIdentifiers>' . "\n";
   }
-  public function ListRecords() {
+
+  public function ListRecords()
+  {
     if (!isset($_REQUEST['set'])) {
       echo '  <error code="badArgument">A set is required for this OAI repository. Because we are an agregator of collections, full list of records has no sense.</error>'."\n";
       return;
@@ -163,13 +174,15 @@ class Pmh {
     }
     echo "  </ListRecords>\n";
   }
+
   /**
    * Start of response
    */
   public function prolog() {
     // header ("Content-Type:text/plain");
     header ("Content-Type:text/xml");
-    if (!ini_get("zlib.output_compression")) ob_start('ob_gzhandler');
+    // NOT SUPPORTED on huma-num.fr
+    // if ( !ini_get("zlib.output_compression") ) ob_start('ob_gzhandler');
     $date = date('Y-m-d\TH:i:s\Z');
     $xml = array();
     //   <repositoryName>' . htmlspecialchars( self::$conf['repositoryName'] ) . '</repositoryName>
@@ -207,7 +220,8 @@ class Pmh {
    */
   public function epilog() {
     echo '</OAI-PMH>';
-    if (!ini_get("zlib.output_compression")) ob_end_flush();
+    // NOT SUPPORTED on huma-num.fr
+    // if (!ini_get("zlib.output_compression")) ob_end_flush();
   }
 }
 ?>

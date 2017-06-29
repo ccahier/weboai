@@ -19,13 +19,6 @@ CREATE TABLE record (
 CREATE INDEX record_oai_datestamp ON record(oai_datestamp);
 
 
-CREATE VIRTUAL TABLE ft USING FTS3 (
-  -- fulltext fields to find records for a public interface
-  heading      TEXT,  -- aggregation of titles and authors for full-text search
-  description  TEXT   -- aggregation of abstracts for full-text search
-);
-
-
 CREATE TABLE author (
   -- person facets for dc:creator or dc:contributor
   heading         TEXT NOT NULL, -- normalize key, ex: Baudelaire, Charles (1821-1867)
@@ -78,7 +71,11 @@ CREATE TABLE member (
 CREATE INDEX member_oaiset   ON member(oaiset);
 CREATE INDEX member_record   ON member(record);
 
-
+CREATE VIRTUAL TABLE ft USING FTS3 (
+  -- fulltext fields to find records for a public interface
+  heading      TEXT,  -- aggregation of titles and authors for full-text search
+  description  TEXT   -- aggregation of abstracts for full-text search
+);
 
 -- TRIGGERS
 
