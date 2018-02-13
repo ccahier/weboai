@@ -112,12 +112,6 @@
             <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/@xml:base"/>
           </dc:identifier>
         </xsl:when>
-        <!-- specific  -->
-        <xsl:when test="tei:fileDesc/tei:editionStmt/tei:edition/tei:ref/@target">
-          <dc:identifier>
-            <xsl:apply-templates select="tei:fileDesc/tei:editionStmt/tei:edition/tei:ref/@target"/>
-          </dc:identifier>
-        </xsl:when>
       </xsl:choose>
       <!-- n? language -->
       <xsl:choose>
@@ -142,8 +136,9 @@
           <xsl:apply-templates select="/*/tei:text/tei:body/tei:argument"/>
         </xsl:when>
         <!-- pas Acte I, Acte II… -->
-        <xsl:when test="/*/tei:text/tei:body/*[@type='act' or @type='acte']"/>
-        <xsl:when test="/*/tei:text/tei:body/*[tei:head]">
+        <!--<xsl:when test="/*/tei:text/tei:body/*[@type='act' or @type='acte']"/>-->
+        <!--
+          <xsl:when test="/*/tei:text/tei:body/*[tei:head]">
           <dc:description>
             <xsl:for-each select="/*/tei:text/tei:body/*[tei:head]">
               <xsl:if test="position() != 1">
@@ -174,8 +169,15 @@
               <xsl:value-of select="$lf"/>
             </xsl:for-each>
           </dc:description>
-        </xsl:when>
-      </xsl:choose>
+       </xsl:when>
+        -->
+        <xsl:otherwise>
+          <dc:description>
+            <xsl:apply-templates
+              select="//tei:front//text()[not(ancestor::tei:note)]|//tei:body//text()[not(ancestor::tei:note)]"/>
+          </dc:description>
+        </xsl:otherwise>
+        </xsl:choose>
       <!-- 1? source -->
       <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]"/>
       <!-- n? subject -->
