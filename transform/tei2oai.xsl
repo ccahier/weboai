@@ -51,8 +51,11 @@
         <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct">
           <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:biblStruct/*/tei:author"/>
         </xsl:when>
+        <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:biblStruct[1][tei:author]">
+          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:biblStruct[1]/tei:author"/>
+        </xsl:when>
         <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]">
-          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:author]/tei:author"/>
+          <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]/tei:author"/>
         </xsl:when>
       </xsl:choose>
       <!-- 1! title -->
@@ -67,6 +70,9 @@
           <!-- specific BVH, msDesc before a <bibl> ? -->
           <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:date">
             <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:date)[1]" mode="year"/>
+          </xsl:when>
+          <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:biblStruct[1][tei:date]">
+            <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc/tei:biblStruct[1][tei:date]//tei:date)[1]" mode="year"/>
           </xsl:when>
           <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]">
             <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc/tei:bibl[1][tei:date]//tei:date)[1]" mode="year"/>
@@ -179,7 +185,8 @@
         </xsl:otherwise>
         </xsl:choose>
       <!-- 1? source -->
-      <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]"/>
+      <xsl:apply-templates select="tei:fileDesc/tei:sourceDesc/tei:bibl[1]|
+        tei:fileDesc/tei:sourceDesc/tei:biblStruct"/>
       <!-- n? subject -->
       <xsl:apply-templates select="tei:profileDesc/tei:textClass//tei:term"/>
       <dc:type scheme="dcterms:DCMIType">Text</dc:type>
@@ -362,6 +369,17 @@
     </xsl:choose>
   </xsl:template>
   
+  <xsl:template match="tei:sourceDesc/tei:biblStruct[.//tei:title]">
+    <xsl:choose>
+      <xsl:when test=".//tei:title='' or .//tei:title='?'"/>
+      <xsl:otherwise>
+        <xsl:variable name="txt">
+          <xsl:apply-templates select=".//tei:title" mode="txt"/>
+        </xsl:variable>
+        <dc:source><xsl:value-of select="normalize-space($txt)"/></dc:source>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
   <!-- http://weboai.sourceforge.net/teiHeader.html#el_creation -->
   <!-- unique, obligatoire -->
   <xsl:template match="tei:date">
