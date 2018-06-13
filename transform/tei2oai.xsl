@@ -67,6 +67,10 @@
           <xsl:when test="tei:profileDesc/tei:creation/tei:date">
             <xsl:apply-templates select="tei:profileDesc/tei:creation/tei:date[1]" mode="year"/>
           </xsl:when>
+          <!-- specific correspondance -->
+          <xsl:when test="tei:profileDesc/tei:correspDesc//tei:date">
+            <xsl:apply-templates select="tei:profileDesc/tei:correspDesc//tei:date[1]" mode="year"/>
+          </xsl:when>
           <!-- specific BVH, msDesc before a <bibl> ? -->
           <xsl:when test="tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:date">
             <xsl:apply-templates select="(tei:fileDesc/tei:sourceDesc/tei:msDesc[1]//tei:date)[1]" mode="year"/>

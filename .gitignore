@@ -1,4 +1,5 @@
-Conf.php
+conf.php
 index.php
 .htaccess
 *.sqlite
+data/*
